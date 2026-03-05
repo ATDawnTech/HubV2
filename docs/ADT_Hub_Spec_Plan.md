@@ -2,13 +2,13 @@
 
 **Version:** 1.0 – Initial Draft  
 **Date:** March 2026  
-**Modules:** Intake · ATS · Onboarding · Assets · Employees · Timesheets
+**Modules:** Intake · ATS · Onboarding · Assets · Employees · Timesheets · Audit Logging
 
 ---
 
 ## Document Overview
 
-This Specification Plan defines the functional scope, objectives, user flows, and requirements for four core modules of ADT Hub. It is intended to align product, engineering, and business stakeholders before detailed design and development begins.
+This Specification Plan defines the functional scope, objectives, user flows, and requirements for seven core modules of ADT Hub. It is intended to align product, engineering, and business stakeholders before detailed design and development begins.
 
 ### Application Architecture
 
@@ -173,27 +173,7 @@ stateDiagram-v2
 
 ---
 
-## Epic 2 – ATS / Candidate Management
-
-### Overview
-Automates candidate intake and tracking. It focuses on reducing manual data entry via intelligent resume parsing and providing a central hub for candidate evaluation.
-
-### Key Features
-| Feature | Description |
-|---|---|
-| AI Resume Parsing | Automatically extract Name, Email, Phone, and LinkedIn URLs from uploaded CVs (PDF/Text) |
-| Candidate Kanban | Drag-and-drop interface for moving candidates through hiring stages |
-| Advanced Filtering | Filter candidates by skills, proficiency, and application date |
-| Interview Feedback | Structured feedback tabs for interviewers to log ratings and comments |
-| Interview Activity Timeline | Real-time log of all candidate-related actions and communications |
-
-### Logic Contracts (from ADTHUB)
-- **Name Extraction:** Multi-strategy fallback (Line 1-5, Title Case check, ALL CAPS normalisation, Email local-part derivation).
-- **Phone Extraction:** Supports international formats, 10-digit US, and parentheses while excluding years (e.g., "2024").
-
----
-
-## Epic 2 – Onboarding Management
+## Epic 3 – Onboarding Management
 
 ### Overview
 
@@ -331,7 +311,7 @@ mindmap
 
 ---
 
-## Epic 3 – Asset Management
+## Epic 4 – Asset Management
 
 ### Overview
 
@@ -505,7 +485,7 @@ flowchart TD
 
 ---
 
-## Epic 4 – Employee Management
+## Epic 5 – Employee Management
 
 ### Overview
 
