@@ -17,7 +17,7 @@ ADT Hub is a web application. Each module is a dedicated section of the applicat
 ```mermaid
 graph TD
     Nav([ADT Hub – Web Application]) --> E1[Intake Management]
-    Nav --> E2[ATS / Candidate Management]
+    Nav --> E2[ATS & Job Management]
     Nav --> E3[Onboarding Management]
     Nav --> E4[Asset Management]
     Nav --> E5[Employee Management]
@@ -49,7 +49,7 @@ Each module also supports connections to external services where relevant — su
 | Module | Purpose | Primary Users |
 |---|---|---|
 | Intake Management | Capture and approve hiring requirements; auto-generate job requisitions and JDs | Recruiters, Hiring Managers, Admins |
-| ATS / Candidate Management | Manage candidates, parse resumes, filter talent, and track interview feedback | Recruiters, Interviewers, Hiring Managers |
+| ATS & Job Management | Manage job vacancies from Intake, parse resumes, and track candidate evaluation | Recruiters, Interviewers, Hiring Managers |
 | Onboarding Management | Orchestrate cross-team onboarding tasks for new joiners from offer acceptance to Day-1 | Recruiters, HR, IT, Admin, Hiring Managers |
 | Asset Management | Register, assign, and track company assets throughout their full lifecycle | Admins, IT, HR |
 | Employee Management | Manage employee records and self-service skills/certifications with AI-powered insights | HR, Admins, Employees, Managers |
@@ -169,21 +169,36 @@ stateDiagram-v2
 
 ---
 
-## Epic 2 – ATS / Candidate Management
+## Epic 2 – ATS & Job Management
 
 ### Overview
-Automates candidate intake and tracking. It focuses on reducing manual data entry via intelligent resume parsing and providing a central hub for candidate evaluation.
+This module is the operational engine for the hiring process, taking approved Job Requisitions from the Intake Management module and transforming them into active job vacancies. It focuses on tracking the status of these jobs and managing candidates through the recruitment funnel.
 
 ### Key Features
 | Feature | Description |
 |---|---|
-| AI Resume Parsing | Automatically extract Name, Email, Phone, and LinkedIn URLs from uploaded CVs (PDF/Text) |
-| Candidate Kanban | Drag-and-drop interface for moving candidates through hiring stages |
-| Advanced Filtering | Filter candidates by skills, proficiency, and application date |
-| Interview Feedback | Structured feedback tabs for interviewers to log ratings and comments |
-| Interview Activity Timeline | Real-time log of all candidate-related actions and communications |
+| Job Requisition Hub | Central view for all requisitions created from the Intake module, including status (Draft, Active, On Hold, Filled, Cancelled) |
+| Vacancy Tracking | Management of specific job postings, including associated Hiring Managers, budgets, and priority levels inherited from Intake data |
+| AI Resume Parsing | Automatically extract Name, Email, Phone, and LinkedIn URLs from uploaded CVs and map them to specific vacancies |
+| Candidate Kanban | Drag-and-drop candidates through hiring stages per vacancy |
+| Advanced Filtering | Filter candidates by skills and proficiency levels against specific job requirements |
+| Interview Feedback | Structured feedback tabs for interviewers, linked to the vacancy and candidate record |
+
+### Job Lifecycle
+```mermaid
+stateDiagram-v2
+    [*] --> RequisitionCreated : From Intake Module
+    RequisitionCreated --> JobActive : Sourcing/Posting Begins
+    JobActive --> OnHold : Hiring Paused
+    OnHold --> JobActive : Hiring Resumed
+    JobActive --> Filled : Candidate Successfully Hired
+    JobActive --> Cancelled : Requirement Removed
+    Filled --> [*]
+    Cancelled --> [*]
+```
 
 ### Logic Contracts (from ADTHUB)
+- **Data Inheritance:** All vacancy records must inherit `Budget`, `Role Level`, and `Skills Tags` directly from the approved Intake record.
 - **Name Extraction:** Multi-strategy fallback (Line 1-5, Title Case check, ALL CAPS normalisation, Email local-part derivation).
 - **Phone Extraction:** Supports international formats, 10-digit US, and parentheses while excluding years (e.g., "2024").
 
