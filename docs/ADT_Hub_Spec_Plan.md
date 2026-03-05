@@ -52,7 +52,7 @@ Each module also supports connections to external services where relevant — su
 | ATS & Job Management | Manage job vacancies from Intake, parse resumes, and track candidate evaluation | Recruiters, Interviewers, Hiring Managers |
 | Onboarding Management | Orchestrate cross-team onboarding tasks for new joiners from offer acceptance to Day-1 | Recruiters, HR, IT, Admin, Hiring Managers |
 | Asset Management | Register, assign, and track company assets throughout their full lifecycle | Admins, IT, HR |
-| Employee Management | Manage employee records and self-service skills/certifications with AI-powered insights | HR, Admins, Employees, Managers |
+| Employee Management | Central system of record for employee data, used for assignments and workflows across all modules | HR, Admins |
 | Timesheets & Productivity | Track employee work hours against projects with billable/non-billable logic | Employees, Managers, Finance |
 
 ---
@@ -519,112 +519,68 @@ flowchart TD
 ## Epic 5 – Employee Management
 
 ### Overview
-
-The Employee Management module is a dedicated section of the ADT Hub web application and serves as the central employee record for the platform. It enables HR and Admins to manage employee profiles, and allows employees to maintain their own skills and certifications. The data stored here is shared across other modules — employee records are used in Onboarding to manage new joiner tasks, in Asset Management for assigning equipment, and in Intake to connect skills to hiring requirements.
+The Employee Management module serves as the central system of record for all staff within the ADT Hub platform. It focuses on maintaining accurate, up-to-date employee profiles that provide the foundational data for all other modules—such as onboarding tasks, asset assignments, and job stakeholder roles.
 
 ### Business Objectives
-
-- Maintain a single source of truth for all employee data
-- Enable skills-based staffing and internal mobility
-- Improve workforce planning and capability visibility
-- Encourage continuous learning and certification tracking
-- Use AI to surface hidden talent and identify skill gaps
+- Maintain a single, authoritative source of truth for all employee personnel data
+- Ensure data consistency across the platform by centralizing record management
+- Streamline administrative workflows by providing a searchable directory for other modules
 
 ### Scope
-
 **In Scope**
-- Employee master record management (HR/Admin managed)
-- Employee self-service skills and certification capture
-- Organisation-wide skills search and reporting
-- Certification notifications to employees and managers
-- AI-driven skill insights and recommendations
+- Employee master record creation and management (HR/Admin only)
+- Centralized employee directory available to other modules
+- Tracking of core employment details (Name, ID, Role, Department, Manager, Start Date)
+- Integration with Assets and Onboarding modules for data lookups
 
 **Out of Scope**
-- Payroll and compensation processing
-- Performance appraisal workflows
-- External LMS integration
+- Employee self-service portals
+- Skills and certification tracking
+- Performance management or payroll
+- AI-driven talent/gap analysis
 
 ### User Flow
-
 ```mermaid
 flowchart TD
-    A([HR/Admin Creates Employee Record]) --> B[Employee Logs In]
-    B --> C[Employee Completes Skills Profile]
-    C --> D[Employee Adds Certifications]
-    D --> E[System Notifies Employee & Manager]
-    E --> F[Skills Data Becomes Searchable]
-    F --> G[AI Analyses Skills Data]
-    G --> H[Insights & Recommendations Surfaced]
-    H --> I([Talent Discovery / Gap Analysis / Internal Mobility])
+    A([HR/Admin Creates Employee Record]) --> B[Record Stored in Central Database]
+    B --> C{Referenced by Other Modules?}
+    C -->|Onboarding| D[New Joiner Workflow Initiated]
+    C -->|Assets| E[Equipment Assigned to Employee]
+    C -->|ATS| F[Employee Assigned as Hiring Manager]
+    D --> G([Operational Efficiency ✓])
+    E --> G
+    F --> G
 
     style A fill:#1F4E79,color:#fff,stroke:none
-    style I fill:#1F4E79,color:#fff,stroke:none
-    style G fill:#2E75B6,color:#fff,stroke:none
-    style H fill:#2E75B6,color:#fff,stroke:none
-```
-
-### AI Capabilities Map
-
-```mermaid
-mindmap
-  root((AI Skill Intelligence))
-    Normalisation
-      Deduplicate similar skills
-      Cluster into domains
-    Search
-      Natural language queries
-      Relevance ranking
-    Talent Discovery
-      Adjacent skills matching
-      Internal candidate suggestions
-    Gap Analysis
-      Org skills vs project needs
-      Highlight weak areas
-    Certification Intelligence
-      Auto-tag to skills
-      Expiry detection
-      Recommend next certs
-    Personalised Recommendations
-      Role-based suggestions
-      Career path alignment
+    style G fill:#1F4E79,color:#fff,stroke:none
 ```
 
 ### Key Features
-
 | Feature | Description |
 |---|---|
-| Unified Employee Profile | Single page for all employment details, managed by HR/Admin |
-| Self-Service Skills Page | Employee-managed skills and certifications profile |
-| Organisation Skills Directory | Searchable directory of all employee skills |
-| Skills Search & Reporting | Filter and report by skill, proficiency, team, and more |
-| Certification Notifications | Notify employee and manager when cert is added or nearing expiry |
-| AI Skill Insights | AI-powered talent discovery, gap analysis, and recommendations |
+| Master Employee Directory | Searchable list of all employees with core filtering (Dept, Location, Role) |
+| Unified Employee Profile | Single administrative page for viewing and editing employment details |
+| System-Wide Referencing | Employee records are selectable in all other modules (e.g., in Assets for assignment) |
+| Role-Based Admin Access | Only HR and Admin users can create or modify employee records |
 
 ### Roles & Permissions
-
 | Role | Access |
 |---|---|
-| Admin | Full access to all employee data and reports |
+| Admin | Full access to create, edit, and view all employee data |
 | HR | Create and manage employee records |
-| Employee | Edit own skills and certifications only |
-| Manager | View team skills and receive certification notifications |
+| Employee / Manager | View-only access to the general directory (as allowed by system settings) |
 
 ### Acceptance Criteria
-
-- HR/Admin can create and update employee records on a single page
-- Employees can add and update skills and certifications independently
-- Skills data is searchable and reportable across the organisation
-- Notifications are sent when certifications are added
-- AI features provide actionable insights and recommendations
-- Role-based access is enforced across all data
+- HR and Admins can create and edit employee records
+- Core fields (Name, Email, Role, Dept, Manager) are mandatory and validated
+- Employee records are searchable and selectable from the Assets module
+- Employee records are searchable and selectable from the ATS module
+- Data updates in Employee Management are reflected immediately across the platform
 
 ### Success Metrics
-
-- % of employees with completed skills profiles
-- Average time to find skilled internal resources
-- Reduction in external hiring for roles fillable internally
-- Increase in certification adoption
-- Manager satisfaction with skills visibility
+- 100% of staff accurately represented in the system of record
+- Zero data silos between employee records and asset assignments
+- Reduction in manual data entry when initiating onboarding workflows
 
 ---
 
@@ -682,8 +638,8 @@ graph LR
 | Onboarding | Asset Management | Asset assignment tasks within onboarding reference the Asset module |
 | Onboarding | Notification Service | Task alerts and reminders are sent via email or messaging |
 | Asset Management | Employee Management | Employee directory is used to search and assign assets to people |
-| Employee Management | Notification Service | Certification alerts are sent via email or messaging |
-| Employee Management | AI Services | AI skill features draw on employee skills and certification data |
+| Employee Management | Notification Service | System-wide alerts (not specific to skills/certs) |
+| Employee Management | AI Services | (Future) Employee data patterns for org insights |
 | Intake | AI Services | AI JD generation and intake summary use intake form data |
 | All Modules | Role & Access Management | User roles and permissions are enforced across the entire application |
 
