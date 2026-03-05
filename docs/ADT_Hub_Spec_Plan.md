@@ -2,13 +2,13 @@
 
 **Version:** 1.0 – Initial Draft  
 **Date:** March 2026  
-**Modules:** Intake · ATS · Onboarding · Assets · Employees · Timesheets · Audit Logging
+**Modules:** Intake · ATS · Onboarding · Assets · Employees · Timesheets
 
 ---
 
 ## Document Overview
 
-This Specification Plan defines the functional scope, objectives, user flows, and requirements for seven core modules of ADT Hub. It is intended to align product, engineering, and business stakeholders before detailed design and development begins.
+This Specification Plan defines the functional scope, objectives, user flows, and requirements for four core modules of ADT Hub. It is intended to align product, engineering, and business stakeholders before detailed design and development begins.
 
 ### Application Architecture
 
@@ -37,12 +37,9 @@ graph TD
     DB --- E4
     DB --- E5
     DB --- E6
-    
-    Audit[Audit Logging System] --- DB
 
     style Nav fill:#1F4E79,color:#fff,stroke:none
     style DB fill:#2E75B6,color:#fff,stroke:none
-    style Audit fill:#808080,color:#fff,stroke:none
 ```
 
 Each module also supports connections to external services where relevant — such as email notifications, AI generation, and importing data from external sources — without requiring users to leave the application.
@@ -57,7 +54,6 @@ Each module also supports connections to external services where relevant — su
 | Asset Management | Register, assign, and track company assets throughout their full lifecycle | Admins, IT, HR |
 | Employee Management | Manage employee records and self-service skills/certifications with AI-powered insights | HR, Admins, Employees, Managers |
 | Timesheets & Productivity | Track employee work hours against projects with billable/non-billable logic | Employees, Managers, Finance |
-| Audit Logging | System-wide immutable record of all data changes and user actions | Admins, Compliance |
 
 ---
 
@@ -170,6 +166,26 @@ stateDiagram-v2
 - AI-generated intake summary is saved to the intake record
 - Summary can be emailed to the hiring manager directly from the intake
 - All intake records include a full audit trail and version history
+
+---
+
+## Epic 2 – ATS / Candidate Management
+
+### Overview
+Automates candidate intake and tracking. It focuses on reducing manual data entry via intelligent resume parsing and providing a central hub for candidate evaluation.
+
+### Key Features
+| Feature | Description |
+|---|---|
+| AI Resume Parsing | Automatically extract Name, Email, Phone, and LinkedIn URLs from uploaded CVs (PDF/Text) |
+| Candidate Kanban | Drag-and-drop interface for moving candidates through hiring stages |
+| Advanced Filtering | Filter candidates by skills, proficiency, and application date |
+| Interview Feedback | Structured feedback tabs for interviewers to log ratings and comments |
+| Interview Activity Timeline | Real-time log of all candidate-related actions and communications |
+
+### Logic Contracts (from ADTHUB)
+- **Name Extraction:** Multi-strategy fallback (Line 1-5, Title Case check, ALL CAPS normalisation, Email local-part derivation).
+- **Phone Extraction:** Supports international formats, 10-digit US, and parentheses while excluding years (e.g., "2024").
 
 ---
 
@@ -614,21 +630,6 @@ A streamlined module for employees to log working hours against specific project
 ### Logic Contracts (from ADTHUB)
 - **Current Week Calculation:** Sunday-correction logic (Sunday belongs to the ending week).
 - **CSV Format:** 6-column structure: `Date, Project, Hours, Notes, Status, Employee`.
-
----
-
-## Epic 7 – System Audit Logging
-
-### Overview
-A foundational system service that records every Create, Update, and Delete action across the platform for compliance and integrity.
-
-### Key Features
-| Feature | Description |
-|---|---|
-| Invariant Logging | Every asset or employee change triggers an automatic `audit_logs` entry |
-| Diff Capture | Stores `old_value` and `new_value` as JSON strings to track specific field changes |
-| User Attribution | Every log entry is permanently linked to the `user_id` of the performer |
-| Immutable History | Audit logs are read-only and cannot be modified or deleted by any user level |
 
 ---
 
