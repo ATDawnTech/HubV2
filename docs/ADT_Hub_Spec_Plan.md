@@ -2,7 +2,7 @@
 
 **Version:** 1.0 – Initial Draft  
 **Date:** March 2026  
-**Modules:** Intake · Onboarding · Assets · Employees
+**Modules:** Intake · ATS · Onboarding · Assets · Employees · Timesheets
 
 ---
 
@@ -17,22 +17,32 @@ ADT Hub is a web application. Each module is a dedicated section of the applicat
 ```mermaid
 graph TD
     Nav([ADT Hub – Web Application]) --> E1[Intake Management]
-    Nav --> E2[Onboarding Management]
-    Nav --> E3[Asset Management]
-    Nav --> E4[Employee Management]
+    Nav --> E2[ATS / Candidate Management]
+    Nav --> E3[Onboarding Management]
+    Nav --> E4[Asset Management]
+    Nav --> E5[Employee Management]
+    Nav --> E6[Timesheets & Productivity]
 
-    E1 <-->|Skills labels, employee data| E4
-    E2 <-->|Employee records, asset tasks| E3
-    E2 <-->|New joiner data| E4
-    E3 <-->|Employee directory for assignment| E4
+    E1 <-->|Skills labels| E5
+    E1 -->|Approved Requisition| E2
+    E2 <-->|Candidate data| E3
+    E3 <-->|Employee records, asset tasks| E4
+    E3 <-->|New joiner data| E5
+    E4 <-->|Employee directory for assignment| E5
+    E6 <-->|Employee work logs| E5
 
     DB[(Central Database)] --- E1
     DB --- E2
     DB --- E3
     DB --- E4
+    DB --- E5
+    DB --- E6
+    
+    Audit[Audit Logging System] --- DB
 
     style Nav fill:#1F4E79,color:#fff,stroke:none
     style DB fill:#2E75B6,color:#fff,stroke:none
+    style Audit fill:#808080,color:#fff,stroke:none
 ```
 
 Each module also supports connections to external services where relevant — such as email notifications, AI generation, and importing data from external sources — without requiring users to leave the application.
@@ -42,27 +52,27 @@ Each module also supports connections to external services where relevant — su
 | Module | Purpose | Primary Users |
 |---|---|---|
 | Intake Management | Capture and approve hiring requirements; auto-generate job requisitions and JDs | Recruiters, Hiring Managers, Admins |
+| ATS / Candidate Management | Manage candidates, parse resumes, filter talent, and track interview feedback | Recruiters, Interviewers, Hiring Managers |
 | Onboarding Management | Orchestrate cross-team onboarding tasks for new joiners from offer acceptance to Day-1 | Recruiters, HR, IT, Admin, Hiring Managers |
 | Asset Management | Register, assign, and track company assets throughout their full lifecycle | Admins, IT, HR |
 | Employee Management | Manage employee records and self-service skills/certifications with AI-powered insights | HR, Admins, Employees, Managers |
+| Timesheets & Productivity | Track employee work hours against projects with billable/non-billable logic | Employees, Managers, Finance |
+| Audit Logging | System-wide immutable record of all data changes and user actions | Admins, Compliance |
 
 ---
 
 ## Epic 1 – Intake Management
 
 ### Overview
-
 The Intake Management module is a dedicated section of the ADT Hub web application and serves as the starting point of the hiring lifecycle. It allows recruiters to capture structured hiring information through an online form and automatically generates a Job Requisition and a draft Job Description upon approval. Data entered here is stored centrally and connects to the Employee Management module for skills data.
 
 ### Business Objectives
-
 - Reduce time to create and approve job requisitions
 - Improve quality and consistency of job descriptions
 - Create a single source of truth for hiring requirements
 - Enable scalable hiring processes as the organisation grows
 
 ### Scope
-
 **In Scope**
 - Intake form creation and management
 - Structured data capture (budget, location, skills, role level, employment type, business context)
@@ -74,7 +84,6 @@ The Intake Management module is a dedicated section of the ADT Hub web applicati
 - Status tracking: Draft → Submitted → Approved → Converted
 
 ### Key Features
-
 | Feature | Description |
 |---|---|
 | Configurable Intake Form | Form fields can be tailored by Admin to reflect organisation needs |
@@ -87,7 +96,6 @@ The Intake Management module is a dedicated section of the ADT Hub web applicati
 | Downstream Integration | Seamless handoff to the Job Requisition module upon approval |
 
 ### Skill Tagging – Behaviour
-
 ```mermaid
 flowchart TD
     A([Recruiter Types a Skill]) --> B{Skill Exists in Library?}
@@ -105,7 +113,6 @@ flowchart TD
 ```
 
 ### AI Intake Summary – Flow
-
 ```mermaid
 flowchart TD
     A([Intake Form Completed]) --> B[AI Generates Summary in JD Context]
@@ -121,7 +128,6 @@ flowchart TD
 ```
 
 ### User Flow
-
 ```mermaid
 flowchart TD
     A([Recruiter Initiates Intake]) --> B[Fill Structured Intake Form]
@@ -143,7 +149,6 @@ flowchart TD
 ```
 
 ### Status Lifecycle
-
 ```mermaid
 stateDiagram-v2
     [*] --> Draft : Recruiter creates intake
@@ -155,7 +160,6 @@ stateDiagram-v2
 ```
 
 ### Acceptance Criteria
-
 - Recruiters can create and submit a complete intake form
 - Mandatory fields are validated before submission
 - Skills can be typed and matched against the existing label library; new labels can be created and are immediately available for reuse
@@ -166,6 +170,26 @@ stateDiagram-v2
 - AI-generated intake summary is saved to the intake record
 - Summary can be emailed to the hiring manager directly from the intake
 - All intake records include a full audit trail and version history
+
+---
+
+## Epic 2 – ATS / Candidate Management
+
+### Overview
+Automates candidate intake and tracking. It focuses on reducing manual data entry via intelligent resume parsing and providing a central hub for candidate evaluation.
+
+### Key Features
+| Feature | Description |
+|---|---|
+| AI Resume Parsing | Automatically extract Name, Email, Phone, and LinkedIn URLs from uploaded CVs (PDF/Text) |
+| Candidate Kanban | Drag-and-drop interface for moving candidates through hiring stages |
+| Advanced Filtering | Filter candidates by skills, proficiency, and application date |
+| Interview Feedback | Structured feedback tabs for interviewers to log ratings and comments |
+| Interview Activity Timeline | Real-time log of all candidate-related actions and communications |
+
+### Logic Contracts (from ADTHUB)
+- **Name Extraction:** Multi-strategy fallback (Line 1-5, Title Case check, ALL CAPS normalisation, Email local-part derivation).
+- **Phone Extraction:** Supports international formats, 10-digit US, and parentheses while excluding years (e.g., "2024").
 
 ---
 
@@ -590,6 +614,41 @@ mindmap
 - Reduction in external hiring for roles fillable internally
 - Increase in certification adoption
 - Manager satisfaction with skills visibility
+
+---
+
+## Epic 6 – Timesheets & Productivity
+
+### Overview
+A streamlined module for employees to log working hours against specific projects, ensuring accurate project costing and billable hour tracking.
+
+### Key Features
+| Feature | Description |
+|---|---|
+| Weekly Timesheet Entry | Monday-to-Sunday grid views with project selection |
+| Billable Tracking | Default-on billable toggle for each time entry |
+| CSV Export | Finance-ready double-quoted CSV generation including Date, Project, Hours, Notes, and Status |
+| Validation Rules | Prevents submission of weekend entries or entries with missing project/hours |
+| RBAC Controls | Admins can edit/delete any record; Employees limited to their own Draft/Rejected records |
+
+### Logic Contracts (from ADTHUB)
+- **Current Week Calculation:** Sunday-correction logic (Sunday belongs to the ending week).
+- **CSV Format:** 6-column structure: `Date, Project, Hours, Notes, Status, Employee`.
+
+---
+
+## Epic 7 – System Audit Logging
+
+### Overview
+A foundational system service that records every Create, Update, and Delete action across the platform for compliance and integrity.
+
+### Key Features
+| Feature | Description |
+|---|---|
+| Invariant Logging | Every asset or employee change triggers an automatic `audit_logs` entry |
+| Diff Capture | Stores `old_value` and `new_value` as JSON strings to track specific field changes |
+| User Attribution | Every log entry is permanently linked to the `user_id` of the performer |
+| Immutable History | Audit logs are read-only and cannot be modified or deleted by any user level |
 
 ---
 
