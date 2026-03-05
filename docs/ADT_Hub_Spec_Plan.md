@@ -2,7 +2,7 @@
 
 **Version:** 1.0 – Initial Draft  
 **Date:** March 2026  
-**Modules:** Intake · ATS · Onboarding · Assets · Employees · Timesheets
+**Modules:** Intake · ATS · Onboarding · Assets · Employees · Timesheets · Productivity
 
 ---
 
@@ -21,7 +21,8 @@ graph TD
     Nav --> E3[Onboarding Management]
     Nav --> E4[Asset Management]
     Nav --> E5[Employee Management]
-    Nav --> E6[Timesheets & Productivity]
+    Nav --> E6[Timesheets]
+    Nav --> E7[Productivity Management]
 
     E1 <-->|Skills labels| E5
     E1 -->|Approved Requisition| E2
@@ -30,6 +31,8 @@ graph TD
     E3 <-->|New joiner data| E5
     E4 <-->|Employee directory for assignment| E5
     E6 <-->|Employee work logs| E5
+    E7 -->|Project & Cost definitions| E6
+    E7 <-->|Employee economics| E5
 
     DB[(Central Database)] --- E1
     DB --- E2
@@ -37,6 +40,7 @@ graph TD
     DB --- E4
     DB --- E5
     DB --- E6
+    DB --- E7
 
     style Nav fill:#1F4E79,color:#fff,stroke:none
     style DB fill:#2E75B6,color:#fff,stroke:none
@@ -53,7 +57,8 @@ Each module also supports connections to external services where relevant — su
 | Onboarding Management | Orchestrate cross-team onboarding tasks for new joiners from offer acceptance to Day-1 | Recruiters, HR, IT, Admin, Hiring Managers |
 | Asset Management | Register, assign, and track company assets throughout their full lifecycle | Admins, IT, HR |
 | Employee Management | Central system of record for employee data, used for assignments and workflows across all modules | HR, Admins |
-| Timesheets & Productivity | Track employee work hours against projects with billable/non-billable logic | Employees, Managers, Finance |
+| Timesheets | Track employee work hours against projects with billable/non-billable logic | Employees, Managers, Finance |
+| Productivity Management | Centralized control of project P&L, employee cost structures, and margins | Admins |
 
 ---
 
@@ -552,7 +557,35 @@ flowchart TD
     F --> G
 
     style A fill:#1F4E79,color:#fff,stroke:none
-    style G fill:#1F4E79,color:#fff,stroke:none
+    style I fill:#1F4E79,color:#fff,stroke:none
+    style G fill:#2E75B6,color:#fff,stroke:none
+    style H fill:#2E75B6,color:#fff,stroke:none
+```
+
+### AI Capabilities Map
+
+```mermaid
+mindmap
+  root((AI Skill Intelligence))
+    Normalisation
+      Deduplicate similar skills
+      Cluster into domains
+    Search
+      Natural language queries
+      Relevance ranking
+    Talent Discovery
+      Adjacent skills matching
+      Internal candidate suggestions
+    Gap Analysis
+      Org skills vs project needs
+      Highlight weak areas
+    Certification Intelligence
+      Auto-tag to skills
+      Expiry detection
+      Recommend next certs
+    Personalised Recommendations
+      Role-based suggestions
+      Career path alignment
 ```
 
 ### Key Features
@@ -584,7 +617,7 @@ flowchart TD
 
 ---
 
-## Epic 6 – Timesheets & Productivity
+## Epic 6 – Timesheets
 
 ### Overview
 A streamlined module for employees to log working hours against specific projects, ensuring accurate project costing and billable hour tracking.
@@ -601,6 +634,91 @@ A streamlined module for employees to log working hours against specific project
 ### Logic Contracts (from ADTHUB)
 - **Current Week Calculation:** Sunday-correction logic (Sunday belongs to the ending week).
 - **CSV Format:** 6-column structure: `Date, Project, Hours, Notes, Status, Employee`.
+
+---
+
+## Epic 7 – Productivity Management
+
+### Overview
+Build a Productivity Management module within ADT Hub that provides admins with centralized control and visibility into projects, employee cost structures, and project-level P&L by integrating project definitions, employee economics, and time-based inputs from the Timesheets module. This module serves as an admin-only financial and operational control layer.
+
+### Business Objectives
+- Provide real-time visibility into project profitability
+- Enable data-driven staffing and pricing decisions
+- Centralize project and employee commercial data
+- Reduce revenue leakage and margin erosion
+- Support forecasting and financial planning
+
+### Access Control
+- **Admin-only module**: No access for employees or managers outside admin roles.
+
+### Module Structure & Sub-Pages
+
+#### 1. Projects
+Allows admins to define and manage project/work order master data.
+- **Fields**: Project Name (Work Order Name / Number), Client, Duration (Start Date – End Date), Project Manager, Sales Manager, Discount.
+- **Capabilities**: Create and manage projects; Map employees to projects (via Project P&L); Track project lifecycle status (Planned, Active, Closed).
+
+#### 2. Employees (Commercial View)
+Maintains employee-level commercial and cost data for financial calculations.
+- **Fields**: Employee, Location, Cost (Annual), Margin %, Rate (Local Currency), Base Rate (USD), Rate with Margin (USD), Status (Billable, Non-billable, On Bench, Exited).
+- **Capabilities**: Maintain cost and rate history; Support multi-currency conversion; Use employee data for project margin calculations.
+
+#### 3. Project P&L
+Provides a consolidated, time-aware financial view of project profitability.
+- **Fields**: Project, Client, Employee, Role, Bill Rate (USD), Base Rate (USD), Discount %, Project Margin %, Projected Revenue, Projected Earnings (Before Tax), Status, Effective From, End Date.
+- **Capabilities**: Calculate projected revenue based on billable time; Apply discounts and margins; Track employee-level and project-level P&L; Support historical and active P&L records.
+
+### Timesheets Integration (Dependency)
+- Actual time spent is sourced from the **Timesheets** module.
+- **Projected Revenue** = Bill Rate × Approved Billable Hours.
+- Earnings calculations are updated as timesheet data changes.
+- Supports period-based (weekly/monthly) roll-ups.
+
+### High-Level User Flow
+```mermaid
+flowchart TD
+    A([Admin Creates Project]) --> B[Admin Configures Employee Commercial Data]
+    B --> C[Admin Assigns Employees to Project P&L]
+    C --> D[Employees Log Time in Timesheets Module]
+    D --> E[Approved Timesheet Data flows into Project P&L]
+    E --> F[System Calculates Revenue, Margin, and Earnings]
+    F --> G([Admin Monitors Project Productivity & Profitability])
+
+    style A fill:#1F4E79,color:#fff,stroke:none
+    style G fill:#1F4E79,color:#fff,stroke:none
+```
+
+### Key Calculations
+- **Projected Revenue** = Bill Rate × Billable Hours (from Timesheets)
+- **Base Cost** = Base Rate × Billable Hours
+- **Project Margin %** = (Revenue – Cost) / Revenue
+- **Projected Earnings** = Revenue – Cost – Discount
+
+### Acceptance Criteria
+- Admins can create and manage projects with required fields.
+- Admins can maintain employee cost and rate data.
+- Project P&L can be configured per employee and role.
+- Timesheet-approved hours are reflected in Project P&L.
+- Revenue and margin calculations are accurate and auditable.
+- Access is restricted to admin users only.
+
+### Audit & Compliance
+- Historical rate and margin changes are retained.
+- Effective date tracking for P&L records.
+- All financial edits are logged with user and timestamp.
+
+### Dependencies
+- **Timesheets module**: Approved hours required.
+- **Employee master data**: Core records for commercial mapping.
+- **Currency conversion service**: For multi-currency support.
+- **RBAC**: Strict admin-only access.
+
+### Success Metrics
+- Accuracy of project margin reporting.
+- Reduction in manual P&L calculations.
+- Time taken to identify low-margin projects.
+- Leadership adoption of the module.
 
 ---
 
@@ -640,7 +758,8 @@ graph LR
 | Asset Management | Employee Management | Employee directory is used to search and assign assets to people |
 | Employee Management | Notification Service | System-wide alerts (not specific to skills/certs) |
 | Employee Management | AI Services | (Future) Employee data patterns for org insights |
-| Intake | AI Services | AI JD generation and intake summary use intake form data |
+| Productivity Management | Timesheets | Actual approved hours are sourced linearly for P&L and revenue calculations |
+| Productivity Management | Employee Management | Employee commercial/cost data is linked to employee master records |
 | All Modules | Role & Access Management | User roles and permissions are enforced across the entire application |
 
 ---
@@ -654,7 +773,8 @@ graph LR
 | IT / Infrastructure | Onboarding, Asset Management |
 | Admin & Facilities | Onboarding, Asset Management |
 | Hiring Managers | Intake, Onboarding, Employee Management |
-| Finance / Compliance | Intake, Onboarding |
+| Finance / Compliance | Intake, Onboarding, Productivity Management |
 | Talent Management | Employee Management |
-| Employees | Employee Management |
-| Leadership | Asset Management, Employee Management |
+| Employees | Employee Management, Timesheets |
+| Leadership | Asset Management, Employee Management, Productivity Management |
+| Sales / Project Management | Productivity Management |
