@@ -1,0 +1,197 @@
+name: Deploy to Test
+
+# Manual trigger only — per CI/CD standard (R5), test requires deliberate promotion.
+# Configure the "test" GitHub Environment with a required reviewer to enforce the approval gate.
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy (git SHA). Defaults to latest commit on main."
+        required: false
+        default: ""
+      deploy_frontend:
+        description: "Deploy Frontend to S3 + CloudFront"
+        required: true
+        type: boolean
+        default: true
+      run_integration_tests:
+        description: "Run Integration Tests"
+        required: true
+        type: boolean
+        default: true
+      deploy_backend:
+        description: "Deploy Backend to ECR + ECS"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  S3_BUCKET: adthub-test-s3-frontend
+  SERVICE_NAME: adthub-test-api
+  ECR_REGISTRY: ${{ vars.ECR_REGISTRY_URL }}
+
+jobs:
+  integration-tests:
+    name: Integration Tests (Isolated)
+    if: inputs.run_integration_tests == true
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (Test OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_TEST_DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Fetch CI secrets from SSM
+        id: ssm
+        run: |
+          CI_DB_PASS=$(aws ssm get-parameter --name "/adthub/test/ci/postgres-password" --with-decryption --query "Parameter.Value" --output text)
+          CI_JWT_SEC=$(aws ssm get-parameter --name "/adthub/test/ci/jwt-secret" --with-decryption --query "Parameter.Value" --output text)
+          echo "::add-mask::$CI_DB_PASS"
+          echo "::add-mask::$CI_JWT_SEC"
+          echo "db_pass=$CI_DB_PASS" >> "$GITHUB_OUTPUT"
+          echo "jwt_secret=$CI_JWT_SEC" >> "$GITHUB_OUTPUT"
+
+      - name: Start isolated Postgres
+        run: |
+          docker run --name postgres \
+            -e POSTGRES_DB=adthub_test \
+            -e POSTGRES_USER=adthub_admin \
+            -e POSTGRES_PASSWORD=${{ steps.ssm.outputs.db_pass }} \
+            -p 5432:5432 \
+            -d postgres:16
+          until docker exec postgres pg_isready; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install poetry && cd backend && poetry install --no-root
+
+      - name: Run migrations and integration tests
+        run: |
+          cd backend
+          poetry run alembic upgrade head
+          poetry run pytest tests/integration -v
+        env:
+          DATABASE_URL: postgresql://adthub_admin:${{ steps.ssm.outputs.db_pass }}@localhost:5432/adthub_test
+          JWT_SECRET: ${{ steps.ssm.outputs.jwt_secret }}
+
+  deploy-frontend-test:
+    name: Frontend → S3 + CloudFront (Test)
+    if: inputs.deploy_frontend == true
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend (Test)
+        run: npm run build -- --mode test
+        env:
+          VITE_API_BASE_URL: https://api.adthub-test.atdawntech.com
+          VITE_ENVIRONMENT: test
+
+      - name: Configure AWS credentials (Test OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_TEST_DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload dist/ to S3
+        run: |
+          aws s3 sync dist/ s3://${{ env.S3_BUCKET }}/ \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "index.html"
+          aws s3 cp dist/index.html s3://${{ env.S3_BUCKET }}/index.html \
+            --cache-control "no-cache,no-store,must-revalidate"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID_TEST }} \
+            --paths "/*"
+
+  deploy-backend-test:
+    name: Backend → ECR + ECS (Test)
+    if: inputs.deploy_backend == true
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (Test OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_TEST_DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Resolve image tag
+        id: tag
+        run: echo "value=${{ inputs.image_tag || github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ steps.tag.outputs.value }}
+            ${{ env.ECR_REGISTRY }}/${{ env.SERVICE_NAME }}:latest
+
+      - name: Deploy to ECS Test
+        run: |
+          aws ecs update-service \
+            --cluster adthub-test-ecs-cluster \
+            --service adthub-test-ecs-api \
+            --force-new-deployment
+
+      - name: Wait for deployment
+        run: |
+          aws ecs wait services-stable \
+            --cluster adthub-test-ecs-cluster \
+            --services adthub-test-ecs-api
+
+  smoke-test-test:
+    name: Smoke Test (Test)
+    if: inputs.deploy_backend == true
+    runs-on: ubuntu-latest
+    needs: deploy-backend-test
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test deps
+        run: pip install requests pytest
+      - name: Run smoke tests
+        run: pytest backend/tests/smoke/test_env.py -v --noconftest
+        env:
+          SMOKE_TEST_BASE_URL: https://api.adthub-test.atdawntech.com
