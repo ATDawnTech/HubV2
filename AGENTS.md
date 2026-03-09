@@ -4,6 +4,10 @@ description: At Dawn engineering standards router — consulted automatically by
 
 # At Dawn Engineering Standards Router
 
+**FOR AI AGENTS:** Read `.standards/AGENTS.md` first — it contains shared AWS context,
+all SSM parameter paths, ECS naming conventions, and DB auth patterns that apply across
+all At Dawn products. Then consult the task-specific standards below.
+
 **FOR AI AGENTS:** Before writing any code, identify your task type below and read the listed standards.
 
 Standards are available at `.standards/` in this repo root (a symlink to the shared `at-dawn-standards` repository).
