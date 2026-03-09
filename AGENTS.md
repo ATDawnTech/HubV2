@@ -71,7 +71,45 @@ Always read `PRINCIPLES.md` and `task-completion-checklist.md` — they apply to
 
 ## Repository-Specific Rules
 
-*(Engineers: Add any repository-specific constraints or architectural rules here.)*
+### Product identity
+- Product name: `adthub`
+- GitHub repo: `ATDawnTech/HubV2`
+- Backend port: `3001`
+
+### Infrastructure — cross-repo prerequisite order
+HubV2 Terraform cannot be applied until two other repos are applied first:
+1. **`at-dawn-infra`** must allocate adthub private subnets (indices 40–41) and publish
+   `/shared/{env}/vpc/adthub-private-subnet-ids` to SSM — without this, the `data` lookups fail
+2. **`at-dawn-shared-db`** must create the `adthub_admin` user + `adthub_{env}` database and publish
+   `/shared/{env}/rds/adthub/database-url` to SSM — without this, ECS tasks cannot connect to the DB
+
+Attempting `terraform apply` in this repo before these two are applied will fail. Always check that
+the SSM parameters exist before applying.
+
+### Infrastructure — migration state (prod)
+`adthub.atdawntech.com` currently serves the **legacy ADTHUB app** (S3 + CloudFront + Supabase).
+The HubV2 prod infrastructure is declared in `infrastructure/environments/prod/` but the DNS cutover
+has **not yet happened**. Do not touch Cloudflare DNS for `adthub.atdawntech.com` or
+`api.adthub.atdawntech.com` without explicit instruction. See `docs/INFRASTRUCTURE.md` for the
+full migration and cutover plan.
+
+### SSM parameter paths (adthub)
+| Path | Source |
+|---|---|
+| `/shared/{env}/vpc/adthub-private-subnet-ids` | `at-dawn-infra` (must exist before apply) |
+| `/shared/{env}/rds/adthub/database-url` | `at-dawn-shared-db` (must exist before apply) |
+| `/adthub/{env}/api/jwt-secret` | This repo's Terraform (auto-generated) |
+| `/adthub/{env}/api/saml-idp-sso-url` | Manual — see `.standards/.agent/skills/aws-sso-saml/SKILL.md` |
+| `/adthub/{env}/api/saml-idp-cert` | Manual — see `.standards/.agent/skills/aws-sso-saml/SKILL.md` |
+| `/adthub/test/ci/postgres-password` | This repo's Terraform (test env only) |
+| `/adthub/test/ci/jwt-secret` | This repo's Terraform (test env only) |
+
+### SAML entity IDs
+`adthub-dev`, `adthub-test`, `adthub-prod`
+
+### Full infrastructure reference
+See `docs/INFRASTRUCTURE.md` for the complete setup checklist, subnet allocation, migration strategy,
+and subdomain reference.
 
 ---
 
