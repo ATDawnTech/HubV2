@@ -197,7 +197,7 @@ flowchart TD
     - **Action States**: "Actions" menu (except Bulk Import) and "Export" button are greyed out until at least one user is selected.
     - **Row-Level Admin**: When Admin Mode is active, an **Archive** button (Red) appears in the row-level action menu alongside Audit (Red). These are hidden when toggled OFF.
     - **Smart Export**: Stand-alone button next to Actions; exports selected users or all (if 0 or all selected) to PDF/CSV.
-    - **Action Confirmations**: Any administrative action (Single/Bulk Archive, Project Assignment) triggers a **confirmation popup** ("Are you sure you want to [Action] [N] users?") to prevent accidental errors.
+    - **Action Confirmations**: Any administrative action (Single/Bulk Archive, Project Assignment, **Password Reset**) triggers a **confirmation popup** ("Are you sure you want to [Action] [N] users?") to prevent accidental errors.
     - **Bulk Import Behavior**: Unified under the Actions menu (always enabled). Upon successful import, the system **disregards current search/filters** and updates the table to display only the newly imported records for immediate verification.
     - **Bulk Import Mapping**: Includes a smart-matching step to link CSV/Excel headers to internal fields.
     - **Permanent Deletion**: Controlled via a specific override within the Admin Actions set, requiring re-authentication and audit logging.
@@ -209,6 +209,10 @@ flowchart TD
     - **Historical Integrity**: Archived records remain searchable (when filtered) to maintain audit trails for past project assignments and asset custodianship.
 - **Project History Management**:
     - **Editable History**: Administrators can manually add, edit, or remove entries in the "Project History" section within the Employee Profile (1.4) to correct past assignment records.
+    - **Admin Mode Account Actions**: When in Admin Mode, the Profile "Action Menu" reveals **"Reset Password"**, **"Detach 2FA Linkage"**, and **"Lock Account"** tools.
+- **2FA Status Indicator (Feature 1.4)**:
+    - **Visibility**: Every employee profile shows a "Security Status" badge (e.g., **2FA: Enabled** in Green or **2FA: Disabled** in Grey).
+    - **Read-Only**: This is a system-generated indicator and cannot be toggled directly by the user on the profile screen (must be reset via Action Menu).
 - **Document Management (Attachments)**:
     - **Storage**: Files are stored in a secure cloud bucket (S3/Azure Blob) with links preserved in the relational database.
     - **Actions**: Users with "Edit" permissions can upload new files, rename labels, or remove attachments. All users with "View" permissions can download or preview compatible formats (PDF, JPG).
@@ -266,27 +270,105 @@ flowchart TD
 
 ---
 
-## Epic 2 – System Configuration
+## Epic 2 – Admin Systems Settings
 
 ### Overview
-The System Configuration module is a centralized admin-only control panel for managing the global metadata, pickup lists, and configuration settings used across all ADT Hub modules. This ensures that dropdowns for Departments, Locations, Role Levels, and Skill Libraries are consistent and easy to update from a single location.
+The Admin Systems Settings module is a master control center for ADT Hub. It is organized into specialized sub-modules to manage global metadata, security, and system-wide automation. This ensures that every module in the Hub operates from a single, consistent source of configuration.
 
-### Key Features (Priority-Based)
+### Sub-Modules & Features
 
-| ID | Feature | Priority | Data Captured | Data Displayed |
+| ID | Sub-Module | Feature | Priority | Data / Controls |
 |---|---|---|---|---|
-| **2.1** | **Global Metadata Pickups** | High | Dept Name, Location Name, Role Levels, Hire Types | Searchable management grids for each list |
-| **2.2** | **Skill Library Management** | Medium | Skill Category, Skill Label, Proficiency Tiers | Standardized skill library available to Intake and Employee modules |
-| **2.3** | **Project Definitions (Master)** | High | Project Name, Client, Category | Master list of projects referenced by Employees and Timesheets |
-| **2.4** | **Role & Permission Management** | High | Role Label, Feature Permissions, Visibility Toggles | **Master Permission Grid**: The single source of truth for tailoring what each role can **do** (Actions: Admin Mode, Edit, Archive) and what they can **see** (Visibility: PII, Contact Info, Audit Logs) |
-| **2.5** | **System Audit Settings** | Low | Logging retention period, Alert triggers | System health and security settings |
+| **2.1** | **Dropdown Settings** | **Area-Specific Sub-Sub-Modules** | High | **Hierarchical Management**: Nested container for area-specific lists. <br>• **Employees**: Dept, Location, Role Levels, Hire Types. <br>• **Intake**: Requisition Statuses, Reason for Hire, Hiring Priorities. <br>• **Onboarding**: Task Categories, Provisioning Stages. <br>• **Assets**: Category, Manufacturer, Status, Condition. <br>• **Audit & Logging**: Event Severity, Log Categories. |
+| **2.2** | **Skill Management** | **Skill Repository** | Medium | **Automated Library**: Dynamic repository of all skills. <br>• **Admin Tools**: Bulk select to delete; usage tracking (Intake counts). <br>• **Performance**: Paginated grid; fuzzy search; sort by **Date Added**. <br>• **Auto-Host**: Staged skills from Intake persist on save. |
+| **2.3** | **Role & Permission Management** | **Additive Role System** | High | **Role Repository**: Centralized creation and management of all system roles. <br>• **Permission Mapping**: Define action and visibility rights. <br>• **Assignment Hierarchy**: Define which roles can assign other roles (e.g., HR can assign 'Staff' but not 'Admin'). |
+| **2.4** | **Notification Module** | **Communication Hub** | Medium | **System Master Switches**: Global and module-specific toggles for Email/In-App alerts. <br>• **Threshold Management**: Centralized control for task deadlines and escalation timing. |
+| **2.5** | **Audit Settings** | **Governance & Compliance** | Low | **Retention Rules**: Global log storage durations. <br>• **Log Integrity**: Read-only enforcement; Export for external audits. |
+| **2.6** | **System Security** | **Advanced Protection** | High | **Approval Gates**: "Block & Approve" for high-risk actions. <br>• **Snapshots**: Immutable 7-day backups with Selective Restore. |
 
-### Logic Contracts (System Access)
-- **Granular RBAC**: The system distinguishes between "Permission to Act" (functional tools) and "Permission to View" (data privacy). 
-- **PII Masking**: Fields like Home Address and Personal Email are masked by default; the "Clear Text PII" permission in the Role Grid is the only way to reveal them.
-- **Dynamic Propagation**: Permission changes in Epic 2 apply immediately to all active sessions across all modules.
-- **Global Consistency**: Any change to a label in Epic 2 (e.g., renaming a Department) propagates instantly to all modules that reference that specific ID.
-- **Deduplication**: System prevents duplicate entries in metadata lists to maintain clean reporting.
+### Logic Contracts (System Administration)
+- **Three-Tier Hierarchy**: The UI reflects a **Module (Settings) > Sub-Module (Dropdowns) > Sub-Sub-Module (Area)** navigation pattern.
+- **Dropdown Authority (Feature 2.1)**: 
+    - **Sole Source of Truth**: These sub-sub-modules are the **only** locations where dropdown values for their respective areas (Employees, Intake, etc.) can be added, edited, or removed.
+    - **Consumer Enforcement**: Other modules (e.g., Epic 1 creation modal) are strictly prohibited from using hardcoded lists or locally-stored options; they must fetch data dynamically from these settings.
+    - **Global Rename Propagation**: Renaming an entry in any sub-sub-module dropdown list updates all records referencing that ID across the entire database instantly.
+- **Skill Management (Feature 2.2)**: 
+    - **Atomic Persistence**: New skills created on-the-fly in the Intake module (Epic 3) or Onboarding module (Epic 4) are **staged** locally during the session. They are only permanently added to the master database upon a successful "Save" of the parent record.
+    - **Discard Logic**: If an intake or onboarding record is canceled or discarded before saving, any "New" skill tags created within that session are automatically purged.
+    - **Smart Lookup & Mapping**: The system maintains a mapping layer for common abbreviations. If a user types "JS", the system proactively suggests "Javascript" as the primary tag while allowing the user to explicitly "Create New" if they have a distinct requirement.
+    - **Admin Bulk Actions**: Admins can bulk-select tags to delete or merge. To prevent data loss, the system displays a **Usage Count** (how many Intakes/Profiles use this tag) upon selection.
+    - **Search & Filtering**: The repository includes a fuzzy-search bar for finding specific tags and clickable headers to sort the library by 'Date Created' (Ascending/Descending).
+    - **Performance Optimization (Pagination)**: To ensure high performance with thousands of tags, the grid implements server-side pagination with a configurable limit (e.g., 50 per page).
+    - **Proficiency Removal**: Proficiency levels are explicitly out of scope for the global skill repository to maintain maximum simplicity.
+    - **Role-Based Access Control (Feature 2.3)**:
+    - **Sole Source of Authority**: All roles—including Employee types, Manager levels, and Admin tiers—must be created and configured **exclusively** within this sub-module.
+    - **Role-as-Entity System**: Roles are treated as standardized system objects with unique IDs and specific permission payloads.
+    - **Manager Role Attribution**: Admins can flag a role as a **"Manager Type."**
+        - **Departmental Linking**: Manager roles can be linked to a specific **Department** (e.g., "IT Manager" is linked to the "Information Technology" department).
+        - **Authoritative Scoping**: This link is used by other modules to identify the "Manager of Record" for departmental approvals or escalations.
+    - **Multi-Role Assignment**: A single user can be assigned **multiple roles** simultaneously.
+    - **Additive Permission Logic (OR Gate)**: Permissions are cumulative. If any assigned role grants a permission, the user has it.
+    - **Assignment Hierarchy & Permissions**:
+        - **Granting Rights**: The RBAC grid includes a section for "Role Assignment Permissions." This defines which specific roles (e.g., 'IT Support', 'Staff') a role (e.g., 'HR Manager') is allowed to assign to others.
+    - **Action Permission Handling (The "Verb" Grid)**:
+        - **Module Scoping (Examples)**:
+            - **Employees (Personnel)**: `can_create_employee`, `can_archive_employee`, `can_edit_project_history`, `can_manage_attachments`.
+            - **Asset Management**: `can_assign_asset`, `can_retire_asset`, `can_edit_asset_metadata`, `can_view_asset_valuation`.
+        - **Granular Toggle**: Each role is assigned specific "Verbs" via a grid of checkboxes.
+        - **Admin Mode Gating**: A critical "System Action" is the `can_access_admin_mode` toggle. If this is not checked for a role, the "Admin Mode" switch in Epic 1 remains hidden/disabled for that user.
+        - **Backend Enforcement**: Each API request checks the user's active role(s) for the specific action key. If the key is missing from all assigned roles, the request is rejected before data processing.
+    - **Visibility Toggle Handling (The "Noun" Grid)**:
+        - **PII Shielding**: Visibility is handled via "Data Scopes." Roles can be toggled to "Reveal PII," "Reveal Financials," or "Reveal Audit Trails." Without these, fields appear as masked (asterisks) or the entire column/section is hidden.
+- **Notification Central (Feature 2.4)**:
+    - **Hierarchy of Control**:
+        - **Global Kill-Switch**: A master toggle to disable all outgoing communications (Email/In-App).
+        - **Module & Role Toggles**: Admins assign triggers to **Roles (2.3)**.
+        - **Notification Channels**: For each trigger, the system allows selecting **"My Tasks" (In-App)**, **"Work Email"**, or **"Both"**.
+        - **Email Enforcement**: All external alerts are strictly routed to the user's **Work Email Address** as stored in their Employee Profile.
+    - **Notification Scoping (Anti-Fatigue)**:
+        - **Role-Wide Alerts**: Broad alerts (e.g., "New Intake Created") are sent to all users with the assigned Role.
+        - **Assignment-Specific Alerts**: For task-based modules (e.g., Offboarding tasks), notifications are **only** sent to the specific user assigned to that task, even if multiple users hold the same functional role.
+    - **Timing & Thresholds**:
+        - **Dynamic Deadlines**: Set standard task durations (e.g., 72hr Offboarding).
+        - **Departmental Escalation Triggers**: Escalation alerts are routed using the **Departmental Link** from Epic 2.3.
+            - **Scoped Routing**: If an IT-specific task misses a deadline, the escalation notification is sent **only** to the role(s) defined as the "Manager" of the "IT" department. This prevents managers in unrelated departments (e.g., HR) from receiving irrelevant alerts.
+    - **Role-Based Routing**: Notifications are mapped to **Roles**, ensuring "My Tasks" feeds and email alerts synchronize automatically with role changes.
+- **Audit & Governance (Feature 2.5)**:
+    - **Retention Policy**: Admins set the "Shelf Life" for system logs (e.g., 90 days, 1 year, or Infinite). 
+    - **Retention Change Grace Period**: 
+        - **Logic**: Any change to the retention policy that would result in log deletion triggers a mandatory **7-day Grace Period**.
+        - **Data Preservation**: Logs that exceed the *new* limit but were valid under the *old* limit (or are within 7 days of the new limit) are protected from the automated purge for exactly **168 hours (7 days)**.
+        - **Recovery Window**: This provides a "Safety Buffer" to revert the retention change if it was made in error or by a bad actor before any data is permanently erased.
+    - **Immutable Logs**: Once an audit event is recorded, it cannot be edited or deleted by any user account. Entries are only removed by the automated retention purge (after the grace period).
+    - **Export for Compliance**: Admins can generate signed PDF or CSV exports of audit trails specifically for external compliance reviews.
+- **System Security (Feature 2.6)**:
+    - **Daily Snapshot Rotation**:
+        - **Automatic Cycle**: The system generates a full database snapshot once every 24 hours.
+        - **3-Day Retention**: Standard snapshots are automatically deleted after **72 hours (3 days)** to optimize storage.
+    - **Security Triggers (Gated Actions)**:
+        - **Category 1: Nuclear Reset Triggers (Lockdown + Gate)**:
+            - **Triggers**: Attempted deletion of **all data** for primary modules (Employees, Intake, Onboarding, Assets, Projects, Audit Logs).
+            - **Lockdown Behavior**: Upon trigger, the **most recent daily snapshot** is immediately "Promoted" to a **7-Day Lockdown** status.
+            - **Immutable Lockdown**: Once promoted, the snapshot cannot be deleted or modified for 168 hours (7 days), even by System Admins.
+        - **Category 2: Critical Management Triggers (Gate Only)**:
+            - **Triggers**: 
+                - **Bulk Archiving**: >10 employees in a single transaction.
+                - **Velocity Purge**: 10 separate employee archiving actions within a 1-hour rolling window.
+                - **Structural Changes**: Deleting a System Role or Modifying Audit Retention.
+                - **Account Security**: Detaching User 2FA, Suspicious individual password resets.
+            - **Behavior**: System **blocks the action** and alerts System Admins for manual approval. Does not trigger a 7-day snapshot lockdown.
+    - **Sealed Storage**: All snapshots (Daily and Locked) are stored in a restricted volume; they cannot be moved, copied, downloaded, or exported to prevent external exploitation.
+    - **Surgical Restore Wizard**:
+        - **Restore Source**: Uses the 7-Day Locked Snapshot to revert the system.
+        - **Non-Destructive Merge**: The wizard allows Admins to "Roll Back" specific compromised records while **expressly preserving** all new data, projects, or employees created after the snapshot was taken.
+    - **Admin Oversight**: All Category 1 & 2 actions trigger a **Priority 1 Alert**. Changes are only committed upon explicit Admin approval in the Security Dashboard.
+    - **Account Infrastructure**:
+        - **Password Storage**: All passwords must be salted and hashed using industry-standard algorithms (e.g., Argon2 or BCrypt). The live database never stores cleartext passwords.
+        - **2FA Linkage**:
+            - **Provider Agnostic**: The system supports linkage to TOTP (Authenticator Apps) or SMS/Email-based 2FA.
+            - **Mandatory Gating**: Admins can enforce "Mandatory 2FA" for specific high-privilege roles (defined in 2.3).
+            - **Reset Logic**: 2FA resets follow the same "Approval Gate" as high-risk actions to prevent account takeovers via social engineering.
+- **Deduplication Logic**: System blocks duplicate entries in metadata and skill lists to prevent "Data Drift" (e.g., prevents having both "NYC" and "New York City" as locations).
 
 ---
 
@@ -327,7 +409,7 @@ The Intake Management module is a dedicated section of the ADT Hub web applicati
 | **3.7** | **Handoff to ATS** | High | Target Job Requisition settings | Link to generated Job Req, Handoff timestamp |
 | **3.8** | **Role-Based Access** | High | User permissions configuration | User-specific view/edit permissions |
 
-### Skill Tagging – Behaviour
+### Skill Tagging – Behaviour (Atomic Persistence)
 ```mermaid
 flowchart TD
     A([Recruiter Types a Skill]) --> B{Skill Exists in Library?}
@@ -335,13 +417,17 @@ flowchart TD
     C --> D[Recruiter Selects Label]
     D --> E([Tag Added to Intake])
     B -- No --> F[Option to Create New Skill Label]
-    F --> G[New Label Created & Added to Global Library]
+    F --> G[New Label Staged in Current Session]
     G --> E
-    E --> H[Label Searchable & Reusable on Future Intakes]
+    E --> H{Is Intake Saved / Approved?}
+    H -- Yes --> I[New Skills Persisted to Global Library (2.2)]
+    H -- No/Cancel --> J[New Skills Discarded]
+    I --> K[Label Searchable & Reusable on Future Intakes]
 
     style A fill:#1F4E79,color:#fff,stroke:none
     style E fill:#1F4E79,color:#fff,stroke:none
     style G fill:#2E75B6,color:#fff,stroke:none
+    style I fill:#2E75B6,color:#fff,stroke:none
 ```
 
 ### AI Intake Summary – Flow
