@@ -171,8 +171,8 @@ const Candidates = () => {
                     }}
                     className="flex items-center gap-2"
                   >
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                     <span>Mark as Complete</span>
-                    <CheckCircle2 className="h-4 w-4 ml-auto text-emerald-600" />
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
