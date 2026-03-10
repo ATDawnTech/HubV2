@@ -20,6 +20,7 @@ interface ConfirmDialogProps extends DialogProps {
   cancelText?: string;
   confirmButtonClassName?: string;
   cancelButtonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  className?: string;
 }
 
 export default function ConfirmDialog({
@@ -32,11 +33,12 @@ export default function ConfirmDialog({
   cancelText = 'Cancel',
   confirmButtonClassName,
   cancelButtonVariant = 'outline',
+  className,
   ...props
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} {...props}>
-      <DialogContent>
+      <DialogContent className={className || "sm:max-w-md"}>
         <DialogHeader>
           <DialogTitle className="mb-2">{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
