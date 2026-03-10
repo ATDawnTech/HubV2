@@ -43,6 +43,7 @@ export interface Candidate {
   }[];
   resume_url?: string;
   status?: string;
+  journey_id?: string;
 }
 
 const Candidates = () => {
@@ -237,6 +238,7 @@ const Candidates = () => {
         const mappedData = (candidatesData as any[]).map((c) => ({
           ...c,
           status: c.onboarding_journeys?.[0]?.status || 'not started',
+          journey_id: c.onboarding_journeys?.[0]?.id,
         }));
         setCandidates(mappedData);
       }
@@ -270,12 +272,11 @@ const Candidates = () => {
   };
 
   const handleCompleteOnboarding = async () => {
-    if (candidateToComplete && candidateToComplete.onboarding_journeys && candidateToComplete.onboarding_journeys.length > 0) {
-      const journeyId = candidateToComplete.onboarding_journeys[0].id;
+    if (candidateToComplete && candidateToComplete.journey_id) {
       const { error } = await supabase
         .from('onboarding_journeys')
         .update({ status: 'completed' })
-        .eq('id', journeyId);
+        .eq('id', candidateToComplete.journey_id);
 
       if (error) {
         toast({
@@ -290,6 +291,12 @@ const Candidates = () => {
         });
         loadData();
       }
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Journey ID not found for this candidate.',
+        variant: 'destructive',
+      });
     }
     setShowCompleteConfirm(false);
     setCandidateToComplete(null);
@@ -365,7 +372,6 @@ const Candidates = () => {
         open={isOpenConfirmDelete}
         onOpenChange={setIsOpenConfirmDelete}
       />
-
       <ConfirmDialog
         open={showCompleteConfirm}
         onOpenChange={setShowCompleteConfirm}
@@ -377,7 +383,6 @@ const Candidates = () => {
           setCandidateToComplete(null);
         }}
       />
-
       <NewEmployeeDialog
         refetch={loadData}
         open={isOpenNewEmployeeDialog}

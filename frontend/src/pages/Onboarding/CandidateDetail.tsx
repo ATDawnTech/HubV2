@@ -640,7 +640,7 @@ export default function CandidateDetail() {
         open={showCompleteConfirm}
         onOpenChange={setShowCompleteConfirm}
         title="Mark as Complete"
-        description="Are you sure you want to mark this onboarding journey as complete? Please make sure that all the tasks are completed."
+        description="Are you sure you want to mark this onboarding journey as complete? This will finalize the process for the candidate."
         onConfirm={async () => {
           await updateStatusMutation.mutateAsync('completed');
           setShowCompleteConfirm(false);
