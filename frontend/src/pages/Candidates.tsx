@@ -38,9 +38,11 @@ export interface Candidate {
     full_name: string | null;
   };
   onboarding_journeys?: {
+    id: string;
     status: string;
-  };
+  }[];
   resume_url?: string;
+  status?: string;
 }
 
 const Candidates = () => {
@@ -56,6 +58,8 @@ const Candidates = () => {
   const [isOpenNewEmployeeDialog, setIsOpenNewEmployeeDialog] = useState(false);
   const [isStartOnboardingOpen, setIsStartOnboardingOpen] = useState(false);
   const [candidateToStart, setCandidateToStart] = useState<Candidate | null>(null);
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
+  const [candidateToComplete, setCandidateToComplete] = useState<Candidate | null>(null);
 
   const columns = [
     {
@@ -101,7 +105,7 @@ const Candidates = () => {
       title: 'Status',
       key: 'status',
       render: (_, record: Candidate) => {
-        const rawStatus = (record.onboarding_journeys?.status || 'not started').toLowerCase();
+        const rawStatus = (record.status || 'not started').toLowerCase();
         const displayStatus = rawStatus.replace('_', ' ');
         return (
           <span
@@ -153,6 +157,17 @@ const Candidates = () => {
                     Start Onboarding
                   </DropdownMenuItem>
                 )}
+                {status === 'in_progress' && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCandidateToComplete(record);
+                      setShowCompleteConfirm(true);
+                    }}
+                  >
+                    Mark as Complete
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
@@ -202,7 +217,7 @@ const Candidates = () => {
         .select(
           `
           *,
-          onboarding_journeys(status),
+          onboarding_journeys(id, status),
           hiring_manager_profile:profiles!candidates_hiring_manager_fkey(
             full_name
           ),
@@ -252,6 +267,32 @@ const Candidates = () => {
         loadData();
       }
     }
+  };
+
+  const handleCompleteOnboarding = async () => {
+    if (candidateToComplete && candidateToComplete.onboarding_journeys && candidateToComplete.onboarding_journeys.length > 0) {
+      const journeyId = candidateToComplete.onboarding_journeys[0].id;
+      const { error } = await supabase
+        .from('onboarding_journeys')
+        .update({ status: 'completed' })
+        .eq('id', journeyId);
+
+      if (error) {
+        toast({
+          title: 'Error',
+          description: `Failed to update status: ${error.message}`,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Status Updated',
+          description: 'Candidate onboarding marked as complete.',
+        });
+        loadData();
+      }
+    }
+    setShowCompleteConfirm(false);
+    setCandidateToComplete(null);
   };
 
   return (
@@ -324,6 +365,19 @@ const Candidates = () => {
         open={isOpenConfirmDelete}
         onOpenChange={setIsOpenConfirmDelete}
       />
+
+      <ConfirmDialog
+        open={showCompleteConfirm}
+        onOpenChange={setShowCompleteConfirm}
+        title="Mark as Complete"
+        description="Are you sure you want to mark this onboarding journey as complete? Please make sure that all the tasks are completed."
+        onConfirm={handleCompleteOnboarding}
+        onCancel={() => {
+          setShowCompleteConfirm(false);
+          setCandidateToComplete(null);
+        }}
+      />
+
       <NewEmployeeDialog
         refetch={loadData}
         open={isOpenNewEmployeeDialog}
