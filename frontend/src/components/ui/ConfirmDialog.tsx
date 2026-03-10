@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { DialogProps } from '@radix-ui/react-dialog';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface ConfirmDialogProps extends DialogProps {
   title: string;
@@ -38,14 +39,20 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} {...props}>
-      <DialogContent className={className || "sm:max-w-md"}>
-        <DialogHeader>
-          <DialogTitle className="mb-2">{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+      <DialogContent className={cn("p-0 overflow-hidden", className || "sm:max-w-md")}>
+        <DialogHeader className="pt-6 px-6 pb-4 border-b border-slate-100">
+          <DialogTitle className="text-lg font-semibold text-slate-900">{title}</DialogTitle>
         </DialogHeader>
-        <DialogFooter className="mt-8 sm:justify-end">
+
+        <div className="px-6 py-5">
+          <DialogDescription className="text-[15px] text-slate-500 leading-relaxed font-normal">
+            {description}
+          </DialogDescription>
+        </div>
+
+        <DialogFooter className="px-6 py-4 bg-[#fcfcfc] border-t border-slate-100 sm:justify-end gap-2">
           <DialogClose asChild>
-            <Button variant={cancelButtonVariant} onClick={onCancel}>
+            <Button variant={cancelButtonVariant} onClick={onCancel} className="text-slate-600 font-medium hover:bg-slate-200/50">
               {cancelText}
             </Button>
           </DialogClose>
