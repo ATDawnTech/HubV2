@@ -16,6 +16,10 @@ interface ConfirmDialogProps extends DialogProps {
   onConfirm: () => void;
   onCancel: () => void;
   open: boolean;
+  confirmText?: string;
+  cancelText?: string;
+  confirmButtonClassName?: string;
+  cancelButtonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 }
 
 export default function ConfirmDialog({
@@ -24,6 +28,10 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
   open,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  confirmButtonClassName,
+  cancelButtonVariant = 'outline',
   ...props
 }: ConfirmDialogProps) {
   return (
@@ -35,11 +43,13 @@ export default function ConfirmDialog({
         </DialogHeader>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" onClick={onCancel}>
-              Cancel
+            <Button variant={cancelButtonVariant} onClick={onCancel}>
+              {cancelText}
             </Button>
           </DialogClose>
-          <Button onClick={onConfirm}>Confirm</Button>
+          <Button onClick={onConfirm} className={confirmButtonClassName}>
+            {confirmText}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

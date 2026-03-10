@@ -393,13 +393,16 @@ const Candidates = () => {
       <ConfirmDialog
         open={showCompleteConfirm}
         onOpenChange={setShowCompleteConfirm}
-        title="Mark as Complete"
-        description="Are you sure you want to mark this onboarding journey as complete? Please make sure that all the tasks are completed."
+        title="Confirm Onboarding Completion"
+        description="Are you sure you want to mark this onboarding as complete? Please verify that all required tasks in the onboarding checklist have been finalized by the respective owner groups."
         onConfirm={handleCompleteOnboarding}
         onCancel={() => {
           setShowCompleteConfirm(false);
           setCandidateToComplete(null);
         }}
+        confirmText="Mark as Complete"
+        confirmButtonClassName="bg-[#f97316] hover:bg-[#ea580c] text-white"
+        cancelButtonVariant="ghost"
       />
       <NewEmployeeDialog
         refetch={loadData}

@@ -639,13 +639,16 @@ export default function CandidateDetail() {
       <ConfirmDialog
         open={showCompleteConfirm}
         onOpenChange={setShowCompleteConfirm}
-        title="Mark as Complete"
-        description="Are you sure you want to mark this onboarding journey as complete? This will finalize the process for the candidate."
+        title="Confirm Onboarding Completion"
+        description="Are you sure you want to mark this onboarding as complete? Please verify that all required tasks in the onboarding checklist have been finalized by the respective owner groups."
         onConfirm={async () => {
           await updateStatusMutation.mutateAsync('completed');
           setShowCompleteConfirm(false);
         }}
         onCancel={() => setShowCompleteConfirm(false)}
+        confirmText="Mark as Complete"
+        confirmButtonClassName="bg-[#f97316] hover:bg-[#ea580c] text-white"
+        cancelButtonVariant="ghost"
       />
 
       <EditTaskScheduleDialog
