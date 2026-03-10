@@ -14,6 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { cn } from '@/lib/utils';
+import { CheckCircle2 } from 'lucide-react';
 
 export interface Candidate {
   id: string;
@@ -168,8 +169,10 @@ const Candidates = () => {
                       setCandidateToComplete(record);
                       setShowCompleteConfirm(true);
                     }}
+                    className="flex items-center gap-2"
                   >
-                    Mark as Complete
+                    <span>Mark as Complete</span>
+                    <CheckCircle2 className="h-4 w-4 ml-auto text-emerald-600" />
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
