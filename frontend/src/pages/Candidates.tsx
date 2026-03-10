@@ -14,7 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { cn } from '@/lib/utils';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Edit, Eye, Trash2, PlayCircle } from 'lucide-react';
 
 export interface Candidate {
   id: string;
@@ -158,8 +158,10 @@ const Candidates = () => {
                       setCandidateToStart(record);
                       setIsStartOnboardingOpen(true);
                     }}
+                    className="flex items-center gap-2"
                   >
-                    Start Onboarding
+                    <PlayCircle className="h-4 w-4 text-slate-500" />
+                    <span>Start Onboarding</span>
                   </DropdownMenuItem>
                 )}
                 {status === 'in_progress' && (
@@ -181,16 +183,20 @@ const Candidates = () => {
                     setSelectedCandidate(record);
                     setIsOpenNewEmployeeDialog(true);
                   }}
+                  className="flex items-center gap-2"
                 >
-                  Edit details
+                  <Edit className="h-4 w-4 text-slate-500" />
+                  <span>Edit details</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/onboarding/candidates/${record.id}`);
                   }}
+                  className="flex items-center gap-2"
                 >
-                  View detail
+                  <Eye className="h-4 w-4 text-slate-500" />
+                  <span>View detail</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => {
@@ -198,9 +204,10 @@ const Candidates = () => {
                     setSelectedCandidate(record);
                     setIsOpenConfirmDelete(true);
                   }}
-                  className="text-red-600"
+                  className="flex items-center gap-2 text-red-600 focus:text-red-600"
                 >
-                  Remove
+                  <Trash2 className="h-4 w-4" />
+                  <span>Remove</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
