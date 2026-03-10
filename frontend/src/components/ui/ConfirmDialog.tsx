@@ -43,7 +43,7 @@ export default function ConfirmDialog({
           <DialogTitle className="mb-2">{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="mt-8 sm:justify-end">
           <DialogClose asChild>
             <Button variant={cancelButtonVariant} onClick={onCancel}>
               {cancelText}
