@@ -40,6 +40,9 @@ export interface Candidate {
   onboarding_journeys?: {
     id: string;
     status: string;
+  } | {
+    id: string;
+    status: string;
   }[];
   resume_url?: string;
   status?: string;
@@ -234,12 +237,17 @@ const Candidates = () => {
       if (candidatesError || !candidatesData) {
         setCandidates([]);
       } else {
-        // Map the data to flatten the journey status
-        const mappedData = (candidatesData as any[]).map((c) => ({
-          ...c,
-          status: c.onboarding_journeys?.[0]?.status || 'not started',
-          journey_id: c.onboarding_journeys?.[0]?.id,
-        }));
+        const mappedData = (candidatesData as any[]).map((c) => {
+          const journeyData = Array.isArray(c.onboarding_journeys)
+            ? c.onboarding_journeys
+            : (c.onboarding_journeys ? [c.onboarding_journeys] : []);
+
+          return {
+            ...c,
+            status: journeyData[0]?.status || 'not started',
+            journey_id: journeyData[0]?.id,
+          };
+        });
         setCandidates(mappedData);
       }
     } catch (error) {
