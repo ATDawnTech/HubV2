@@ -2,13 +2,13 @@
 
 **Version:** 1.0 – Initial Draft  
 **Date:** March 2026  
-**Modules:** Employees · Intake · Onboarding · Assets · Timesheets · Productivity · ATS
+**Modules:** Hub Dashboard · Employee Management · Admin System Settings · Assets · Intake · Onboarding · Project Management · Audit · Timesheets · Productivity · ATS
 
 ---
 
 ## Document Overview
 
-This Specification Plan defines the functional scope, objectives, user flows, and requirements for four core modules of ADT Hub. It is intended to align product, engineering, and business stakeholders before detailed design and development begins.
+This Specification Plan defines the functional scope, objectives, user flows, and requirements for the ten modules of ADT Hub. It is intended to align product, engineering, and business stakeholders before detailed design and development begins.
 
 ### Application Architecture
 
@@ -16,28 +16,31 @@ ADT Hub is a web application. Each module is a dedicated section of the applicat
 
 ```mermaid
 graph TD
-    Nav([ADT Hub – Web Application]) --> E1[Employee Management]
-    Nav --> E2[System Configuration]
-    Nav --> E3[Intake Management]
-    Nav --> E4[Onboarding Management]
-    Nav --> E5[Asset Management]
-    Nav --> E6[Timesheets]
-    Nav --> E7[Productivity Management]
-    Nav --> E8[ATS & Job Management]
-    Nav --> E9[Audit & Logging]
-    Nav --> E10[Project Management]
+    Nav([ADT Hub – Web Application]) --> E1[Hub Dashboard]
+    Nav --> E2[Employee Management]
+    Nav --> E3[Admin System Settings]
+    Nav --> E4[Asset Management]
+    Nav --> E5[Intake Management]
+    Nav --> E6[Onboarding Management]
+    Nav --> E7[Project Management]
+    Nav --> E8[Audit & Logging]
+    Nav --> E9[Timesheets]
+    Nav --> E10[Productivity Management]
+    Nav --> E11[ATS]
 
-    E1 <-->|Employee directory| E4
-    E1 <-->|Employee records| E3
-    E1 <-->|Employee work logs| E5
-    E1 <-->|Employee economics| E6
-    E1 <-->|Skills labels| E2
-    E3 -->|Approved Requisition| E8
-    E8 <-->|Candidate data| E3
-    E3 <-->|Asset tasks| E4
-    E10 <-->|Project Tags| E1
-    E10 <-->|Project Master| E6
-    E10 <-->|Project P&L| E7
+    E1 <-->|Aggregated Tasks| E4
+    E1 <-->|Aggregated Tasks| E6
+    E1 <-->|Approval Tasks| E5
+    E2 <-->|Employee directory| E6
+    E2 <-->|Employee records| E5
+    E2 <-->|Employee work logs| E4
+    E2 <-->|Skills labels| E3
+    E5 -->|Approved Requisition| E11
+    E11 <-->|Candidate data| E5
+    E5 <-->|Asset tasks| E6
+    E11 <-->|Project Tags| E2
+    E11 <-->|Project Master| E7
+    E11 <-->|Project P&L| E8
 
     DB[(Central Database)] --- E1
     DB --- E2
@@ -49,6 +52,7 @@ graph TD
     DB --- E8
     DB --- E9
     DB --- E10
+    DB --- E11
 
     style Nav fill:#1F4E79,color:#fff,stroke:none
     style DB fill:#2E75B6,color:#fff,stroke:none
@@ -60,23 +64,64 @@ Each module also supports connections to external services where relevant — su
 
 | Module | Purpose | Primary Users |
 |---|---|---|
-| Employee Management | Central system of record for employee data, used for assignments and workflows across all modules | HR, Admins |
-| System Configuration | Centralized management of global metadata, skill libraries, and dropdown lists | Admins |
+| Employee Management | Authoritative system of record for all personnel data, featuring a unified directory with smart project tagging and a dedicated **Offboarding & Decommissioning Hub** for orchestrated lifecycle management | HR, Admins |
+| Admin System Settings | Master control center for global metadata, **Role-Based Access Control (RBAC)**, and **System Security** | Admins |
+| Asset Management | Register, assign, and track company assets throughout their full lifecycle | Admins, IT, HR |
 | Intake Management | Capture and approve hiring requirements; auto-generate job requisitions and JDs | Recruiters, Hiring Managers, Admins |
 | Onboarding Management | Orchestrate cross-team onboarding tasks for new joiners from offer acceptance to Day-1 | Recruiters, HR, IT, Admin, Hiring Managers |
-| Asset Management | Register, assign, and track company assets throughout their full lifecycle | Admins, IT, HR |
+| Project Management | Operational hub for project definitions, tagging, and assignment metadata | Admins, Project Managers |
+| Audit & Logging | System-wide tracking of user actions and record changes for compliance | Admins |
 | Timesheets | Track employee work hours against projects with billable/non-billable logic | Employees, Managers, Finance |
 | Productivity Management | Centralized control of project P&L, employee cost structures, and margins | Admins |
-| ATS & Job Management | Manage the end-to-end recruitment process from job posting to offer | Recruiters, Hiring Managers |
-| Audit & Logging | System-wide tracking of user actions and record changes for compliance | Admins |
-| Project Management | Operational hub for project definitions, tagging, and assignment metadata | Admins, Project Managers |
+| ATS | Manage the end-to-end recruitment process from job posting to offer | Recruiters, Hiring Managers |
 
 ---
 
-## Epic 1 – Personnel Management
+## Shared Platform Components
+
+These components are persistent and accessible across every module in ADT Hub, ensuring a unified user experience and consistent administrative oversight.
+
+### Global Notification Inbox
+- **Purpose**: A system-wide activity log that keeps users informed of relevant updates, mentions, and automated alerts regardless of which module they are currently browsing.
+- **UI Placement**: Accessible via a persistent bell icon in the top navigation bar.
+- **Behavior**:
+    - **Real-Time Alerts**: New notifications trigger a visual badge (counter).
+    - **Role-Based Routing**: Notifications are filtered by user role and department (as defined in Epic 3).
+    - **Actionable Links**: Most notifications provide direct links to the relevant record (e.g., clicking a "New Onboarding" alert takes the user directly to that joiner's task list).
+    - **Cross-Module Persistence**: The inbox state and read/unread status are synchronized across all application pages.
+
+---
+
+## Epic 1 – Hub Dashboard
 
 ### Overview
-The Personnel Management module is the central system of record for all staff, divided into two primary business units:
+The Hub Dashboard is the default landing page for every user in ADT Hub. It serves as a personalized intelligence center that aggregates critical data and actionable tasks from all modules into a single, high-visibility interface.
+
+### Key Features
+
+| ID | Feature | Priority | Description |
+|---|---|---|---|
+| **1.1** | **Module Navigation Hub** | High | **Visual Directory**: A responsive grid display of all main modules (Employees, Assets, Intake, etc.) as large, interactive cards providing quick access. |
+| **1.2** | **My Tasks Center** | High | **Unified Task Feed**: Aggregates actionable items from across the platform (e.g., Warranty alerts from 4.6, Offboarding tasks from 2.10, Approval requests from 5.3). |
+
+### Logic Contracts
+- **Landing Default**: Upon login, the system automatically redirects users to the Hub Dashboard.
+- **Module Navigation Hub (Feature 1.1)**:
+    - **Dynamic Cards**: Each card displays the module name and a high-level status indicator (e.g., "3 Pending Approvals" in Intake).
+- **Task Aggregation (Feature 1.2)**:
+    - **Synchronized Feed**: The "My Tasks" center pulls live data from individual module task pools. Completing a task in the Dashboard marks it as complete in the source module and vice versa.
+    - **Sorting & Urgency**: Tasks are sorted by **Deadline** (fetched from 3.4) by default.
+- **Role-Based Personalization**:
+    - **Configurable Dashboard**: The specific modules visible in the **Module Navigation Hub (1.1)** and the task categories shown in the **My Tasks Center (1.2)** are assigned at the **Role level** within Epic 3.
+    - **Aggregation Logic (Multi-Role)**: For users assigned multiple roles, the dashboard displays the **union (additive)** of all components assigned to any of their roles. If Role A grants access to "Employees" and Role B grants access to "Assets," the user sees both on their Module Hub. This ensures no relevant data is hidden due to role conflicts.
+    - **Manager Access**: Roles flagged as "Manager Type" in Epic 3 automatically gain access to relevant supervisor widgets and task escalations.
+
+---
+
+## Epic 2 – Employee Management
+
+### Overview
+The Employee Management module is the central system of record for all staff, divided into two primary business units:
 1. **Employees Directory**: The management hub for active personnel records.
 2. **Newly Offboarded**: A specialized workflow module for managing the decommissioning of archived staff via task-based checklists.
 
@@ -90,30 +135,27 @@ The Personnel Management module is the central system of record for all staff, d
 | Group | Fields |
 |---|---|
 | **Employee Data** | Employee ID (Auto-assigned), Name, Work Email, Job Title, Dept, Manager, Status, Hire Type, Work Mode |
-| **Contact Info** | Personal Email, Phone, Address & Location |
-| **Emergency Contacts** | Name, Phone, and Relationship |
-| **Asset Info** | **Read-only**: Asset Count (Table), Asset List (Profile); Navigation links to Asset Module (Epic 5) |
+| **Asset Info** | **Read-only**: Asset Count (Table), Asset List (Profile); Navigation links to Asset Module (Epic 4) |
 | **Project Tracking** | Active Projects (Tags); **Project History**: Historical assignments with roles/dates (Editable in Profile) |
 | **Attachments** | Employment contracts, IDs, Certifications, and other documents (Upload/View/Download) |
 
 ### Project Tagging Architecture (Smart Assignment)
 
-When an employee is tagged to a project in the creation modal or profile, the system leverages **Epic 8 (Project Management)**:
-- **Project Lookup**: Searchable master list from Epic 8.
+When an employee is tagged to a project in the creation modal or profile, the system leverages **Epic 7 (Project Management)**:
+- **Project Lookup**: Searchable master list from Epic 7.
 - **Inline Creation Flow**:
     - **Inheritance**: Selecting "Create New" inherits the text currently typed in the search field as the project name.
     - **Input Clearing**: Upon selection, the search/tag field (the "project field") is cleared immediately to allow for subsequent searches, and the name is transferred to the newly expanded project details section.
-    - **Atomic Save**: New project entries are only persisted to the database (Epic 8) upon the final "Save" of the employee record. If the modal or edits are canceled, no project record is created.
+    - **Atomic Save**: New project entries are only persisted to the database (Epic 7) upon the final "Save" of the employee record. If the modal or edits are canceled, no project record is created.
 - **Metadata per Tag**: For each project assigned, a distinct section expands to capture:
-    - **Project Role**: Specific role on this project (source: Epic 8 / custom).
+    - **Project Role**: Specific role on this project (source: Epic 7 / custom).
 - **Management**: Users can delete tags or **collapse** expanded sections (via a toggle/button next to each entry) directly from the UI.
 
 ### Scope
 **In Scope**
-- Employee master record creation and management (HR/Admin only)
+- Master record creation and management (HR/Admin only)
 - Centralized employee directory available to other modules
 - Tracking of comprehensive employment details (as defined in Data Groups)
-- Emergency contact and relationship management
 - **Project Tracking**: Multi-tag assignment of employees to active and historical projects
 
 **Out of Scope**
@@ -148,90 +190,98 @@ flowchart TD
 
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
-| **1.1** | **Employee Directory Table View** | High | Click/Navigation | **Admin Mode Toggle**: Top-level button to enable management controls; Table format (Sorted by Employee ID by default); **Actions**: View (1.4 read-only), Edit (1.4 edit mode), Audit (9.1 - Red in Admin Mode), **Archive** (Red, visible in Admin Mode only) |
-| **1.2** | **Modal-Based User Creation** | High | **All fields**; Active Projects only; Auto-assigned ID; **Initial Attachments** | "Add User" button; Popout modal; **Read-only ID preview**; **Smart Project Assignment**; **Document Upload**: Drag-and-drop or select initial employment files; Atomic save to DB |
-| **1.3** | **Duplicate Detection Logic** | High | Work Email, Personal Email, Employee ID | **Real-time Validation**: Inline error indicators if unique fields are taken; **Pre-Save blocking**: Prevents submission if duplicates persist; Matches are case-insensitive and whitespace-trimmed |
-| **1.4** | **Unified Employee Profile** | High | Ongoing updates to all [Employee Data Groups](#employee-data-groups); **Attachment Management** | **Management Hub**: Accessed via 1.1; View/Edit modes; **Project History Management**; **Document Center**: View, Download, or Remove existing attachments; Upload new documents with category labels; Deep-linking to Epic 5 |
-| **1.5** | **Advanced Search & Filtering** | High | Multi-field search query, Sort parameters, Status (Active/Archiving/Archived) | **Unified Search Bar**: Fuzzy search across all record fields; **Filter Options Button**: Expands to show multi-group filter chips; **Header-based Filtering**: Column titles allow direct search injection; **Advanced Sorting**: ID (Num), Name (Alpha), etc.; **Status Isolation**: Active records shown by default; Archived/Archiving records excluded unless toggled via "Show Archived" filters |
-| **1.6** | **Admin Mode & Bulk Management** | High | Multi-selection set, File Upload (Import) | **Admin Mode UI**: Gradually shifting toggle reveals **Actions** (Dropdown) and **Export** (Stand-alone button); **Checklist Selection**: Left-side column; **Actions Menu**: Assign to Project, Archive, **Bulk Import** (Always enabled); **Export Button**: Exports selected or all (PDF/CSV); **Import Results View**: Discards current search; **Safety Guards**: All actions require a confirmation popup before processing |
-| **1.7** | **System-Wide Referencing** | High | N/A (Data lookup via DB keys) | Selection dropdowns in other modules (Assets, ATS, etc.) using central DB keys |
-| **1.8** | **Admin-Only Row Controls** | High | UI Toggle State | Row-level buttons (Archive, Audit) highlighted in **Red**; Only visible when Admin Mode is active |
-| **1.9** | **Archived User Lifecycle** | High | Decommissioning checks, Project migration | **Workflow Integration**: Initial archiving sets status to **Archiving** and moves users to the "Newly Offboarded" sub-module; Final completion sets status to **Archived** |
-| **1.10** | **Newly Offboarded (Offboarding Hub)** | High | Task status, Sign-off logs, Assignees, Deadlines | **Sub-Module View**: List of users with **Archiving** status; **Checklist Management**; **Manager Overview**: Role-specific dashboard for tracking all tasks and facilitating manual reassignment |
+| **2.1** | **Employee Directory Table View** | High | Click/Navigation | **Admin Mode Toggle**: Top-level button to enable management controls; Table format (Sorted by Employee ID by default); **Actions**: View (2.4 read-only), Edit (2.4 edit mode), Audit (10.1 - Red in Admin Mode), **Archive** (Red, visible in Admin Mode only) |
+| **2.2** | **Modal-Based User Creation** | High | **Mandatory**: Name, Dept, Location, Status (**New Onboard**, **Active**), Hire Type, Work Mode; **Optional**: Job Title, Manager, Attachments, Project Tags | "Add User" button; Popout modal; **Predictive Email Generation**: Auto-formats `Name` to Entra standard; **Read-only ID preview**; **Validation**: Real-time completion status indicators per section |
+| **2.3** | **Duplicate Detection Logic** | High | Work Email, Employee ID | **Real-time Validation**: Inline error indicators if unique fields are taken; **Pre-Save blocking**: Prevents submission if duplicates persist; Matches are case-insensitive and whitespace-trimmed |
+| **2.4** | **Unified Employee Profile** | High | Ongoing updates to all [Employee Data Groups](#employee-data-groups); **Attachment Management** | **Management Hub**: Accessed via 2.1; View/Edit modes; **Project History Management**; **Document Center**; **Onboarding History**: View-only summary of the completed onboarding checklist and initiation dates from Epic 6 |
+| **2.5** | **Advanced Search & Filtering** | High | Multi-field search query, Sort parameters, Status (**New Onboard**, **Active**, **Archiving**, **Archived**) | **Unified Search Bar**: Fuzzy search across all record fields; **Filter Options Button**: Expands to show multi-group filter chips; **Header-based Filtering**: Column titles allow direct search injection; **Advanced Sorting**: ID (Num), Name (Alpha), etc.; **Status Isolation**: **New Onboard** and **Active** records shown by default; Archived/Archiving records excluded unless toggled via "Show Archived" filters |
+| **2.6** | **Admin Mode & Bulk Management** | High | Multi-selection set, File Upload (Import) | **Admin Mode UI**: Gradually shifting toggle reveals **Actions** (Dropdown) and **Export** (Stand-alone button); **Checklist Selection**: Left-side column; **Actions Menu**: Assign to Project, Archive, **Bulk Import** (Always enabled); **Export Button**: Exports selected or all (PDF/CSV); **Post-Import Filter**: Auto-filters view to show only newly imported records; **Safety Guards**: All actions require a confirmation popup before processing |
+| **2.7** | **System-Wide Referencing** | High | N/A (Data lookup via DB keys) | Selection dropdowns in other modules (Assets, ATS, etc.) using central DB keys |
+| **2.8** | **Admin-Only Row Controls** | High | UI Toggle State | Row-level buttons (Archive, Audit) highlighted in **Red**; Only visible when Admin Mode is active |
+| **2.9** | **Archived User Lifecycle** | High | Decommissioning checks, Project migration | **Workflow Integration**: Initial archiving sets status to **Archiving** and moves users to the "Newly Offboarded" sub-module; Final completion sets status to **Archived** |
+| **2.10** | **Newly Offboarded (Offboarding Hub)** | High | Task status, Sign-off logs, Assignees, Deadlines | **Sub-Module View**: List of users with **Archiving** status; **Checklist Management**; **Manager Overview**: Role-specific dashboard for tracking all tasks and facilitating manual reassignment |
 
 
 
 ### Logic Contracts (Data Architecture)
 - **Central Storage**: All employee records are stored in a centralized, secure relational database to ensure data integrity.
 - **Duplicate Prevention Hierarchy**: 
-    1. **Real-time Check**: As the user tabs out (blur) of the 'Work Email', 'Personal Email', or 'Employee ID' fields, the system performs an asynchronous lookup.
+    1. **Real-time Check**: As the user tabs out (blur) of the 'Work Email' or 'Employee ID' fields, the system performs an asynchronous lookup.
     2. **Inline Feedback**: If a match is found, the field is highlighted in red with an error message: "This [Field] is already in use."
     3. **Atomic Pre-submission Check**: A final check is performed on the server-side during the 'Save' transaction to prevent race conditions.
     4. **Matching Rules**: All unique field checks are case-insensitive and follow strict whitespace trimming.
+- **Work Email Generation (Feature 2.2)**:
+    - **Entra Alignment**: To ensure parity with company-existing AD/Entra accounts, the system automatically generates a proposed **Work Email** upon Name entry.
+    - **Formatting Logic**: 
+        1. Trim leading and trailing whitespace from the full name.
+        2. Replaces internal spaces with a single period (`.`).
+        3. Appends `@AtDawnTech.com`. 
+    - **Example**: " Ryan Tjan " transforms to `Ryan.Tjan@AtDawnTech.com`.
+    - **Manual Override**: While auto-generated for speed, the field remains editable to handle unique cases or middle initials if they differ from the standard.
 - **Search & Filter Architecture**:
     - **Unified Search**: A single input searches all record fields (ID, Name, Role, etc.) for partial matches.
     - **Filter Logic**: A dedicated "Filter" button expands to reveal selection chips for Dept, Location, and Project.
-    - **Contextual Search**: Clicking a column header in the table (1.1) automatically populates the search/filter criteria with that specific field's value.
+    - **Contextual Search**: Clicking a column header in the table (2.1) automatically populates the search/filter criteria with that specific field's value.
     - **Sorting**: Toggle buttons next to the search bar allow for numeric (ID) and alphabetical (Name/Dept) sorting in ascending/descending order.
-    - **Status Isolation**: Employees marked as **Archiving** or **Archived** are hidden from all default views, searches, and filters.
+    - **Status Isolation**: Employees marked as **Archiving** or **Archived** are hidden from all default views, searches, and filters. **New Onboard** and **Active** statuses are considered "Live" and visible across all primary dashboards.
     - **Filtered Discovery**: A specialized "Show Non-Active" filter allows users to toggle between **Archiving** (Pending checks) and **Archived** (Closed/Decommissioned) records in the directory results.
-    - **Deep Table Persistence**: The system caches the search query, active filter list, sort state, and **scroll position**. Navigating back from a profile (1.4) restores the table to its exact previous state.
-- **System-Wide Referencing (Feature 1.7)**:
-    - **Authoritative Source**: Epic 1 is the sole owner of employee identity. Modules (Assets, ATS, etc.) must reference the **Employee ID** (Primary Key) and never store duplicate PII (Name/Email) locally.
+    - **Deep Table Persistence**: The system caches the search query, active filter list, sort state, and **scroll position**. Navigating back from a profile (2.4) restores the table to its exact previous state.
+- **System-Wide Referencing (Feature 2.7)**:
+    - **Authoritative Source**: Epic 2 is the sole owner of employee identity. Modules (Assets, ATS, etc.) must reference the **Employee ID** (Primary Key) and never store duplicate PII (Name/Email) locally.
     - **Real-Time Lookup**: Other modules pull display names and contact info dynamically via the API to ensure they always reflect the latest updates from the Directory.
     - **Status Enforcement**: Modules must respect the employee status. Users with **Archiving** or **Archived** status are automatically excluded from "New Assignment" dropdowns (e.g., cannot assign a new Asset or a new Job Stakeholder role to an offboarded user).
-    - **Global Traceability**: Clicking an Employee Name in any other module (e.g., Asset Owner in Epic 5) deep-links the user back to the **Unified Employee Profile (1.4)** for full context.
+    - **Global Traceability**: Clicking an Employee Name in any other module (e.g., Asset Owner in Epic 4) deep-links the user back to the **Unified Employee Profile (2.4)** for full context.
 - **Immutable Records & Archiving**: Employee records cannot be permanently deleted from the system. Instead, they are moved to an 'Archive' state. Permanent removal is only possible via a specialized Admin Settings panel.
 - **Auto-Incrementing IDs**: The system generates unique, incrementing Employee IDs for every new record created, ensuring no gaps or duplicates in the identification sequence. In the creation modal, this ID is displayed as a **read-only preview** and cannot be modified by the user.
-- **Audit Integration**: The "View Audit" action in the directory table links to the Audit Module (Epic 9), automatically applying a filter for the selected user's history (Visible to Admins only).
-- **Metadata Source**: Dropdown selections (Dept, Location, Hire Type, etc.) are managed via the **System Configuration (Epic 2)** to ensure global consistency.
+- **Audit Integration**: The "View Audit" action in the directory table links to the Audit Module (Epic 8), automatically applying a filter for the selected user's history (Visible to Admins only).
+- **Metadata Source**: Dropdown selections (Dept, Location, Hire Type, etc.) are managed via the **System Configuration (Epic 3)** to ensure global consistency.
 - **Project Atomic Save**: Inline project creation within the employee modal is treated as a single transaction; projects are not added to the master table unless the employee record is successfully saved.
 - **Asset Integration Logic**: 
-    - **Read-Only**: Asset data (Count/List) is strictly read-only within Epic 1. No asset assignment or editing can occur in the Employee Creation or Profile screens.
-    - **Epic 5 Authority**: All asset movements (assign/remove) must be performed within the **Asset Management (Epic 5)** module.
-    - **Deep-Linking**: Clicking a specific asset in the profile (1.4) redirects the user to Epic 5 and automatically initiates a search for that asset's unique ID for immediate inspection.
+    - **Read-Only**: Asset data (Count/List) is strictly read-only within Epic 2. No asset assignment or editing can occur in the Employee Creation or Profile screens.
+    - **Epic 4 Authority**: All asset movements (assign/remove) must be performed within the **Asset Management (Epic 4)** module.
+    - **Deep-Linking**: Clicking a specific asset in the profile (2.4) redirects the user to Epic 4 and automatically initiates a search for that asset's unique ID for immediate inspection.
 - **Admin Mode Operations**:
-    - **Configurable Access**: The visibility of the "Admin Mode" toggle and specific buttons (Actions/Export) is controlled by **Role Permissions** defined in Epic 2. This allows HR or other custom roles to be granted administrative editing/bulk powers.
+    - **Configurable Access**: The visibility of the "Admin Mode" toggle and specific buttons (Actions/Export) is controlled by **Role Permissions** defined in Epic 3. This allows HR or other custom roles to be granted administrative editing/bulk powers.
     - **Toggle UI**: Toggling "Admin Mode" initiates a gradual visual shift revealing the **Actions** dropdown and a separate **Export** button. Toggling OFF hides these and row-level admin controls.
     - **Selection Logic**: The selection column is only visible in Admin Mode. Toggling OFF retains current selection (cached).
     - **Action States**: "Actions" menu (except Bulk Import) and "Export" button are greyed out until at least one user is selected.
     - **Row-Level Admin**: When Admin Mode is active, an **Archive** button (Red) appears in the row-level action menu alongside Audit (Red). These are hidden when toggled OFF.
     - **Smart Export**: Stand-alone button next to Actions; exports selected users or all (if 0 or all selected) to PDF/CSV.
     - **Action Confirmations**: Any administrative action (Single/Bulk Archive, Project Assignment, **Password Reset**) triggers a **confirmation popup** ("Are you sure you want to [Action] [N] users?") to prevent accidental errors.
-    - **Bulk Import Behavior**: Unified under the Actions menu (always enabled). Upon successful import, the system **disregards current search/filters** and updates the table to display only the newly imported records for immediate verification.
+    - **Bulk Import Behavior**: Unified under the Actions menu (always enabled). Upon successful import, the system **automatically filters the directory view** to display only the newly imported records for immediate administrative verification.
     - **Bulk Import Mapping**: Includes a smart-matching step to link CSV/Excel headers to internal fields.
     - **Permanent Deletion**: Controlled via a specific override within the Admin Actions set, requiring re-authentication and audit logging.
 - **Draft Persistence**: If a user accidentally closes the creation modal (e.g., clicking the background overlay), all current input data is temporarily cached. Reopening the modal restores the previous session state.
 - **Archived User Workflow (Lifecycle)**:
-    - **Discovery**: Archived users are hidden by default. Access is managed via a "Show Archived" filter within the Advanced Filtering (1.5) system.
+    - **Discovery**: Archived users are hidden by default. Access is managed via a "Show Archived" filter within the Advanced Filtering (2.5) system.
     - **Email Decommissioning**: The archiving process includes a mandatory checklist for administrators to verify "Work Email Decommissioned."
     - **Project Cleanup**: Upon archiving, the system automatically removes the employee from all **Active Project Tags** and creates corresponding entries in their **Project History** section (storing last role and exit date).
-    - **Historical Integrity**: Archived records remain searchable (when filtered) to maintain audit trails for past project assignments and asset custodianship.
+    - **Historical Integrity**: Archived records remain searchable (when filtered) to maintain audit trails for past project assignments and asset assignment history.
 - **Project History Management**:
-    - **Editable History**: Administrators can manually add, edit, or remove entries in the "Project History" section within the Employee Profile (1.4) to correct past assignment records.
+    - **Editable History**: Administrators can manually add, edit, or remove entries in the "Project History" section within the Employee Profile (2.4) to correct past assignment records.
     - **Admin Mode Account Actions**: When in Admin Mode, the Profile "Action Menu" reveals **"Reset Password"**, **"Detach 2FA Linkage"**, and **"Lock Account"** tools.
-- **2FA Status Indicator (Feature 1.4)**:
+- **2FA Status Indicator (Feature 2.4)**:
     - **Visibility**: Every employee profile shows a "Security Status" badge (e.g., **2FA: Enabled** in Green or **2FA: Disabled** in Grey).
     - **Read-Only**: This is a system-generated indicator and cannot be toggled directly by the user on the profile screen (must be reset via Action Menu).
 - **Document Management (Attachments)**:
     - **Storage**: Files are stored in a secure cloud bucket (S3/Azure Blob) with links preserved in the relational database.
     - **Actions**: Users with "Edit" permissions can upload new files, rename labels, or remove attachments. All users with "View" permissions can download or preview compatible formats (PDF, JPG).
-    - **Audit**: Every document upload, download, or removal is logged in the user's Audit History (Epic 9).
+    - **Audit**: Every document upload, download, or removal is logged in the user's Audit History (Epic 8).
 - **Navigation Guard**: System triggers a standard browser confirmation dialog if the user attempts to reload or navigate away from the page while the creation modal has unsaved changes.
 - **Role-Based Access Control (RBAC)**:
-    - **Epic 2 Authority**: The "who" (which roles) can access Admin Mode or edit records is managed exclusively in the **System Configuration (Epic 2)** module.
-    - **PII Masking**: Sensitive data visibility is controlled via the role-based toggles defined in Epic 2.
-- **Offboarding & Task Pool Operations (Feature 1.10)**:
+    - **Epic 3 Authority**: The "who" (which roles) can access Admin Mode or edit records is managed exclusively in the **System Configuration (Epic 3)** module.
+    - **PII Masking**: Sensitive data visibility is controlled via the role-based toggles defined in Epic 3.
+- **Offboarding & Task Pool Operations (Feature 2.10)**:
     - **Gradual Archival**: When an admin initiates an "Archive" action, the user record status shifts from **Active** to **Archiving**. They are moved to the **Newly Offboarded** sub-module and remain there until all checks are resolved.
     - **Mandatory Checks**:
         1. **Work Email Decommissioning** (Assigned to **IT** role).
         2. **Project History Migration** (Automated; verified by Manager).
-        3. **Asset Retrieval** (Assigned to **HR/Asset Manager**; linked to Epic 5).
+        3. **Asset Retrieval** (Assigned to **HR/Asset Manager**; linked to Epic 4).
         4. **System Account Removal** (GitHub/Microsoft) (Assigned to **IT** role).
     - **The Task Pool**:
         - Tasks are not assigned to individuals initially but are instead pooled by **Role** (e.g., all IT users see pending email checks).
         - **Self-Assignment**: Users can "Pick up" a task from the pool, becoming the primary assignee.
-        - **Sign-off**: Marking a check as resolved logs the specific user's ID and timestamp to the employee record and the **Audit Module (Epic 9)**.
+        - **Sign-off**: Marking a check as resolved logs the specific user's ID and timestamp to the employee record and the **Audit Module (Epic 8)**.
     - **Deadline & Escalation Logic**:
         - **Task Deadlines**: Every offboarding check has a system-defined deadline (e.g., 72 hours from Archive initiation).
         - **Proactive Notifications**: When a task is within **24 hours of its deadline**, the system triggers a "Deadline Warning" notification to the **Assignee** and their **Manager Role**.
@@ -240,8 +290,8 @@ flowchart TD
         - **Manual Reassignment**: Managers can override any current assignment, reassigning a task from one role-employee to another, or "Pick up" the task themselves directly from their staff's queue.
     - **Finalization**: Only when all 4 checks are green can the user status be shifted to **Archived**. At this point, they are removed from the Newly Offboarded view and appear in the general Directory results only when the "Archived" filter is explicitly enabled.
 - **Admin Mode functional logic**:
-    - **Permission Check**: The "Admin Mode" toggle only appears if the user's role has the "Admin Mode Access" permission enabled in Epic 2.
-    - **Action Logic**: All bulk and row-level admin actions (1.6, 1.8) are strictly gated by these central permissions.
+    - **Permission Check**: The "Admin Mode" toggle only appears if the user's role has the `can_access_employee_admin_mode` permission enabled in Epic 3.
+    - **Action Logic**: All bulk and row-level admin actions (2.6, 2.8) are strictly gated by these central permissions.
 
 ### Roles & Permissions
 
@@ -252,16 +302,16 @@ flowchart TD
 | Employee / Manager | View-only access to the general directory (as allowed by system settings) |
 
 ### Acceptance Criteria
-- **[1.1]** Authorized users can view a responsive table of employees with ID, Name, Role, Dept, Location, Manager, and Work Email, sorted by ID by default.
-- **[1.1]** Admins can click "View Audit" to navigate to the Audit module with pre-filtered user history.
-- **[1.2]** HR and Admins can trigger an "Add User" popout modal from the Table View page.
-- **[1.2]** Clicking "Add New User" within the modal accurately persists all data points to the database.
-- **[1.3]** System prevents record creation and displays a clear error if a duplicate Work Email, Personal Email, or Employee ID is detected.
-- **[1.4]** Once created/viewed, employee profiles accurately display all grouped information and current asset status.
-- **[1.5]** Users can perform natural language searches and apply multi-dimensional filters (Dept, Role, etc.) to the directory.
-- **[1.6]** Authorized users can access a centralized directory summary for personnel verification.
-- **[1.7]** Employee records are selectable as primary data points (e.g., as Asset Custodians or Hiring Managers) in all downstream modules using secure database referencing.
-- **[1.8]** Data integrity is maintained through strict RBAC, ensuring only authorized personnel can add or modify master records.
+- **[2.1]** Authorized users can view a responsive table of employees with ID, Name, Role, Dept, Location, Manager, and Work Email, sorted by ID by default.
+- **[2.1]** Admins can click "View Audit" to navigate to the Audit module with pre-filtered user history.
+- **[2.2]** HR and Admins can trigger an "Add User" popout modal from the Table View page.
+- **[2.2]** Clicking "Add New User" within the modal accurately persists all data points to the database.
+- **[2.3]** System prevents record creation and displays a clear error if a duplicate Work Email or Employee ID is detected.
+- **[2.4]** Once created/viewed, employee profiles accurately display all grouped information and current asset status.
+- **[2.5]** Users can perform natural language searches and apply multi-dimensional filters (Dept, Role, etc.) to the directory.
+- **[2.6]** Authorized users can access a centralized directory summary for personnel verification.
+- **[2.7]** Employee records are selectable as primary data points (e.g., as Asset Assignees or Hiring Managers) in all downstream modules using secure database referencing.
+- **[2.8]** Data integrity is maintained through strict RBAC, ensuring only authorized personnel can add or modify master records.
 
 ### Success Metrics
 - 100% of staff accurately represented in the system of record
@@ -270,37 +320,37 @@ flowchart TD
 
 ---
 
-## Epic 2 – Admin Systems Settings
+## Epic 3 – Admin System Settings
 
 ### Overview
-The Admin Systems Settings module is a master control center for ADT Hub. It is organized into specialized sub-modules to manage global metadata, security, and system-wide automation. This ensures that every module in the Hub operates from a single, consistent source of configuration.
+The Admin System Settings module is a master control center for ADT Hub. It is organized into specialized sub-modules to manage global metadata, security, and system-wide automation. This ensures that every module in the Hub operates from a single, consistent source of configuration.
 
 ### Sub-Modules & Features
 
 | ID | Sub-Module | Feature | Priority | Data / Controls |
 |---|---|---|---|---|
-| **2.1** | **Dropdown Settings** | **Area-Specific Sub-Sub-Modules** | High | **Hierarchical Management**: Nested container for area-specific lists. <br>• **Employees**: Dept, Location, Role Levels, Hire Types. <br>• **Intake**: Requisition Statuses, Reason for Hire, Hiring Priorities. <br>• **Onboarding**: Task Categories, Provisioning Stages. <br>• **Assets**: Category, Manufacturer, Status, Condition. <br>• **Audit & Logging**: Event Severity, Log Categories. |
-| **2.2** | **Skill Management** | **Skill Repository** | Medium | **Automated Library**: Dynamic repository of all skills. <br>• **Admin Tools**: Bulk select to delete; usage tracking (Intake counts). <br>• **Performance**: Paginated grid; fuzzy search; sort by **Date Added**. <br>• **Auto-Host**: Staged skills from Intake persist on save. |
-| **2.3** | **Role & Permission Management** | **Additive Role System** | High | **Role Repository**: Centralized creation and management of all system roles. <br>• **Permission Mapping**: Define action and visibility rights. <br>• **Assignment Hierarchy**: Define which roles can assign other roles (e.g., HR can assign 'Staff' but not 'Admin'). |
-| **2.4** | **Notification Module** | **Communication Hub** | Medium | **System Master Switches**: Global and module-specific toggles for Email/In-App alerts. <br>• **Threshold Management**: Centralized control for task deadlines and escalation timing. |
-| **2.5** | **Audit Settings** | **Governance & Compliance** | Low | **Retention Rules**: Global log storage durations. <br>• **Log Integrity**: Read-only enforcement; Export for external audits. |
-| **2.6** | **System Security** | **Advanced Protection** | High | **Approval Gates**: "Block & Approve" for high-risk actions. <br>• **Snapshots**: Immutable 7-day backups with Selective Restore. |
+| **3.1** | **Dropdown Settings** | **Area-Specific Sub-Sub-Modules** | High | **Hierarchical Management**: Nested container for area-specific lists. <br>• **Global**: **Location** (Shared across Employees & Assets). <br>• **Employees**: Dept, Role Levels, Hire Types. <br>• **Intake**: Requisition Statuses, Reason for Hire, Hiring Priorities. <br>• **Onboarding**: Task Categories, Provisioning Stages. <br>• **Assets**: **Asset Item Types (Categories)**, **Asset Statuses**, Manufacturer, Condition. <br>• **Audit & Logging**: Event Severity, Log Categories. |
+| **3.2** | **Skill Management** | **Skill Repository** | Medium | **Automated Library**: Dynamic repository of all skills. <br>• **Admin Tools**: Bulk select to delete; usage tracking (Intake counts). <br>• **Performance**: Paginated grid; fuzzy search; sort by **Date Added**. <br>• **Auto-Host**: Staged skills from Intake persist on save. |
+| **3.3** | **Role & Permission Management** | **Additive Role System** | High | **Role Repository**: Centralized creation and management. <br>• **Permission Mapping**: Define action and visibility rights. <br>• **Assignment Hierarchy**: Define which roles can assign other roles. <br>• **Validation**: Real-time completion status indicators per section. |
+| **3.4** | **Notification Module** | **Communication Hub** | Medium | **System Master Switches**: Global and module-specific toggles for Email/In-App alerts. <br>• **Threshold Management**: Centralized control for task deadlines, escalation timing, and **Asset Warranty Alert Thresholds** (Default: 2 months). |
+| **3.5** | **Audit Settings** | **Governance & Compliance** | Low | **Retention Rules**: Global log storage durations. <br>• **Log Integrity**: Read-only enforcement; Export for external audits. |
+| **3.6** | **System Security** | **Advanced Protection** | High | **Approval Gates**: "Block & Approve" for high-risk actions. <br>• **Snapshots**: Immutable 7-day backups with Selective Restore. |
 
 ### Logic Contracts (System Administration)
 - **Three-Tier Hierarchy**: The UI reflects a **Module (Settings) > Sub-Module (Dropdowns) > Sub-Sub-Module (Area)** navigation pattern.
-- **Dropdown Authority (Feature 2.1)**: 
+- **Dropdown Authority (Feature 3.1)**: 
     - **Sole Source of Truth**: These sub-sub-modules are the **only** locations where dropdown values for their respective areas (Employees, Intake, etc.) can be added, edited, or removed.
-    - **Consumer Enforcement**: Other modules (e.g., Epic 1 creation modal) are strictly prohibited from using hardcoded lists or locally-stored options; they must fetch data dynamically from these settings.
+    - **Consumer Enforcement**: Other modules (e.g., Epic 2 creation modal) are strictly prohibited from using hardcoded lists or locally-stored options; they must fetch data dynamically from these settings.
     - **Global Rename Propagation**: Renaming an entry in any sub-sub-module dropdown list updates all records referencing that ID across the entire database instantly.
-- **Skill Management (Feature 2.2)**: 
-    - **Atomic Persistence**: New skills created on-the-fly in the Intake module (Epic 3) or Onboarding module (Epic 4) are **staged** locally during the session. They are only permanently added to the master database upon a successful "Save" of the parent record.
+- **Skill Management (Feature 3.2)**: 
+    - **Atomic Persistence**: New skills created on-the-fly in the Intake module (Epic 5) or Onboarding module (Epic 6) are **staged** locally during the session. They are only permanently added to the master database upon a successful "Save" of the parent record.
     - **Discard Logic**: If an intake or onboarding record is canceled or discarded before saving, any "New" skill tags created within that session are automatically purged.
     - **Smart Lookup & Mapping**: The system maintains a mapping layer for common abbreviations. If a user types "JS", the system proactively suggests "Javascript" as the primary tag while allowing the user to explicitly "Create New" if they have a distinct requirement.
     - **Admin Bulk Actions**: Admins can bulk-select tags to delete or merge. To prevent data loss, the system displays a **Usage Count** (how many Intakes/Profiles use this tag) upon selection.
     - **Search & Filtering**: The repository includes a fuzzy-search bar for finding specific tags and clickable headers to sort the library by 'Date Created' (Ascending/Descending).
     - **Performance Optimization (Pagination)**: To ensure high performance with thousands of tags, the grid implements server-side pagination with a configurable limit (e.g., 50 per page).
     - **Proficiency Removal**: Proficiency levels are explicitly out of scope for the global skill repository to maintain maximum simplicity.
-    - **Role-Based Access Control (Feature 2.3)**:
+    - **Role-Based Access Control (Feature 3.3)**:
     - **Sole Source of Authority**: All roles—including Employee types, Manager levels, and Admin tiers—must be created and configured **exclusively** within this sub-module.
     - **Role-as-Entity System**: Roles are treated as standardized system objects with unique IDs and specific permission payloads.
     - **Manager Role Attribution**: Admins can flag a role as a **"Manager Type."**
@@ -315,14 +365,22 @@ The Admin Systems Settings module is a master control center for ADT Hub. It is 
             - **Employees (Personnel)**: `can_create_employee`, `can_archive_employee`, `can_edit_project_history`, `can_manage_attachments`.
             - **Asset Management**: `can_assign_asset`, `can_retire_asset`, `can_edit_asset_metadata`, `can_view_asset_valuation`.
         - **Granular Toggle**: Each role is assigned specific "Verbs" via a grid of checkboxes.
-        - **Admin Mode Gating**: A critical "System Action" is the `can_access_admin_mode` toggle. If this is not checked for a role, the "Admin Mode" switch in Epic 1 remains hidden/disabled for that user.
+        - **Module-Specific Privileged Modes**:
+            - **Employees (Admin Mode)**: The `can_access_employee_admin_mode` toggle.
+            - **Assets (Edit Mode)**: The `can_access_asset_edit_mode` toggle.
+            - **Functional Gating**: If the specific module toggle is not checked for a role, the corresponding "Admin Mode" or "Edit Mode" switch remains hidden within that module.
         - **Backend Enforcement**: Each API request checks the user's active role(s) for the specific action key. If the key is missing from all assigned roles, the request is rejected before data processing.
     - **Visibility Toggle Handling (The "Noun" Grid)**:
         - **PII Shielding**: Visibility is handled via "Data Scopes." Roles can be toggled to "Reveal PII," "Reveal Financials," or "Reveal Audit Trails." Without these, fields appear as masked (asterisks) or the entire column/section is hidden.
-- **Notification Central (Feature 2.4)**:
+    - **Dashboard Component Assignment**:
+        - **Configuration Pane**: A dedicated section within the Role Editor allowing admins to select which **Epic 1** components are active for that role.
+        - **Module Visibility**: Checkbox list of all system modules (Employees, Assets, etc.) to define what appears in the user's **Module Navigation Hub (1.1)**.
+        - **Task Feed Filtering**: Selection of task categories (e.g., "IT Tasks," "HR Approvals") that populate the user's **My Tasks Center (1.2)**.
+        - **Persistence**: These assignments are stored as a configuration string in the role's permission payload, fetched by the dashboard front-end on load.
+- **Notification Central (Feature 3.4)**:
     - **Hierarchy of Control**:
         - **Global Kill-Switch**: A master toggle to disable all outgoing communications (Email/In-App).
-        - **Module & Role Toggles**: Admins assign triggers to **Roles (2.3)**.
+        - **Module & Role Toggles**: Admins assign triggers to **Roles (3.3)**.
         - **Notification Channels**: For each trigger, the system allows selecting **"My Tasks" (In-App)**, **"Work Email"**, or **"Both"**.
         - **Email Enforcement**: All external alerts are strictly routed to the user's **Work Email Address** as stored in their Employee Profile.
     - **Notification Scoping (Anti-Fatigue)**:
@@ -330,10 +388,10 @@ The Admin Systems Settings module is a master control center for ADT Hub. It is 
         - **Assignment-Specific Alerts**: For task-based modules (e.g., Offboarding tasks), notifications are **only** sent to the specific user assigned to that task, even if multiple users hold the same functional role.
     - **Timing & Thresholds**:
         - **Dynamic Deadlines**: Set standard task durations (e.g., 72hr Offboarding).
-        - **Departmental Escalation Triggers**: Escalation alerts are routed using the **Departmental Link** from Epic 2.3.
+        - **Departmental Escalation Triggers**: Escalation alerts are routed using the **Departmental Link** from Epic 3.3.
             - **Scoped Routing**: If an IT-specific task misses a deadline, the escalation notification is sent **only** to the role(s) defined as the "Manager" of the "IT" department. This prevents managers in unrelated departments (e.g., HR) from receiving irrelevant alerts.
     - **Role-Based Routing**: Notifications are mapped to **Roles**, ensuring "My Tasks" feeds and email alerts synchronize automatically with role changes.
-- **Audit & Governance (Feature 2.5)**:
+- **Audit & Governance (Feature 3.5)**:
     - **Retention Policy**: Admins set the "Shelf Life" for system logs (e.g., 90 days, 1 year, or Infinite). 
     - **Retention Change Grace Period**: 
         - **Logic**: Any change to the retention policy that would result in log deletion triggers a mandatory **7-day Grace Period**.
@@ -341,7 +399,7 @@ The Admin Systems Settings module is a master control center for ADT Hub. It is 
         - **Recovery Window**: This provides a "Safety Buffer" to revert the retention change if it was made in error or by a bad actor before any data is permanently erased.
     - **Immutable Logs**: Once an audit event is recorded, it cannot be edited or deleted by any user account. Entries are only removed by the automated retention purge (after the grace period).
     - **Export for Compliance**: Admins can generate signed PDF or CSV exports of audit trails specifically for external compliance reviews.
-- **System Security (Feature 2.6)**:
+- **System Security (Feature 3.6)**:
     - **Daily Snapshot Rotation**:
         - **Automatic Cycle**: The system generates a full database snapshot once every 24 hours.
         - **3-Day Retention**: Standard snapshots are automatically deleted after **72 hours (3 days)** to optimize storage.
@@ -366,7 +424,7 @@ The Admin Systems Settings module is a master control center for ADT Hub. It is 
         - **Password Storage**: All passwords must be salted and hashed using industry-standard algorithms (e.g., Argon2 or BCrypt). The live database never stores cleartext passwords.
         - **2FA Linkage**:
             - **Provider Agnostic**: The system supports linkage to TOTP (Authenticator Apps) or SMS/Email-based 2FA.
-            - **Mandatory Gating**: Admins can enforce "Mandatory 2FA" for specific high-privilege roles (defined in 2.3).
+            - **Mandatory Gating**: Admins can enforce "Mandatory 2FA" for specific high-privilege roles (defined in 3.3).
             - **Reset Logic**: 2FA resets follow the same "Approval Gate" as high-risk actions to prevent account takeovers via social engineering.
 - **Deduplication Logic**: System blocks duplicate entries in metadata and skill lists to prevent "Data Drift" (e.g., prevents having both "NYC" and "New York City" as locations).
 
@@ -374,7 +432,225 @@ The Admin Systems Settings module is a master control center for ADT Hub. It is 
 
 ---
 
-## Epic 3 – Intake Management
+## Epic 4 – Asset Management
+
+### Overview
+
+The Asset Management module is a dedicated section of the ADT Hub web application and acts as the system of record for all company-owned assets. Authorized users can register assets, assign them to employees using data from the Employee Management module, and track their full lifecycle. The module also supports importing asset data from external sources and attaching invoices for verification, with all records stored centrally and linked to employee profiles.
+
+### Business Objectives
+
+- Maintain a single, reliable source of truth for all company assets
+- Ensure complete asset traceability and audit compliance
+- Reduce asset loss and mismanagement
+- Enable proactive warranty and replacement planning
+- Improve onboarding efficiency through faster asset assignment
+
+### Scope
+
+**In Scope**
+- Asset registration and master data management
+- Asset assignment and reassignment via Employee Management integration
+- Dedicated asset detail page per asset record
+- Immutable asset records (non-deletable; status changes only)
+- Search and filter across all asset records
+- Automated warranty expiry notifications
+- Bulk asset import from external data sources with configurable field-matching criteria
+- Invoice attachment and asset-to-invoice verification
+
+**Out of Scope**
+- Asset procurement workflows and vendor payments
+- Asset depreciation and accounting
+- Asset disposal approval workflows
+
+### Asset Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Available : Admin registers asset or data imported
+    Available --> Assigned : Assigned to employee
+    Assigned --> Available : Returned / Reassigned
+    Assigned --> InRepair : Fault reported
+    InRepair --> Available : Repair complete
+    Available --> Retired : End of life
+    Assigned --> Retired : End of life
+    InRepair --> Retired : Unrepairable
+    Retired --> [*]
+
+    InRepair : In Repair
+```
+
+### Warranty Alert Flow
+
+```mermaid
+flowchart TD
+    A([System Monitors Warranty Dates]) --> B{Expiry within 2 months?}
+    B -- No --> A
+    B -- Yes --> C[Send Alert to Admin / IT / Asset Owner]
+    C --> D{Action Taken?}
+    D -- Yes --> E([Resolved ✓])
+    D -- No --> F[Send Escalation Reminder]
+    F --> D
+
+    style A fill:#1F4E79,color:#fff,stroke:none
+    style E fill:#1F4E79,color:#fff,stroke:none
+```
+
+### Key Features (Priority-Based)
+
+| ID | Feature | Priority | Data Captured | Data Displayed |
+|---|---|---|---|---|
+| **4.1** | **Asset Directory Table View** | High | Click/Navigation | Table format (Sorted by Asset ID by default); Columns: **Asset ID**, **Manufacturer & Model**, **Location**, **Assigned To**, **Status**, **Warranty End Date**, and **Actions**; View Detail (4.3) |
+| **4.2** | **Smart Asset Registration** | High | **Mandatory**: Belongs to ADT, Category, Manufacturer/Model, Local Dates, Location, Status; **Optional**: Serial Number, Vendor, Assigned To, Invoice | **Registration Hub**: Popout modal; **Auto-ID**: `[LOC]-[CAT]-[0001]`; **Integrity**: Real-time uniqueness check; **Validation**: Real-time completion status indicators per section |
+| **4.3** | **Unified Asset Profile** | High | Updates to data groups | **Management Hub**: Detail view with full lifecycle history and deep-linking back to Epic 2 (Employee Profile) |
+| **4.4** | **Advanced Search & Filtering** | High | Multi-field query, Category/Status chips | Fuzzy search across serials/assignees; Column-header search injection; Cached scroll/filter state |
+| **4.5** | **Edit Mode & Bulk Management** | High | Multi-selection set | **Edit Mode UI**: Toggle reveals Actions (Dropdown) and Export; Checklist Selection; Bulk Status Updates; Export (PDF/CSV) |
+| **4.6** | **Warranty Monitoring** | Medium | Alert settings | Automated notifications 2 months prior; Escalation paths; Dashboard summary |
+| **4.7** | **Bulk Data Import** | Medium | External file, Header mapping | Pre-import verification; Conflict logging; **Post-Import Filter**: Auto-filters view to show only newly imported records |
+| **4.8** | **Invoice Attachment** | Medium | Uploaded Invoice, Verification notes | Document storage; Verification status (Verified/Mismatch) |
+
+### Employee Assignment Flow
+
+```mermaid
+flowchart TD
+    A([Admin Opens Asset Record]) --> B[Search Employee by Name or ID]
+    B --> C[Select Employee from Directory]
+    C --> D[Asset Status Updated to Assigned]
+    D --> E[Asset Linked to Employee Profile]
+    E --> F([Assignment Logged in Audit History])
+
+    style A fill:#1F4E79,color:#fff,stroke:none
+    style F fill:#1F4E79,color:#fff,stroke:none
+    style C fill:#2E75B6,color:#fff,stroke:none
+```
+
+### External Data Import Flow
+
+```mermaid
+flowchart TD
+    A([Admin Uploads External Data File]) --> B[System Parses File]
+    B --> C{Does Each Row Meet Matching Criteria?}
+    C -- Yes --> D[Row Queued for Import Preview]
+    C -- No --> E[Row Skipped with Reason Logged]
+    D --> F[Admin Reviews Import Preview]
+    F --> G{Confirmed?}
+    G -- Yes --> H[New Asset Records Created]
+    G -- No --> I[Import Cancelled]
+    H --> J([Assets Available in System])
+
+    style A fill:#1F4E79,color:#fff,stroke:none
+    style J fill:#1F4E79,color:#fff,stroke:none
+    style D fill:#2E75B6,color:#fff,stroke:none
+    style H fill:#2E75B6,color:#fff,stroke:none
+```
+
+**Import matching criteria are configurable by Admin** and define which fields must be present and valid for a record to be accepted into the system.
+
+### Invoice Attachment & Verification Flow
+
+```mermaid
+flowchart TD
+    A([Admin Attaches Invoice to Asset]) --> B[Invoice Stored on Asset Record]
+    B --> C[Admin Initiates Verification]
+    C --> D{Invoice Details Match Asset Record?}
+    D -- Yes --> E[Asset Marked as Invoice Verified ✓]
+    D -- No --> F[Mismatch Flagged for Review]
+    F --> G[Admin Resolves and Re-verifies]
+    G --> D
+
+    style A fill:#1F4E79,color:#fff,stroke:none
+    style E fill:#1F4E79,color:#fff,stroke:none
+    style F fill:#C00000,color:#fff,stroke:none
+```
+
+### Asset Data Captured
+
+| Field | Details |
+|---|---|
+| **Belongs to ADT** | **Mandatory** Boolean toggle (Yes/No) indicating if the asset is company-owned vs third-party |
+| **Asset Category** | **Mandatory** Dropdown (managed in 3.1); Includes Laptop, Monitor, etc. |
+| **Manufacturer & Model** | **Mandatory** Free text (Smart Autocomplete) |
+| **Asset ID** | **Auto-Generated** unique identifier (e.g., IND-LAP-0001); See Feature 3.3 for logic |
+| Serial Number / Asset Tag | Physical manufacturer ID (Optional) |
+| **Procurement Date** | **Mandatory** Date for tracking |
+| Vendor | Procurement source (Optional) |
+| Warranty Start Date | Date for tracking (Optional) |
+| **Warranty End Date** | **Mandatory** Date for tracking; triggers automated alerts (4.6) |
+| Warranty Type | Standard / Extended (Optional) |
+| **Current Status** | **Mandatory** Dropdown (managed in 3.1); Available / Assigned / In Repair / Retired |
+| Assigned To | Linked from Employee Management directory (Optional) |
+| **Location** | **Mandatory** Dropdown (Shared Global List in 3.1) |
+| Invoice Attachments | Uploaded invoices with verification status (Optional) |
+| Import Source | Populated if record was created via external data import |
+| **Notes** | Free text for additional asset details (Optional) |
+
+### Logic Contracts (Data Architecture)
+
+- **Regional Authority**: Epic 4 is the master source for all equipment data.
+- **Asset Directory Table View (Feature 4.1)**:
+    - **Default View**: Read-only directory for all active assets.
+    - **Header Injection**: Clicking a table header automatically injects that column's value into the Advanced Filter (4.4).
+- **Advanced Search & Filtering (Feature 4.4)**:
+    - **Fuzzy Search**: Single bar searching across Serial Number, Manufacturer, Model, and **Assigned To** Name.
+    - **Dropdown Chips**: Category, Status (Available/Assigned/Retired), and Location filtering.
+    - **Universal State Persistence**: Filters, search queries, and scroll positions are strictly preserved during:
+        - Navigation to and from the **Unified Asset Profile** (4.3).
+        - Activation and usage of **Edit Mode** (4.5).
+        - Execution of **Bulk Management** operations (4.5) to avoid losing the targeted dataset.
+- **Edit Mode & Bulk Management (Feature 4.5)**:
+    - **Mode Toggle**: Gated by the `can_access_asset_edit_mode` permission (Epic 3). Toggling ON reveals the **Actions Dropdown** and **Export** button.
+    - **Row Actions**: Reveals **Edit**, **Archive** (Red), and **Audit** (Red) buttons at the row level.
+    - **Bulk Operations**: multi-select checklist appears; allows bulk "Change Status" or "Assign to Location."
+    - **Post-Action Filter**: After a bulk update, the system automatically filters the table to show only the affected records for final verification.
+- **Smart Asset Registration & Integrity (Feature 4.2)**:
+    - **Uniform UI**: Matches the "Add User" modal pattern (Epic 2) for a consistent administrative experience.
+    - **Asset ID Generation**: Upon selection of **Location** and **Asset Category**, the system calculates and displays a **read-only preview** of the Asset ID:
+        - `[First 3 letters of Location]-[First 3 letters of Category]-[4-Digit Incremental ID]` (e.g., `IND-LAP-0001`).
+    - **Real-Time Integrity**:
+        - **Serial Number Check**: Any manually entered Serial Number is checked for uniqueness in real-time.
+        - **ID Conflict Prevention**: Re-verifies ID availability upon final "Save" submission.
+    - **Smart Autocomplete**: Predictive text for **Manufacturer**, **Model**, and **Vendor** fields.
+    - **Draft Persistence**: Form data is cached if the modal is closed without saving.
+    - **Invoice Input**: Dedicated file-upload zone for attaching invoices during creation (Feature 4.8).
+- **Unified Asset Profile (Feature 4.3)**:
+    - **Access Trigger**: This dedicated management view is accessed by selecting the **View** action (4.1) on any asset record.
+    - **Comprehensive Data Display**: Lists every data point captured during registration (4.2):
+        - **Asset Identity**: Auto-Generated **Asset ID**, **Manufacturer & Model**, and physical **Serial Number**.
+        - **Financials**: **Procurement Date**, **Warranty Start & End Dates**, **Warranty Type**, **Vendor**, and **Invoice Attachments** (4.8).
+        - **Governance**: **Belongs to ADT** (Toggle), **Asset Category**, **Location**, and **Notes**.
+        - **Assignment & State**: **Current Status** and **Assigned To** (Deep-link to Epic 2).
+    - **Lifecycle Ledger**: Displays a chronological feed of all status changes, assignments, and repairs (sourced from Epic 8).
+    - **Financial Pane**: Provides a quick-view summary of warranty status (4.6) and invoice verification status (4.8).
+- **Warranty Monitoring (Feature 4.6)**:
+    - **Trigger Logic**: The system initiates automated notifications based on the **Warranty End Date** captured in 4.2.
+    - **Configurability**: The lead time for these alerts (e.g., 60 days) is fetched dynamically from the **Admin System Settings (3.4)**.
+    - **Escalation Sync**: Alerts are routed to the assigned Asset Manager and Escalation Contacts defined in Epic 3.3.
+- **Metadata Sourcing**: Dropdown options (Category, Status, Location) fetched from **Admin System Settings (Epic 3)**.
+- **Audit Integration**: Every registration event is logged with the **Created Asset ID**, administrative user, and timestamp.
+- **Invoice-Asset Mapping (Feature 4.8)**:
+    - **Deep Linkage**: Invoices are linked via a shared database key.
+    - **Cross-Verification**: Verification status is exposed on the asset record.
+
+### Acceptance Criteria
+- **[4.1]** Users can view a complete directory of assets with primary data columns.
+- **[4.2]** System generates a unique Asset ID (IND-LAP-0001) in real-time during registration and enforces serial number uniqueness.
+- **[4.3]** Every asset has a dedicated detail page with full lifecycle and invoice history.
+- **[4.4]** Users can search and filter across all data dimensions with state persistence.
+- **[4.5]** Edit Mode provides gated access to bulk actions and row-level management.
+- **[4.6]** Automated alerts trigger prior to warranty expiry based on configurable thresholds in System Settings (Epic 3).
+- **[4.7]** Bulk import supports matching criteria and pre-import verification, and automatically filters the view to show newly imported records on success.
+- **[3.8]** Invoices can be attached and verified against asset records.
+
+### Success Metrics
+
+- % of assets accurately tracked in the system
+- Reduction in missing or unaccounted assets
+- % of warranty expiries proactively addressed
+- Reduction in onboarding delays due to asset unavailability
+
+---
+
+## Epic 5 – Intake Management
 
 ### Overview
 The Intake Management module is a dedicated section of the ADT Hub web application and serves as the starting point of the hiring lifecycle. It allows recruiters to capture structured hiring information through an online form and automatically generates a Job Requisition and a draft Job Description upon approval. Data entered here is stored centrally and connects to the Employee Management module for skills data.
@@ -393,21 +669,66 @@ The Intake Management module is a dedicated section of the ADT Hub web applicati
 - Validation of mandatory fields
 - Conversion of intake into Job Requisition
 - AI-assisted JD generation based on intake data and existing JD formats
-- AI-generated intake summary saved to the intake record and emailed to hiring managers
 - Status tracking: Draft → Submitted → Approved → Converted
 
 ### Key Features (Priority-Based)
 
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
-| **3.1** | **Configurable Intake Form** | High | Hiring Manager, Job Title, Dept, Openings, Budget, Location, Employment Type, Reason for Hire, Role Level, Key Responsibilities, Hiring Priority | Form summary, Validation status, Approval status |
-| **3.2** | **Skill Tagging** | Medium | Skill name (search/create), Proficiency level | Skill labels, Global skill library indicators |
-| **3.3** | **Approval Workflow** | High | Approver selection, Approval/Rejection comments | Status (Draft → Submitted → Approved), Approval history |
-| **3.4** | **AI JD Generation** | Medium | Tone/Style preferences (optional) | Draft Job Description content |
-| **3.5** | **AI Intake Summary** | Medium | N/A (Generated from 3.1) | Contextual summary, Hiring Manager email preview |
-| **3.6** | **Audit Trail** | Low | N/A (System log) | Change log (Who/When/What), Prior versions |
-| **3.7** | **Handoff to ATS** | High | Target Job Requisition settings | Link to generated Job Req, Handoff timestamp |
-| **3.8** | **Role-Based Access** | High | User permissions configuration | User-specific view/edit permissions |
+| **5.1** | **Intake Directory Table** | High | Click/Navigation | Table format; Columns: **Role Title**, **Hiring Manager**, **Hiring Type**, **Department**, **Location**, **Positions**, **Status**, **Creation Date**, and **Actions**; View Profile (5.3), **Export (PDF/CSV)** |
+| **5.2** | **Intake Creation Modal** | High | Multi-section attributes (See 5.2 Schema Below) | **Creation Hub**: Popout modal; **Auto-ID**: INT-XXXX (System-gen on save); **Validation**: Real-time completion status indicators per section |
+| **5.3** | **Unified Intake Profile** | High | Record updates | **Management Hub**: Detail view with full context and Audit History (5.10). |
+| **5.4** | **Skill Tagging** | Medium | Skill name (search/create), Proficiency level | Skill labels, Global skill library indicators |
+| **5.5** | **Advanced Search & Filters** | High | Multi-field query, Category/Status chips | Fuzzy search across managers/titles; Column-header search injection; Cached scroll/filter state |
+| **5.6** | **Intake Edit Mode & Bulk Management** | High | Multi-selection set | **Edit Mode UI**: Toggle reveals Actions (Dropdown) and Export; Checklist Selection; Bulk Status Updates; Export (PDF/CSV) |
+| **5.7** | **Approval Workflow** | High | Approver selection, Approval/Rejection comments | Status (Draft → Submitted → Approved), Approval history |
+| **5.8** | **Role-Based Access** | High | User permissions configuration | User-specific view/edit permissions |
+| **5.9** | **AI JD Generation** | Low | Tone/Style preferences (optional) | Draft Job Description content |
+| **5.10** | **Audit Trail** | Low | N/A (System log) | Change log (Who/When/What), Prior versions |
+| **5.11** | **Handoff to ATS** | High | Target Job Requisition settings | Link to generated Job Req, Handoff timestamp |
+
+### Feature 5.2 – Detailed Field Schema & Logic (Creation Modal)
+
+The Intake Creation Modal is a dynamic UI component governed by the following data types and validation rules:
+
+| Section | Field | Type | Logic / UI Behavior |
+|---|---|---|---|
+| **Identity** | **Intake ID** | Auto-Generated | Unique identifier (e.g., INT-0001). **System-generated on save; hidden from form UI.** |
+| **Stakeholders** | **Hiring Manager** | String (Name/Email) | External contact fields (Not linked to Epic 2). |
+| | **Department** | Searchable Text | Fuzzy-search autocomplete; suggests existing departments from **Epic 3.1**. |
+| | **Preferred Panelists** | Searchable Text | Search/Insert tags for internal stakeholders. |
+| | **Recruiting Agencies** | Auto-complete | Dynamic search against the global vendor list (specifically for external agencies). |
+| **Role Specs** | **Number of Openings** | Number Stepper | Up/Down arrows; Minimum value: 1. |
+| | **Min/Max Budget** | Dual Number Input | **Validation**: Submission blocked if `Min > Max`. |
+| | **Currency** | Dropdown (3.1) | Managed in global settings; adjacent to budget inputs. |
+| | **Min Experience** | Number (Years) | Captures required years of experience as an integer. |
+| | **Location** | Dropdown (3.1) | Primary work location (Shared Global List). |
+| | **Work Model** | Dropdown (3.1) | Remote / Hybrid / In-person. |
+| | **Hire Type** | Dropdown (3.1) | Full Time / Staff Augmentation / Part Time. |
+| | **Skills (Mandatory)** | Tag Cloud (3.2) | Primary requirement tags. Atomic persistence logic. |
+| | **Skills (Nice-to-Have)**| Tag Cloud (3.2) | Secondary requirement tags. Independent of Mandatory list. |
+| **Justification**| **Budget Approved** | Checkbox | Controls the "Qualified" status of the intake. |
+| | **Client-Facing** | Checkbox | Boolean flag for internal vs customer-facing roles. |
+| | **Client** | Searchable Text | Fuzzy-search autocomplete for the associated client. |
+| | **Pref. Start Date** | Date Picker | Standard calendar input for target onboarding. |
+| **Context** | **Key Perks / Benefits**| Free Text | Narrative for JD highlighting (e.g., Work from home). |
+| | **Client Expectations**| Free Text | Project-specific criteria or SLA requirements. |
+| | **Intake Call Notes** | Free Text | Catch-all for recruiter/manager discussion points. |
+### Feature 5.3 – Unified Intake Profile (Management Hub)
+
+The Unified Intake Profile is the single point of truth for a specific hiring requirement once saved. It provides a read/edit interface for all data captured in 5.2 and coordinates the lifecycle of the record.
+
+| Component | Logic / UI Behavior |
+|---|---|
+| **Data Review** | Read-only view of all fields from 5.2. Toggle "Edit Mode" to modify (permissions gated). |
+| **Approval Banner** | Persistent header for **Submitted** records. Shows "Approve" / "Reject" buttons for authorized users (5.7). |
+| **Audit History (5.10)** | Expandable sidebar or tab showing a chronological log of changes (Who/When/What). |
+| **AI JD Preview (5.9)** | Direct access to the generated Job Description draft for refinement. |
+| **ATS Handoff (5.11)** | High-visibility action button for **Approved** intakes to trigger Job Requisition creation. |
+| **Export Function** | **PDF/CSV Export**: Generate a document of the current record (single record export). Available in both View and Edit modes. |
+| **Version Control** | Restore capability for previous record states via the Audit Trail. |
+
+---
 
 ### Skill Tagging – Behaviour (Atomic Persistence)
 ```mermaid
@@ -420,7 +741,7 @@ flowchart TD
     F --> G[New Label Staged in Current Session]
     G --> E
     E --> H{Is Intake Saved / Approved?}
-    H -- Yes --> I[New Skills Persisted to Global Library (2.2)]
+    H -- Yes --> I[New Skills Persisted to Global Library (3.2)]
     H -- No/Cancel --> J[New Skills Discarded]
     I --> K[Label Searchable & Reusable on Future Intakes]
 
@@ -430,20 +751,6 @@ flowchart TD
     style I fill:#2E75B6,color:#fff,stroke:none
 ```
 
-### AI Intake Summary – Flow
-```mermaid
-flowchart TD
-    A([Intake Form Completed]) --> B[AI Generates Summary in JD Context]
-    B --> C[Summary Saved to Intake Record]
-    C --> D{Send to Hiring Manager?}
-    D -- Yes --> E[Email Sent with Summary Attached]
-    D -- No --> F[Summary Viewable on Intake Page]
-    E --> F
-
-    style A fill:#1F4E79,color:#fff,stroke:none
-    style B fill:#2E75B6,color:#fff,stroke:none
-    style E fill:#2E75B6,color:#fff,stroke:none
-```
 
 ### User Flow
 ```mermaid
@@ -478,20 +785,20 @@ stateDiagram-v2
 ```
 
 ### Acceptance Criteria
-- **[3.1]** Recruiters can create and submit a complete intake form with all required data fields
-- **[3.1]** Mandatory fields are validated before submission
-- **[3.2]** Skills can be typed and matched against the existing label library; new labels can be created and are immediately available for reuse
-- **[3.2]** All skill labels are searchable and filterable across intake records
-- **[3.3]** Approval workflow routes intake to the correct approver (where configured)
-- **[3.7]** Job Requisition is auto-created upon approval (Handoff to ATS)
-- **[3.4]** Draft JD is generated in the existing organisation format using AI
-- **[3.5]** AI-generated intake summary is saved to the intake record
-- **[3.5]** Summary can be emailed to the hiring manager directly from the intake
-- **[3.6]** All intake records include a full audit trail and version history
+- **[5.1]** Users can view a centralized directory of all intake records in a table format with key metadata.
+- **[5.2]** Recruiters can initiate a creation modal with all required fields (Manager, Budget, etc.) to capture new hiring requirements.
+- **[5.3]** Users can open a dedicated profile for any intake record to see full context.
+- **[5.4]** Skills can be typed and matched against the existing label library; new labels are persisted to the global library (3.2) only upon intake save.
+- **[5.5]** The directory table supports fuzzy search, column-header filters, and persistent filter states.
+- **[5.7]** Approval workflow routes intake to the correct approver (where configured) and updates the status across the directory.
+- **[5.8]** Access to sensitive fields and administrative actions is strictly gated by role-based permissions.
+- **[5.11]** Approved intakes can be successfully converted/handed off to the ATS module, creating a linked Job Requisition.
+- **[5.9]** Draft JD is generated in the existing organisation format using AI based on data captured in the modal (5.2).
+- **[5.10]** All intake records include a full audit trail of edits, status changes, and version history.
 
 ---
 
-## Epic 4 – Onboarding Management
+## Epic 6 – Onboarding Management
 
 ### Business Objectives
 
@@ -562,13 +869,58 @@ flowchart LR
 
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
-| **4.1** | **Workflow Template Builder** | High | Template name, Tasks, Assigned teams, Due rules, Dependencies, Notifications | Template configuration list, Node-based workflow preview |
-| **4.2** | **Template Versioning** | Medium | N/A (Auto-versioning) | Version history, "Active" vs "Draft" status |
-| **4.3** | **Task Dependency Management** | High | Dependency mapping (Task A depends on Task B) | Visual dependency tree, Locked/Unlocked task states |
-| **4.4** | **Multi-Team Assignment** | High | Target team (IT, HR, Admin, etc.) | Team-specific task counts, Overdue items by team |
-| **4.5** | **SLA Enforcement** | Medium | Target completion datetime | SLA countdown, Overdue escalation status |
-| **4.6** | **Real-Time Dashboard** | High | N/A (Aggregated data) | Progress percentage per joiner, Global onboarding health |
-| **4.7** | **Audit Trail** | Low | N/A (System log) | Timestamped task completions, Ownership changes |
+| **6.1** | **Onboarding Dashboard** | High | Click/Navigation | **Directory Table**: Columns: **Joiner Name**, **Role**, **Join Date**, **Progress (%)**, **Active Team**, **Status**; Access Profile (6.3) |
+| **6.2** | **Workflow Template Hub** | High | Template name, Tasks, Assigned teams, Due rules, Dependencies, Notifications | **Management Hub**: List of active/draft templates; Versioning (6.5); Preview node-based workflows |
+| **6.3** | **Unified Onboarding Profile** | High | Task sign-offs, Comments | **Management Hub**: Individual joiner progress; Interactive checklist; Dependency status (6.4); Audit Trail (6.8) |
+| **6.4** | **Task Dependency Logic** | High | Dependency mapping | Real-time locking/unlocking of tasks; Visual dependency tree |
+| **6.5** | **Template Versioning** | Medium | N/A (Auto-versioning) | Version history, "Active" vs "Draft" status |
+| **6.6** | **Multi-Team Assignment** | High | Target team (IT, HR, Admin, etc.) | Team-specific task pools; Role-based task visibility |
+| **6.7** | **SLA & Escalation Monitoring** | Medium | Target completion datetime | SLA countdown; Overdue escalation status; Proactive alerts |
+| **6.8** | **Data Persistence (Epic 2)** | High | Final status, Completed tasks, Signed-off documents | **Syncing**: Once status is **Complete**, the onboarding data is persisted to the **Employee Profile (2.4)** as a permanent history record. |
+| **6.9** | **Audit Trail** | Low | N/A (System log) | Change log: Task completions, Ownership shifts, Profile edits |
+
+### Feature 6.1 – Onboarding Dashboard (Directory Table)
+
+The Onboarding Dashboard provides a global view of all active joiners and their setup status.
+
+| Column | Logic / UI Behavior |
+|---|---|
+| **Joiner Name** | Employee name from **Epic 2 (2.2/2.4)**. Links to 6.3. |
+| **Role & Dept** | Captured from the associated employee record. |
+| **Join Date** | The target start date (SLA reference). |
+| **Active Team** | The team currently responsible for the "Blocked" task (IT, HR, Admin). |
+| **Progress (%)** | Visual progress bar based on (Completed Tasks / Total Tasks). |
+| **Status** | **Pre-boarding** (Pending Join), **Day 1** (Active Start), **Complete** (Transitions Employee Status to **Active**). |
+| **Actions** | View Profile (6.3), **Export (PDF/CSV)** standalone reports. |
+
+---
+
+### Feature 6.2 – Workflow Template Hub
+
+A centralized editor for defining the "Blueprints" of onboarding.
+
+| Logic | UI Behavior |
+|---|---|
+| **Node-Based Editor** | Visual canvas to drag-and-drop tasks and define dependency arrows (6.4). |
+| **Role Linking** | Templates can be assigned to trigger for specific **Job Titles** or **Departments**. |
+| **SLA Rules** | Define hours/days completion targets per task (relative to Join Date). |
+| **Versioning (6.5)** | Iterative saving. "Publish" makes a template the active system default. |
+| **Global Sync** | Updating a template only affects **future** joiners (In-progress records are locked to their initiation version). |
+
+---
+
+### Feature 6.3 – Unified Onboarding Profile (Management Hub)
+
+The operational workspace for completing a joiner's setup.
+
+| Component | Logic / UI Behavior |
+|---|---|
+| **Task Checklist** | Grouped by **Team Ownership**. Interactive checkboxes for sign-offs. |
+| **Dependency Guard** | Tasks are greyed out and unclickable until their predecessors are completed. |
+| **Communication Log** | Inline comments per task for cross-team coordination (IT to HR). |
+| **Day-1 Ready Badge** | Turns **Green** only when all "Critical Path" tasks (Email, Device, Access) are done. |
+| **Manual Reassignment**| Managers can re-route specific tasks to different team members. |
+| **Persistence Sync** | Upon full sign-off, the checklist and final report are archived in the **Employee's Document Center (2.4)**. |
 
 ### Template Structure
 
@@ -605,13 +957,13 @@ mindmap
 | Hiring Manager | View onboarding status for their new joiners |
 
 ### Acceptance Criteria
-- **[4.1]** Admins can create and edit onboarding templates with complex rules (tasks, owners, due dates).
-- **[4.2]** System supports template versioning, ensuring ongoing processes are not interrupted by updates.
-- **[4.3]** Tasks are correctly gated by dependencies, only becoming active/notified once prerequisites are met.
-- **[4.4]** Tasks are automatically assigned and distributed to the correct cross-functional teams.
-- **[4.5]** SLA monitoring triggers notifications and visual flags for overdue onboarding items.
-- **[4.6]** Stakeholders can access a real-time dashboard showing the status of all active new joiners.
-- **[4.7]** Full audit logs capture every change in task status and template configuration.
+- **[6.1]** Admins can create and edit onboarding templates with complex rules (tasks, owners, due dates).
+- **[6.2]** System supports template versioning, ensuring ongoing processes are not interrupted by updates.
+- **[6.3]** Tasks are correctly gated by dependencies, only becoming active/notified once prerequisites are met.
+- **[6.4]** Tasks are automatically assigned and distributed to the correct cross-functional teams.
+- **[6.5]** SLA monitoring triggers notifications and visual flags for overdue onboarding items.
+- **[6.6]** Stakeholders can access a real-time dashboard showing the status of all active new joiners.
+- **[6.7]** Full audit logs capture every change in task status and template configuration.
 
 ### Success Metrics
 
@@ -621,177 +973,61 @@ mindmap
 - New joiner satisfaction score
 - Reduction in manual follow-ups by recruiters
 
+
 ---
 
-## Epic 5 – Asset Management
+## Epic 7 – Project Management
 
 ### Overview
-
-The Asset Management module is a dedicated section of the ADT Hub web application and acts as the system of record for all company-owned assets. Admins can register assets, assign them to employees using data from the Employee Management module, and track their full lifecycle. The module also supports importing asset data from external sources and attaching invoices for verification, with all records stored centrally and linked to employee profiles.
-
-### Business Objectives
-
-- Maintain a single, reliable source of truth for all company assets
-- Ensure complete asset traceability and audit compliance
-- Reduce asset loss and mismanagement
-- Enable proactive warranty and replacement planning
-- Improve onboarding efficiency through faster asset assignment
-
-### Scope
-
-**In Scope**
-- Asset registration and master data management
-- Asset assignment and reassignment via Employee Management integration
-- Dedicated asset detail page per asset record
-- Immutable asset records (non-deletable; status changes only)
-- Search and filter across all asset records
-- Automated warranty expiry notifications
-- Bulk asset import from external data sources with configurable field-matching criteria
-- Invoice attachment and asset-to-invoice verification
-
-**Out of Scope**
-- Asset procurement workflows and vendor payments
-- Asset depreciation and accounting
-- Asset disposal approval workflows
-
-### Asset Lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> Available : Admin registers asset or data imported
-    Available --> Assigned : Assigned to employee
-    Assigned --> Available : Returned / Reassigned
-    Assigned --> InRepair : Fault reported
-    InRepair --> Available : Repair complete
-    Available --> Retired : End of life
-    Assigned --> Retired : End of life
-    InRepair --> Retired : Unrepairable
-    Retired --> [*]
-
-    InRepair : In Repair
-```
-
-### Warranty Alert Flow
-
-```mermaid
-flowchart TD
-    A([System Monitors Warranty Dates]) --> B{Expiry within 2 months?}
-    B -- No --> A
-    B -- Yes --> C[Send Alert to Admin / IT / Asset Owner]
-    C --> D{Action Taken?}
-    D -- Yes --> E([Resolved ✓])
-    D -- No --> F[Send Escalation Reminder]
-    F --> D
-
-    style A fill:#1F4E79,color:#fff,stroke:none
-    style E fill:#1F4E79,color:#fff,stroke:none
-```
+The Project Management module is the operational engine for defining and tracking projects across ADT Hub. While the Productivity module focuses on financial P&L, this module focuses on the project lifecycle, team assignments, and real-time tagging. It serves as the master source for project labels used in the Employee and Timesheet modules.
 
 ### Key Features (Priority-Based)
 
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
-| **5.1** | **Asset Registration** | High | Category, Manufacturer, Model, Serial Number, Procurement Date, Vendor, Warranty Dates | Asset master record, Form validation status |
-| **5.2** | **Asset Detail Page** | High | N/A (Aggregated data) | Full history, Status timeline, Linked invoices, Assignment history |
-| **5.3** | **Employee Assignment** | High | Employee ID (Lookup), Assignment Date | Link to employee profile, Current custodian name |
-| **5.4** | **Lifecycle Tracking** | High | Status transition (Available → Assigned → etc.) | Status badges, Transition history logs |
-| **5.5** | **Global Search & Filters** | High | Search query, Category filter, Status filter | Filtered asset grid |
-| **5.6** | **Warranty Alerts** | Medium | Alert recipient settings | Warranty expiry dashboard, Email notification preview |
-| **5.7** | **Bulk Data Import** | Medium | CSV/External file, Field mapping | Import preview, Success/Failure logs per row |
-| **5.8** | **Invoice Attachment** | Medium | Uploaded Invoice file, Verification notes | Attached document list, Verification status (Verified/Mismatch) |
+| **7.1** | **Project Master Table** | High | Project Name, Client, Category, Status, Description | Searchable list of all projects; Edit/View actions |
+| **7.2** | **Project Creation Popout** | High | Name, Client, Internal Lead, Start Date | Compact form for inline creation (linked to Epic 2) |
+| **7.3** | **Team Assignment View** | Medium | N/A (Linked from Epic 2) | Aggregated list of all employees tagged to a specific project |
+| **7.4** | **Project Status Tracking** | Medium | Status (Pipeline → Active → Completed → Cancelled) | Visual status badges; Timeline of status changes |
+| **7.5** | **Tag Management** | High | Tag color, Category labels | Global project tag library; Usage counts |
 
-### Employee Assignment Flow
-
+### Smart Assignment Flow (Cross-Module)
 ```mermaid
-flowchart TD
-    A([Admin Opens Asset Record]) --> B[Search Employee by Name or ID]
-    B --> C[Select Employee from Directory]
-    C --> D[Asset Status Updated to Assigned]
-    D --> E[Asset Linked to Employee Profile]
-    E --> F([Assignment Logged in Audit History])
-
-    style A fill:#1F4E79,color:#fff,stroke:none
-    style F fill:#1F4E79,color:#fff,stroke:none
-    style C fill:#2E75B6,color:#fff,stroke:none
+sequenceDiagram
+    participant Admin
+    participant E2 as Employee Module (2.2)
+    participant E7 as Project Module (7.2)
+    
+    Admin->>E2: Search for Project Tag
+    alt Tag Exists
+        E2->>Admin: Show matches
+        Admin->>E2: Select & Assign
+    else Tag Missing
+        Admin->>E2: Click "Create New Project"
+        E2->>E7: Trigger Inline Form Expansion
+        Admin->>E7: Fill project details (optional)
+        E7->>E7: Save to Master Project Table
+        E7->>E2: Auto-assign new tag to Employee
+    end
 ```
-
-### External Data Import Flow
-
-```mermaid
-flowchart TD
-    A([Admin Uploads External Data File]) --> B[System Parses File]
-    B --> C{Does Each Row Meet Matching Criteria?}
-    C -- Yes --> D[Row Queued for Import Preview]
-    C -- No --> E[Row Skipped with Reason Logged]
-    D --> F[Admin Reviews Import Preview]
-    F --> G{Confirmed?}
-    G -- Yes --> H[New Asset Records Created]
-    G -- No --> I[Import Cancelled]
-    H --> J([Assets Available in System])
-
-    style A fill:#1F4E79,color:#fff,stroke:none
-    style J fill:#1F4E79,color:#fff,stroke:none
-    style D fill:#2E75B6,color:#fff,stroke:none
-    style H fill:#2E75B6,color:#fff,stroke:none
-```
-
-**Import matching criteria are configurable by Admin** and define which fields must be present and valid for a record to be accepted into the system.
-
-### Invoice Attachment & Verification Flow
-
-```mermaid
-flowchart TD
-    A([Admin Attaches Invoice to Asset]) --> B[Invoice Stored on Asset Record]
-    B --> C[Admin Initiates Verification]
-    C --> D{Invoice Details Match Asset Record?}
-    D -- Yes --> E[Asset Marked as Invoice Verified ✓]
-    D -- No --> F[Mismatch Flagged for Review]
-    F --> G[Admin Resolves and Re-verifies]
-    G --> D
-
-    style A fill:#1F4E79,color:#fff,stroke:none
-    style E fill:#1F4E79,color:#fff,stroke:none
-    style F fill:#C00000,color:#fff,stroke:none
-```
-
-### Asset Data Captured
-
-| Field | Details |
-|---|---|
-| Asset Category | Laptop, Headphones, Monitor, Peripherals, etc. |
-| Manufacturer & Model | Free text |
-| Serial Number / Asset Tag | Unique identifier |
-| Procurement Date | Date of purchase |
-| Vendor | Optional |
-| Warranty Start & End Date | Used for automated alerts |
-| Warranty Type | Standard / Extended |
-| Current Status | Available / Assigned / In Repair / Retired |
-| Assigned Employee | Linked from Employee Management directory; current and historical |
-| Location | Office / Remote / Warehouse |
-| Invoice Attachments | Uploaded invoices with verification status (Unverified / Verified / Mismatch) |
-| Import Source | Populated if record was created via external data import; includes import date |
-| Notes & Attachments | Warranty documents and general notes |
 
 ### Acceptance Criteria
-- **[5.1]** Admins can create comprehensive asset records with required procurement and warranty data.
-- **[5.2]** Every asset has a dedicated detail page showing its complete lifecycle and financial documentation.
-- **[5.3]** Assets can be assigned to employees via a directory lookup, with immediate profile linking.
-- **[5.4]** Records are immutable; status changes are tracked in a non-deletable history log.
-- **[5.5]** Users can search and filter assets across all data dimensions (category, status, custodian).
-- **[5.6]** Automated alerts trigger 2 months prior to warranty expiry with escalation paths.
-- **[5.7]** Bulk import supports admin-defined matching criteria and provides a pre-import verification preview.
-- **[5.8]** Invoices can be attached and verified against asset records, flagging any discrepancies for review.
-
-### Success Metrics
-
-- % of assets accurately tracked in the system
-- Reduction in missing or unaccounted assets
-- % of warranty expiries proactively addressed
-- Reduction in onboarding delays due to asset unavailability
+- **[7.1]** Admins can manage a master list of all projects with full operational details.
+- **[7.2]** The module provides a lightweight endpoint for inline project creation within other modules.
+- **[7.3]** Users can view a "Project Team" list showing everyone currently assigned to a project tag.
+- **[7.4]** Projects can be transitioned through a standard lifecycle with status history.
+- **[7.5]** Project tags support custom styling (colors) to easily distinguish between categories.
 
 ---
 
-## Epic 6 – Timesheets
+## Epic 8 – Audit & Logging
+
+### Overview
+System-wide tracking of user actions and record changes for compliance.
+
+---
+
+## Epic 9 – Timesheets [Low Priority]
 
 ### Overview
 A streamlined module for employees to log working hours against specific projects, ensuring accurate project costing and billable hour tracking.
@@ -800,26 +1036,26 @@ A streamlined module for employees to log working hours against specific project
 
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
-| **6.1** | **Weekly Timesheet Entry** | High | Project selection, Hours per day (Mon-Sun), Notes | Weekly grid view, Total hours summary |
-| **6.2** | **Billable Tracking** | High | Billable toggle per entry | Billable vs Non-billable color coding |
-| **6.3** | **CSV Export** | High | Export date range | Downloadable CSV file (Finance-ready) |
-| **6.4** | **Validation Rules** | High | N/A (Client-side validation) | Error messages for missing data or weekend entries |
-| **6.5** | **RBAC Controls** | High | N/A (User role) | View/Edit/Delete restrictions based on role |
+| **9.1** | **Weekly Timesheet Entry** | High | Project selection, Hours per day (Mon-Sun), Notes | Weekly grid view, Total hours summary |
+| **9.2** | **Billable Tracking** | High | Billable toggle per entry | Billable vs Non-billable color coding |
+| **9.3** | **CSV Export** | High | Export date range | Downloadable CSV file (Finance-ready) |
+| **9.4** | **Validation Rules** | High | N/A (Client-side validation) | Error messages for missing data or weekend entries |
+| **9.5** | **RBAC Controls** | High | N/A (User role) | View/Edit/Delete restrictions based on role |
 
 ### Logic Contracts (from ADTHUB)
 - **Current Week Calculation:** Sunday-correction logic (Sunday belongs to the ending week).
 - **CSV Format:** 6-column structure: `Date, Project, Hours, Notes, Status, Employee`.
 
 ### Acceptance Criteria
-- **[6.1]** Employees can log their hours against specific projects using a standard 7-day grid.
-- **[6.2]** System defaults to billable but allows granular per-entry overriding.
-- **[6.3]** Finance users can export a CSV that follows the exact 6-column architecture defined in the contracts.
-- **[6.4]** Submission is blocked if mandatory fields (hours, projects) are missing or if weekend entries are detected.
-- **[6.5]** Admins have full CRUD access to all timesheets, while employees can only modify their own draft/rejected records.
+- **[9.1]** Employees can log their hours against specific projects using a standard 7-day grid.
+- **[9.2]** System defaults to billable but allows granular per-entry overriding.
+- **[9.3]** Finance users can export a CSV that follows the exact 6-column architecture defined in the contracts.
+- **[9.4]** Submission is blocked if mandatory fields (hours, projects) are missing or if weekend entries are detected.
+- **[9.5]** Admins have full CRUD access to all timesheets, while employees can only modify their own draft/rejected records.
 
 ---
 
-## Epic 7 – Productivity Management
+## Epic 10 – Productivity Management [Low Priority]
 
 ### Overview
 Build a Productivity Management module within ADT Hub that provides admins with centralized control and visibility into projects, employee cost structures, and project-level P&L by integrating project definitions, employee economics, and time-based inputs from the Timesheets module. This module serves as an admin-only financial and operational control layer.
@@ -838,10 +1074,10 @@ Build a Productivity Management module within ADT Hub that provides admins with 
 
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
-| **7.1** | **Project Definition & Management** | High | Project Name, Client, Duration, PM/Sales Manager, Discount | Master project list, Status (Planned/Active/Closed) |
-| **7.2** | **Employee Commercial data** | High | Employee, Location, Annual Cost, Margin %, Local/Base Rates | Employee commercial grid, Multi-currency cost views |
-| **7.3** | **Project P&L Tracking** | High | Role assignments, Billable/Base Rates, Effective dates | Projected Revenue, Earnings (Before Tax), Margin % |
-| **7.4** | **Timesheet Integration** | High | N/A (Approval status in Epic 6) | Revenue/Cost calculations based on approved hours |
+| **10.1** | **Project Definition & Management** | High | Project Name, Client, Duration, PM/Sales Manager, Discount | Master project list, Status (Planned/Active/Closed) |
+| **10.2** | **Employee Commercial data** | High | Employee, Location, Annual Cost, Margin %, Local/Base Rates | Employee commercial grid, Multi-currency cost views |
+| **10.3** | **Project P&L Tracking** | High | Role assignments, Billable/Base Rates, Effective dates | Projected Revenue, Earnings (Before Tax), Margin % |
+| **10.4** | **Timesheet Integration** | High | N/A (Approval status in Epic 9) | Revenue/Cost calculations based on approved hours |
 
 ### Timesheets Integration (Dependency)
 - Actual time spent is sourced from the **Timesheets** module.
@@ -870,11 +1106,11 @@ flowchart TD
 - **Projected Earnings** = Revenue – Cost – Discount
 
 ### Acceptance Criteria
-- **[7.1]** Admins can create and manage project master data with full duration and stakeholder tracking.
-- **[7.2]** System maintains a specialized commercial view for employees, supporting multi-currency and historic rate tracking.
-- **[7.3]** Project P&L accurately displays projected vs. actual revenue and margin based on effective date rules.
-- **[7.4]** Approved timesheet hours flow linearly into Productivity calculators without manual re-entry.
-- **[7.3]** All financial and margin calculations are auditable and restricted to users with Admin roles.
+- **[10.1]** Admins can create and manage project master data with full duration and stakeholder tracking.
+- **[10.2]** System maintains a specialized commercial view for employees, supporting multi-currency and historic rate tracking.
+- **[10.3]** Project P&L accurately displays projected vs. actual revenue and margin based on effective date rules.
+- **[10.4]** Approved timesheet hours flow linearly into Productivity calculators without manual re-entry.
+- **[10.3]** All financial and margin calculations are auditable and restricted to users with Admin roles.
 
 ### Audit & Compliance
 - Historical rate and margin changes are retained.
@@ -893,58 +1129,9 @@ flowchart TD
 - Time taken to identify low-margin projects.
 - Leadership adoption of the module.
 
-## Epic 8 – Project Management
-
-### Overview
-The Project Management module is the operational engine for defining and tracking projects across ADT Hub. While the Productivity module focuses on financial P&L, this module focuses on the project lifecycle, team assignments, and real-time tagging. It serves as the master source for project labels used in the Employee and Timesheet modules.
-
-### Key Features (Priority-Based)
-
-| ID | Feature | Priority | Data Captured | Data Displayed |
-|---|---|---|---|---|
-| **8.1** | **Project Master Table** | High | Project Name, Client, Category, Status, Description | Searchable list of all projects; Edit/View actions |
-| **8.2** | **Project Creation Popout** | High | Name, Client, Internal Lead, Start Date | Compact form for inline creation (linked to Epic 1) |
-| **8.3** | **Team Assignment View** | Medium | N/A (Linked from Epic 1) | Aggregated list of all employees tagged to a specific project |
-| **8.4** | **Project Status Tracking** | Medium | Status (Pipeline → Active → Completed → Cancelled) | Visual status badges; Timeline of status changes |
-| **8.5** | **Tag Management** | High | Tag color, Category labels | Global project tag library; Usage counts |
-
-### Smart Assignment Flow (Cross-Module)
-```mermaid
-sequenceDiagram
-    participant Admin
-    participant E1 as Employee Module (1.2)
-    participant E8 as Project Module (8.2)
-    
-    Admin->>E1: Search for Project Tag
-    alt Tag Exists
-        E1->>Admin: Show matches
-        Admin->>E1: Select & Assign
-    else Tag Missing
-        Admin->>E1: Click "Create New Project"
-        E1->>E8: Trigger Inline Form Expansion
-        Admin->>E8: Fill project details (optional)
-        E8->>E8: Save to Master Project Table
-        E8->>E1: Auto-assign new tag to Employee
-    end
-```
-
-### Acceptance Criteria
-- **[8.1]** Admins can manage a master list of all projects with full operational details.
-- **[8.2]** The module provides a lightweight endpoint for inline project creation within other modules.
-- **[8.3]** Users can view a "Project Team" list showing everyone currently assigned to a project tag.
-- **[8.4]** Projects can be transitioned through a standard lifecycle with status history.
-- **[8.5]** Project tags support custom styling (colors) to easily distinguish between categories.
-
 ---
 
-## Epic 9 – Audit & Logging
-
-### Overview
-System-wide tracking of user actions and record changes for compliance.
-
----
-
-## Epic 10 – ATS & Job Management
+## Epic 11 – ATS & Job Management [Low Priority]
 
 ### Overview
 This module is the operational engine for the hiring process, taking approved Job Requisitions from the Intake Management module and transforming them into active job vacancies. It focuses on tracking the status of these jobs and managing candidates through the recruitment funnel.
@@ -953,12 +1140,12 @@ This module is the operational engine for the hiring process, taking approved Jo
 
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
-| **10.1** | **Job Requisition Hub** | High | Requisition status updates | List of requisitions, status indicators (Draft, Active, etc.) |
-| **10.2** | **Vacancy Tracking** | High | Hiring Manager, Budget, Priority (inherited), Posting dates | Vacancy details, Priority level, Days open |
-| **10.3** | **AI Resume Parsing** | Medium | Uploaded CV/Resume file | Candidate Name, Email, Phone, LinkedIn profile, Parsed skills |
-| **10.4** | **Candidate Kanban** | High | Candidate stage (Drag-and-drop) | Candidate cards by stage, Total count per stage |
-| **10.5** | **Advanced Filtering** | Medium | Filter criteria (Skills, Proficiency, Location) | Filtered list of candidates |
-| **10.6** | **Interview Feedback** | Medium | Interviewer name, Rating (1-5), Qualitative comments | Feedback history, Average rating per candidate |
+| **11.1** | **Job Requisition Hub** | High | Requisition status updates | List of requisitions, status indicators (Draft, Active, etc.) |
+| **11.2** | **Vacancy Tracking** | High | Hiring Manager, Budget, Priority (inherited), Posting dates | Vacancy details, Priority level, Days open |
+| **11.3** | **AI Resume Parsing** | Medium | Uploaded CV/Resume file | Candidate Name, Email, Phone, LinkedIn profile, Parsed skills |
+| **11.4** | **Candidate Kanban** | High | Candidate stage (Drag-and-drop) | Candidate cards by stage, Total count per stage |
+| **11.5** | **Advanced Filtering** | Medium | Filter criteria (Skills, Proficiency, Location) | Filtered list of candidates |
+| **11.6** | **Interview Feedback** | Medium | Interviewer name, Rating (1-5), Qualitative comments | Feedback history, Average rating per candidate |
 
 ### Job Lifecycle
 ```mermaid
@@ -979,12 +1166,12 @@ stateDiagram-v2
 - **Phone Extraction:** Supports international formats, 10-digit US, and parentheses while excluding years (e.g., "2024").
 
 ### Acceptance Criteria
-- **[10.1]** Users can view a centralized hub of all job requisitions with correct status mapping.
-- **[10.2]** Vacancy records accurately inherit data from the Intake module and allow for priority tracking.
-- **[10.3]** AI parsing correctly extracts contact information and professional links from standard CV formats.
-- **[10.4]** Recruiters can move candidates between stages via drag-and-drop, with immediate state persistence.
-- **[10.5]** Advanced searches accurately filter the candidate pool based on skill tags and proficiency levels.
-- **[10.6]** Interviewers can submit structured feedback that is immediately viewable on the candidate's profile.
+- **[11.1]** Users can view a centralized hub of all job requisitions with correct status mapping.
+- **[11.2]** Vacancy records accurately inherit data from the Intake module and allow for priority tracking.
+- **[11.3]** AI parsing correctly extracts contact information and professional links from standard CV formats.
+- **[11.4]** Recruiters can move candidates between stages via drag-and-drop, with immediate state persistence.
+- **[11.5]** Advanced searches accurately filter the candidate pool based on skill tags and proficiency levels.
+- **[11.6]** Interviewers can submit structured feedback that is immediately viewable on the candidate's profile.
 
 ---
 
@@ -1012,14 +1199,14 @@ graph LR
     Onboarding -->|Asset tasks| Assets
     ProjectMgmt -->|Master Project List| Timesheets
     ProjectMgmt -->|Operational Data| Productivity
-    Config[System Configuration] --> Employees
-    Config --> Intake
-    Config --> Onboarding
-    Config --> Assets
-    Config --> ATS
-    Config --> Timesheets
-    Config --> Productivity
-    Config --> ProjectMgmt
+    AdminSettings[Admin System Settings] --> Employees
+    AdminSettings --> Intake
+    AdminSettings --> Onboarding
+    AdminSettings --> Assets
+    AdminSettings --> ATS
+    AdminSettings --> Timesheets
+    AdminSettings --> Productivity
+    AdminSettings --> ProjectMgmt
     AI[AI Services] --> Employees
     AI --> Intake
     AI --> ATS
@@ -1032,18 +1219,17 @@ graph LR
 |---|---|---|
 | Employee Management | All Modules | Centralized directory and personnel records used throughout the platform |
 | Intake Management | Employee Management | Skills labels from the global library are shared across both modules |
-| Intake Management | ATS & Job Management | An approved intake automatically creates a Job Requisition in ATS |
-| Onboarding | Employee Management | New joiner data is pulled from employee records to initiate workflows |
-| Onboarding | Asset Management | Asset assignment tasks within onboarding reference the Asset module |
+| Intake Management | ATS | An approved intake automatically creates a Job Requisition in ATS |
+| Onboarding Management | Employee Management | New joiner data is pulled from employee records to initiate workflows |
+| Onboarding Management | Asset Management | Asset assignment tasks within onboarding reference the Asset module |
 | Asset Management | Employee Management | Employee directory is used to search and assign assets to people |
 | Timesheets | Employee Management | Employee work hours are logged against master staff records |
 | Productivity | Timesheets | Actual approved hours are sourced linearly for P&L and revenue calculations |
-| Asset Management | Employee Management | Employee directory is used to search and assign assets to people |
 | Timesheets | Project Management | Project tags are used for hourly logging |
 | Productivity | Project Management | Operational project data is used as the base for P&L tracking |
 | Project Management | Employee Management | Team lists are dynamically generated from employee project assignments |
 | All Modules | Role & Access Management | User roles and permissions are enforced across the entire application |
-| All Modules | System Configuration | Shared metadata (Dept, Location, etc.) used for consistency |
+| All Modules | Admin System Settings | Shared metadata (Dept, Location, etc.) used for consistency |
 
 ---
 
