@@ -1,0 +1,452 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* AT Dawn Tech orange/coral color scheme */
+    --primary: 16 94% 57%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 16 100% 95%;
+    --secondary-foreground: 16 94% 57%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 16 88% 85%;
+    --accent-foreground: 16 94% 57%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 16 94% 57%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2JL7SUc.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+#root {
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
+  }
+}
+
+/* Logo sizes */
+.logo-large {
+  height: 11.25rem !important;
+  width: auto;
+}
+
+.logo-extra-large {
+  height: 10rem !important;
+  width: auto;
+}
+
+.logo-medium {
+  height: 2rem !important;
+  width: auto;
+}
+
+/* Normalized text sizes */
+@layer utilities {
+  .text-xs {
+    font-size: 0.75rem !important;
+  }
+
+  .text-sm {
+    font-size: 0.875rem !important;
+  }
+
+  .text-lg {
+    font-size: 1.125rem !important;
+  }
+
+  .text-xl {
+    font-size: 1.25rem !important;
+  }
+
+  .text-2xl {
+    font-size: 1.5rem !important;
+  }
+
+  /* Console and error log styling */
+  pre,
+  code {
+    font-size: 0.875rem !important;
+  }
+
+  /* Muted text for logs */
+  .text-muted-foreground {
+    font-size: 0.875rem !important;
+  }
+}
+
+.ant-table-wrapper {
+  border: 1px solid hsl(var(--muted));
+}
+
+.ant-table-thead>tr>th {
+  text-transform: uppercase;
+  font-weight: lighter;
+  font-size: 12px;
+  color: #64748b !important;
+}
+
+.ant-table-tbody>tr>td {
+  color: #475569;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  white-space: nowrap;
+}
+
+.custom-ant-pagination {
+  color: #64748b;
+  display: flex !important;
+  width: 100%;
+  align-items: center;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.custom-ant-pagination .ant-pagination-total-text {
+  margin-right: auto !important;
+  flex: 1;
+}
+
+/* Sidebar Styles */
+.sidebar-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-collapsed {
+  width: 80px !important;
+}
+
+.sidebar-collapsed .sidebar-label {
+  display: none;
+}
+
+.sidebar-collapsed .min-w-\[256px\] {
+  min-width: 80px !important;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+/* Custom Ant Design Menu Styling to match Tailwind */
+.custom-sidebar-menu {
+  background: transparent !important;
+  border-inline-end: none !important;
+}
+
+.custom-sidebar-menu .ant-menu-item,
+.custom-sidebar-menu .ant-menu-submenu-title {
+  height: 48px !important;
+  line-height: 48px !important;
+  margin-block: 4px !important;
+  padding-inline: 12px !important;
+  border-radius: 8px !important;
+  color: #475569 !important;
+  /* slate-600 */
+}
+
+.dark .custom-sidebar-menu .ant-menu-item,
+.dark .custom-sidebar-menu .ant-menu-submenu-title {
+  color: #94a3b8 !important;
+  /* slate-400 */
+}
+
+.custom-sidebar-menu .ant-menu-item:hover,
+.custom-sidebar-menu .ant-menu-submenu-title:hover {
+  background-color: #f1f5f9 !important;
+  /* slate-100 */
+  color: #f97316 !important;
+  /* primary */
+}
+
+.dark .custom-sidebar-menu .ant-menu-item:hover,
+.dark .custom-sidebar-menu .ant-menu-submenu-title:hover {
+  background-color: #1e293b !important;
+  /* slate-800 */
+}
+
+.custom-sidebar-menu .ant-menu-item-selected {
+  background-color: #fff7ed !important;
+  /* orange-50 */
+  color: #f97316 !important;
+  /* primary */
+  font-weight: 500;
+}
+
+.dark .custom-sidebar-menu .ant-menu-item-selected {
+  background-color: rgba(124, 45, 18, 0.1) !important;
+  /* orange-900/10 */
+}
+
+.custom-sidebar-menu .ant-menu-submenu-arrow {
+  color: inherit !important;
+}
+
+.custom-sidebar-menu .ant-menu-inline .ant-menu-item {
+  padding-left: 48px !important;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.shadcn-autocomplete {
+  width: 100% !important;
+  height: 40px;
+  cursor: pointer !important;
+  border: 1px solid hsl(var(--input)) !important;
+}
+
+.shadcn-autocomplete:hover {
+  border: 1px solid hsl(var(--input)) !important;
+  cursor: pointer !important;
+}
+
+.shadcn-autocomplete .ant-select-selector {
+  height: 2.5rem !important;
+  /* h-10 */
+  padding: 0 0.75rem !important;
+  /* px-3 */
+  border: 1px solid hsl(var(--input)) !important;
+  background-color: hsl(var(--background)) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.shadcn-autocomplete:hover .ant-select-selector {
+  border-color: hsl(var(--ring) / 0.5) !important;
+}
+
+.shadcn-autocomplete.ant-select-focused .ant-select-selector {
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 1px hsl(var(--ring)) !important;
+  outline: none !important;
+}
+
+.shadcn-autocomplete.ant-select-status-error .ant-select-selector {
+  border-color: hsl(var(--destructive)) !important;
+}
+
+.shadcn-autocomplete .ant-select-selection-search {
+  inset-inline-start: 0.75rem !important;
+  inset-inline-end: 2.5rem !important;
+  /* Space for icon */
+  top: 0 !important;
+  bottom: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.shadcn-autocomplete .ant-select-placeholder {
+  inset-inline-start: 0.75rem !important;
+  inset-inline-end: 2.5rem !important;
+  color: hsl(var(--foreground));
+  font-size: 0.875rem !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+
+.shadcn-autocomplete .ant-select-selection-search-input {
+  height: 100% !important;
+  font-size: 0.875rem !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.shadcn-autocomplete .ant-select-arrow {
+  inset-inline-end: 0.75rem !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  margin-top: -0.5rem !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.shadcn-autocomplete .ant-select-arrow * {
+  width: auto !important;
+}
+
+/* Dropdown styling */
+.ant-select-dropdown {
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  padding: 4px !important;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
+
+.ant-select-item {
+  border-radius: calc(var(--radius) - 2px) !important;
+  padding: 6px 12px !important;
+  font-size: 0.875rem !important;
+  transition: background-color 0.2s !important;
+}
+
+.ant-select-item-option-selected {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+.ant-select-item-option-active {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* Custom Ant Design Switch Styling */
+.custom-antd-switch.ant-switch-checked {
+  background-color: #f97316 !important;
+  /* AT Dawn Tech orange */
+}
+
+.custom-antd-switch.ant-switch:focus-visible {
+  outline: 2px solid #f97316 !important;
+  outline-offset: 2px;
+}
+
+.custom-antd-switch.ant-switch-small.ant-switch-checked {
+  background-color: #f97316 !important;
+}
+
+/* Custom Ant Design Table Styling */
+.custom-antd-table .ant-table-thead>tr>th {
+  border-bottom: 1px solidhsl(var(--muted)) !important;
+}
+
+.custom-antd-table.orange-header .ant-table-thead>tr>th {
+  background-color: #fff7ed !important;
+  /* orange-50 */
+  color: #f97316 !important;
+  /* orange-500 */
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  /* text-xs */
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+  border-bottom: none !important;
+}
+
+.custom-antd-table.orange-header .ant-table-thead>tr>th:first-child {
+  border-top-left-radius: 0.5rem !important;
+  /* rounded-lg */
+  border-bottom-left-radius: 0.5rem !important;
+}
+
+.custom-antd-table.orange-header .ant-table-thead>tr>th:last-child {
+  border-top-right-radius: 0.5rem !important;
+  border-bottom-right-radius: 0.5rem !important;
+}

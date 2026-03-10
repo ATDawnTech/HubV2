@@ -1,0 +1,1 @@
+ALTER TABLE public.candidates ADD CONSTRAINT candidates_work_email_key UNIQUE (work_email);

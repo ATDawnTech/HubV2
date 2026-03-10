@@ -1,0 +1,19 @@
+  FROM onboarding_templates
+    UPDATE onboarding_templates 
+    INSERT INTO onboarding_templates (name, created_by)
+CREATE TABLE IF NOT EXISTS "public"."onboarding_templates" (
+ALTER TABLE "public"."onboarding_templates" OWNER TO "postgres";
+ALTER TABLE ONLY "public"."onboarding_templates"
+    ADD CONSTRAINT "onboarding_templates_pkey" PRIMARY KEY ("id");
+CREATE OR REPLACE TRIGGER "update_onboarding_templates_updated_at" BEFORE UPDATE ON "public"."onboarding_templates" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+    ADD CONSTRAINT "onboarding_journeys_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "public"."onboarding_templates"("id");
+    ADD CONSTRAINT "onboarding_task_templates_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "public"."onboarding_templates"("id") ON DELETE CASCADE;
+ALTER TABLE ONLY "public"."onboarding_templates"
+    ADD CONSTRAINT "onboarding_templates_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id");
+CREATE POLICY "Users can create templates" ON "public"."onboarding_templates" FOR INSERT WITH CHECK (("auth"."uid"() = "created_by"));
+CREATE POLICY "Users can update their templates" ON "public"."onboarding_templates" FOR UPDATE USING (("auth"."uid"() = "created_by"));
+CREATE POLICY "Users can view active templates" ON "public"."onboarding_templates" FOR SELECT USING ((("is_active" = true) OR ("auth"."uid"() IS NOT NULL)));
+ALTER TABLE "public"."onboarding_templates" ENABLE ROW LEVEL SECURITY;
+GRANT ALL ON TABLE "public"."onboarding_templates" TO "anon";
+GRANT ALL ON TABLE "public"."onboarding_templates" TO "authenticated";
+GRANT ALL ON TABLE "public"."onboarding_templates" TO "service_role";

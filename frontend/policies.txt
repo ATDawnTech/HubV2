@@ -1,0 +1,3 @@
+supabase/migrations/20260124152520_init.sql:CREATE POLICY "Users can create templates" ON "public"."onboarding_templates" FOR INSERT WITH CHECK (("auth"."uid"() = "created_by"));
+supabase/migrations/20260124152520_init.sql:CREATE POLICY "Users can update their templates" ON "public"."onboarding_templates" FOR UPDATE USING (("auth"."uid"() = "created_by"));
+supabase/migrations/20260124152520_init.sql:CREATE POLICY "Users can view active templates" ON "public"."onboarding_templates" FOR SELECT USING ((("is_active" = true) OR ("auth"."uid"() IS NOT NULL)));
