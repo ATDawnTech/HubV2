@@ -1,14 +1,14 @@
 # ADT Hub – Product Specification Plan
 
-**Version:** 1.0 – Initial Draft  
+**Version:** 1.1 – Onboarding Module Refined, Epic Priorities Updated  
 **Date:** March 2026  
-**Modules:** Hub Dashboard · Employee Management · Admin System Settings · Assets · Intake · Onboarding · Project Management · Audit · Timesheets · Productivity · ATS
+**Modules:** Hub Dashboard · Employee Management · Admin System Settings · Assets · Intake · Onboarding · Project Management *(Low Priority)* · Audit & Logging *(Low Priority)* · Timesheets *(Low Priority)* · Productivity Management *(Low Priority)* · ATS *(Low Priority)*
 
 ---
 
 ## Document Overview
 
-This Specification Plan defines the functional scope, objectives, user flows, and requirements for the ten modules of ADT Hub. It is intended to align product, engineering, and business stakeholders before detailed design and development begins.
+This Specification Plan defines the functional scope, objectives, user flows, and requirements for the eleven modules of ADT Hub. It is intended to align product, engineering, and business stakeholders before detailed design and development begins. Epics 1–6 are **High Priority** and defined in detail. Epics 7–11 are **Low Priority** and defined at a high level for future development phases.
 
 ### Application Architecture
 
@@ -60,20 +60,19 @@ graph TD
 
 Each module also supports connections to external services where relevant — such as email notifications, AI generation, and importing data from external sources — without requiring users to leave the application.
 
-### Module Summary
-
-| Module | Purpose | Primary Users |
-|---|---|---|
-| Employee Management | Authoritative system of record for all personnel data, featuring a unified directory with smart project tagging and a dedicated **Offboarding & Decommissioning Hub** for orchestrated lifecycle management | HR, Admins |
-| Admin System Settings | Master control center for global metadata, **Role-Based Access Control (RBAC)**, and **System Security** | Admins |
-| Asset Management | Register, assign, and track company assets throughout their full lifecycle | Admins, IT, HR |
-| Intake Management | Capture and approve hiring requirements; auto-generate job requisitions and JDs | Recruiters, Hiring Managers, Admins |
-| Onboarding Management | Orchestrate cross-team onboarding tasks for new joiners from offer acceptance to Day-1 | Recruiters, HR, IT, Admin, Hiring Managers |
-| Project Management | Operational hub for project definitions, tagging, and assignment metadata | Admins, Project Managers |
-| Audit & Logging | System-wide tracking of user actions and record changes for compliance | Admins |
-| Timesheets | Track employee work hours against projects with billable/non-billable logic | Employees, Managers, Finance |
-| Productivity Management | Centralized control of project P&L, employee cost structures, and margins | Admins |
-| ATS | Manage the end-to-end recruitment process from job posting to offer | Recruiters, Hiring Managers |
+| Epic | Module | Purpose | Primary Users | Priority |
+|---|---|---|---|---|
+| **1** | Hub Dashboard | Personalized intelligence center aggregating tasks, metrics, and alerts from all modules into a single landing page | All Users | **High** |
+| **2** | Employee Management | Authoritative system of record for all personnel data, unified directory, smart project tagging, and dedicated Offboarding Hub | HR, Admins | **High** |
+| **3** | Admin System Settings | Master control center for global metadata, Role-Based Access Control (RBAC), notifications, and system security | Admins | **High** |
+| **4** | Asset Management | Register, assign, and track company assets throughout their full lifecycle with warranty monitoring | Admins, IT, HR | **High** |
+| **5** | Intake Management | Capture and approve hiring requirements; manage requisitions, candidates, and approval workflows | Recruiters, Hiring Managers, Admins | **High** |
+| **6** | Onboarding Management | Orchestrate cross-team onboarding journeys for new joiners using a Visual Template engine with node-based automation | HR, IT, Admin, Hiring Managers | **High** |
+| **7** | Project Management | Operational hub for project definitions, tagging, team assignments, and status tracking | Admins, Project Managers | *Low Priority* |
+| **8** | Audit & Logging | System-wide tracking of user actions and record changes for compliance and governance | Admins | *Low Priority* |
+| **9** | Timesheets | Track employee work hours against projects with billable/non-billable logic | Employees, Managers, Finance | *Low Priority* |
+| **10** | Productivity Management | Centralized control of project P&L, employee cost structures, and margins | Admins | *Low Priority* |
+| **11** | ATS | Manage the end-to-end recruitment process from job posting to offer | Recruiters, Hiring Managers | *Low Priority* |
 
 ---
 
@@ -89,6 +88,15 @@ These components are persistent and accessible across every module in ADT Hub, e
     - **Role-Based Routing**: Notifications are filtered by user role and department (as defined in Epic 3).
     - **Actionable Links**: Most notifications provide direct links to the relevant record (e.g., clicking a "New Onboarding" alert takes the user directly to that joiner's task list).
     - **Cross-Module Persistence**: The inbox state and read/unread status are synchronized across all application pages.
+
+### My Tasks (Global Task Center)
+- **Purpose**: A centralized, cross-module task feed that aggregates every open action item assigned to the current user — regardless of which module generated it (e.g., Onboarding tasks, Asset check-ins, Intake approvals).
+- **UI Placement**: Accessible as a persistent item in the top navigation bar, alongside the Notification Inbox.
+- **Behavior**:
+    - **Unified Feed**: All pending tasks assigned to the current user's role or directly to them are pulled into a single, prioritized list.
+    - **Module Badges**: Each task is tagged with the module it originated from (e.g., "Onboarding", "Asset") for quick context.
+    - **Real-Time Counters**: The navigation icon displays a live count of open, unread tasks.
+    - **Actionable**: Clicking any task opens the relevant record or checklist directly.
 
 ---
 
@@ -167,7 +175,7 @@ When an employee is tagged to a project in the creation modal or profile, the sy
 ### User Flow
 ```mermaid
 flowchart TD
-    A([Admin Clicks 'Add User']) --> B[Popout Modal Displays Form]
+    A([Admin Clicks 'Add User']) --> B[Center-screen Modal Displays Form]
     B --> C{Admin Submits Form}
     C --> D{System Checks for Duplicates}
     D -- Duplicate Found --> E[Show Error Message in Modal]
@@ -191,13 +199,13 @@ flowchart TD
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
 | **2.1** | **Employee Directory Table View** | High | Click/Navigation | **Admin Mode Toggle**: Top-level button to enable management controls; Table format (Sorted by Employee ID by default); **Actions**: View (2.4 read-only), Edit (2.4 edit mode), Audit (10.1 - Red in Admin Mode), **Archive** (Red, visible in Admin Mode only) |
-| **2.2** | **Modal-Based User Creation** | High | **Mandatory**: Name, Dept, Location, Status (**New Onboard**, **Active**), Hire Type, Work Mode; **Optional**: Job Title, Manager, Attachments, Project Tags | "Add User" button; Popout modal; **Predictive Email Generation**: Auto-formats `Name` to Entra standard; **Read-only ID preview**; **Validation**: Real-time completion status indicators per section |
+| **2.2** | **Modal-Based User Creation** | High | **Mandatory**: Name, Dept, Location, Status (**New Onboard**, **Active**), Hire Type, Work Mode; **Optional**: Job Title, Manager, Attachments, Project Tags | "Add User" button; Center-screen modal; **Predictive Email Generation**: Auto-formats `Name` to Entra standard; **Read-only ID preview**; **Validation**: Real-time completion status indicators per section |
 | **2.3** | **Duplicate Detection Logic** | High | Work Email, Employee ID | **Real-time Validation**: Inline error indicators if unique fields are taken; **Pre-Save blocking**: Prevents submission if duplicates persist; Matches are case-insensitive and whitespace-trimmed |
 | **2.4** | **Unified Employee Profile** | High | Ongoing updates to all [Employee Data Groups](#employee-data-groups); **Attachment Management** | **Management Hub**: Accessed via 2.1; View/Edit modes; **Project History Management**; **Document Center**; **Onboarding History**: View-only summary of the completed onboarding checklist and initiation dates from Epic 6 |
 | **2.5** | **Advanced Search & Filtering** | High | Multi-field search query, Sort parameters, Status (**New Onboard**, **Active**, **Archiving**, **Archived**) | **Unified Search Bar**: Fuzzy search across all record fields; **Filter Options Button**: Expands to show multi-group filter chips; **Header-based Filtering**: Column titles allow direct search injection; **Advanced Sorting**: ID (Num), Name (Alpha), etc.; **Status Isolation**: **New Onboard** and **Active** records shown by default; Archived/Archiving records excluded unless toggled via "Show Archived" filters |
 | **2.6** | **Admin Mode & Bulk Management** | High | Multi-selection set, File Upload (Import) | **Admin Mode UI**: Gradually shifting toggle reveals **Actions** (Dropdown) and **Export** (Stand-alone button); **Checklist Selection**: Left-side column; **Actions Menu**: Assign to Project, Archive, **Bulk Import** (Always enabled); **Export Button**: Exports selected or all (PDF/CSV); **Post-Import Filter**: Auto-filters view to show only newly imported records; **Safety Guards**: All actions require a confirmation popup before processing |
-| **2.7** | **System-Wide Referencing** | High | N/A (Data lookup via DB keys) | Selection dropdowns in other modules (Assets, ATS, etc.) using central DB keys |
-| **2.8** | **Admin-Only Row Controls** | High | UI Toggle State | Row-level buttons (Archive, Audit) highlighted in **Red**; Only visible when Admin Mode is active |
+| **2.7** | **System-Wide Referencing** | Low | N/A (Data lookup via DB keys) | Selection dropdowns in other modules (Assets, ATS, etc.) using central DB keys |
+| **2.8** | **Admin-Only Row Controls** | Low | UI Toggle State | Row-level buttons (Archive, Audit) highlighted in **Red**; Only visible when Admin Mode is active. *Audit action depends on Epic 8 (Low Priority).* |
 | **2.9** | **Archived User Lifecycle** | High | Decommissioning checks, Project migration | **Workflow Integration**: Initial archiving sets status to **Archiving** and moves users to the "Newly Offboarded" sub-module; Final completion sets status to **Archived** |
 | **2.10** | **Newly Offboarded (Offboarding Hub)** | High | Task status, Sign-off logs, Assignees, Deadlines | **Sub-Module View**: List of users with **Archiving** status; **Checklist Management**; **Manager Overview**: Role-specific dashboard for tracking all tasks and facilitating manual reassignment |
 
@@ -304,7 +312,7 @@ flowchart TD
 ### Acceptance Criteria
 - **[2.1]** Authorized users can view a responsive table of employees with ID, Name, Role, Dept, Location, Manager, and Work Email, sorted by ID by default.
 - **[2.1]** Admins can click "View Audit" to navigate to the Audit module with pre-filtered user history.
-- **[2.2]** HR and Admins can trigger an "Add User" popout modal from the Table View page.
+- **[2.2]** HR and Admins can trigger an "Add User" center-screen modal from the Table View page.
 - **[2.2]** Clicking "Add New User" within the modal accurately persists all data points to the database.
 - **[2.3]** System prevents record creation and displays a clear error if a duplicate Work Email or Employee ID is detected.
 - **[2.4]** Once created/viewed, employee profiles accurately display all grouped information and current asset status.
@@ -501,7 +509,7 @@ flowchart TD
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
 | **4.1** | **Asset Directory Table View** | High | Click/Navigation | Table format (Sorted by Asset ID by default); Columns: **Asset ID**, **Manufacturer & Model**, **Location**, **Assigned To**, **Status**, **Warranty End Date**, and **Actions**; View Detail (4.3) |
-| **4.2** | **Smart Asset Registration** | High | **Mandatory**: Belongs to ADT, Category, Manufacturer/Model, Local Dates, Location, Status; **Optional**: Serial Number, Vendor, Assigned To, Invoice | **Registration Hub**: Popout modal; **Auto-ID**: `[LOC]-[CAT]-[0001]`; **Integrity**: Real-time uniqueness check; **Validation**: Real-time completion status indicators per section |
+| **4.2** | **Smart Asset Registration** | High | **Mandatory**: Belongs to ADT, Category, Manufacturer/Model, Local Dates, Location, Status; **Optional**: Serial Number, Vendor, Assigned To, Invoice | **Registration Hub**: Center-screen modal; **Auto-ID**: `[LOC]-[CAT]-[0001]`; **Integrity**: Real-time uniqueness check; **Validation**: Real-time completion status indicators per section |
 | **4.3** | **Unified Asset Profile** | High | Updates to data groups | **Management Hub**: Detail view with full lifecycle history and deep-linking back to Epic 2 (Employee Profile) |
 | **4.4** | **Advanced Search & Filtering** | High | Multi-field query, Category/Status chips | Fuzzy search across serials/assignees; Column-header search injection; Cached scroll/filter state |
 | **4.5** | **Edit Mode & Bulk Management** | High | Multi-selection set | **Edit Mode UI**: Toggle reveals Actions (Dropdown) and Export; Checklist Selection; Bulk Status Updates; Export (PDF/CSV) |
@@ -676,7 +684,7 @@ The Intake Management module is a dedicated section of the ADT Hub web applicati
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
 | **5.1** | **Intake Directory Table** | High | Click/Navigation | Table format; Columns: **Role Title**, **Hiring Manager**, **Hiring Type**, **Department**, **Location**, **Positions**, **Status**, **Creation Date**, and **Actions**; View Profile (5.3), **Export (PDF/CSV)** |
-| **5.2** | **Intake Creation Modal** | High | Multi-section attributes (See 5.2 Schema Below) | **Creation Hub**: Popout modal; **Auto-ID**: INT-XXXX (System-gen on save); **Validation**: Real-time completion status indicators per section |
+| **5.2** | **Intake Creation Modal** | High | Multi-section attributes (See 5.2 Schema Below) | **Creation Hub**: Center-screen modal; **Auto-ID**: INT-XXXX (System-gen on save); **Validation**: Real-time completion status indicators per section |
 | **5.3** | **Unified Intake Profile** | High | Record updates | **Management Hub**: Detail view with full context and Audit History (5.10). |
 | **5.4** | **Skill Tagging** | Medium | Skill name (search/create), Proficiency level | Skill labels, Global skill library indicators |
 | **5.5** | **Advanced Search & Filters** | High | Multi-field query, Category/Status chips | Fuzzy search across managers/titles; Column-header search injection; Cached scroll/filter state |
@@ -811,13 +819,12 @@ stateDiagram-v2
 ### Scope
 
 **In Scope**
-- Onboarding workflow initiation from offer/joining confirmation
-- Task and dependent task orchestration across teams
-- Cross-team task ownership and assignment
-- Configurable onboarding templates defining tasks, owners, dependencies, and notifications
-- Status tracking and SLA monitoring
-- Automated notifications and reminders
-- Central onboarding dashboard for all stakeholders
+- **Sub-Module 1: New Candidates**: Orchestrating the active journey of new joiners.
+- **Sub-Module 2: Templates**: Managing the blueprints and rules for onboarding workflows.
+- Task and dependent task orchestration across teams.
+- Integration with the **Global Notification Inbox** and **My Tasks (Epic 1.2)**.
+- Role-based visibility and assignment (Synced with Epic 3.3).
+- Status tracking, SLA monitoring, and automated triggers.
 
 **Out of Scope**
 - Offboarding workflows
@@ -867,85 +874,120 @@ flowchart LR
 
 ### Key Features (Priority-Based)
 
-| ID | Feature | Priority | Data Captured | Data Displayed |
+### Sub-Modules & Features
+
+The Onboarding module is centered around the **New Candidates** dashboard, with **Templates** serving as the underlying configuration engine.
+
+| ID | Sub-Module | Feature | Priority | Description |
 |---|---|---|---|---|
-| **6.1** | **Onboarding Dashboard** | High | Click/Navigation | **Directory Table**: Columns: **Joiner Name**, **Role**, **Join Date**, **Progress (%)**, **Active Team**, **Status**; Access Profile (6.3) |
-| **6.2** | **Workflow Template Hub** | High | Template name, Tasks, Assigned teams, Due rules, Dependencies, Notifications | **Management Hub**: List of active/draft templates; Versioning (6.5); Preview node-based workflows |
-| **6.3** | **Unified Onboarding Profile** | High | Task sign-offs, Comments | **Management Hub**: Individual joiner progress; Interactive checklist; Dependency status (6.4); Audit Trail (6.8) |
-| **6.4** | **Task Dependency Logic** | High | Dependency mapping | Real-time locking/unlocking of tasks; Visual dependency tree |
-| **6.5** | **Template Versioning** | Medium | N/A (Auto-versioning) | Version history, "Active" vs "Draft" status |
-| **6.6** | **Multi-Team Assignment** | High | Target team (IT, HR, Admin, etc.) | Team-specific task pools; Role-based task visibility |
-| **6.7** | **SLA & Escalation Monitoring** | Medium | Target completion datetime | SLA countdown; Overdue escalation status; Proactive alerts |
-| **6.8** | **Data Persistence (Epic 2)** | High | Final status, Completed tasks, Signed-off documents | **Syncing**: Once status is **Complete**, the onboarding data is persisted to the **Employee Profile (2.4)** as a permanent history record. |
-| **6.9** | **Audit Trail** | Low | N/A (System log) | Change log: Task completions, Ownership shifts, Profile edits |
+| **6.1** | **New Candidates** | **Main Onboarding Dashboard** | High | **Primary Entry Point**: Global directory of all active joiners. Columns: Full Name, Location, Personal email address, Date of joining, Hiring Manager, Requisition Records, Status, Actions. |
+| **6.2** | | **Add New Candidate** | High | **Enrollment Flow**: Multi-step form/dialog to initiate the onboarding journey and trigger template-based task generation. |
+| **6.3** | | **Persistence Sync** | High | Automates the final handover to the **Employee Profile (Epic 2)**. |
+| **6.4** | | **Candidate Detail View** | High | **View/Edit Screen**: Full candidate profile showing all captured onboarding data, task progress, and history. Accessible via the "View" and "Edit" actions from the dashboard. |
+| **6.5** | **Visual Templates** | **Template Management Hub**| High | **Configuration Area**: Template directory organized into three sections — **Active**, **Drafts**, and **Archived**. Each template row shows Version History which can be expanded to view and compare previous versions. |
+| **6.6** | | **Node-Based Editor** | High | Visual canvas for the underlying process design. |
 
-### Feature 6.1 – Onboarding Dashboard (Directory Table)
+### Logic Contracts (Onboarding Architecture)
+- **Sub-Module Isolation**:
+    - **New Candidates**: Focuses on *operational* data for active joiners.
+    - **Visual Templates**: Focuses on *configuration* data for future joiners.
+- **My Tasks Integration (Platform-Wide)**:
+    - **Unified Feed**: All pending onboarding tasks assigned to a role/user are pushed to the **My Tasks Center (1.2)**.
+    - **Real-Time Counters**: The dashboard module navigation cards for Onboarding reflect the current count of open tasks from the active candidate sub-module.
+- **Role & Access Authority (Epic 3.3 Integration)**:
+    - **Assignment Pools**: Tasks are assigned to **Roles** defined in the System Settings. Users gain access to "New Candidate" tasks based on their assigned role groups.
+    - **SLA Escalations**: Overdue tasks escalate through the departmental hierarchy (e.g., IT Manager) as defined in the **Role & Permission Management (3.3)**.
+- **Authoritative Source (Start Date)**: Onboarding target dates are driven by the **Joining Date** captured in the Intake module (5.2) or Employee Record (2.2).
+- **Enrollment Flow (Feature 6.2)**:
+    - **UI Component**: Center-screen Modal (Dialog), providing a focused popup for data entry.
+    - **Draft Persistence**: If a user unintentionally closes the modal without saving (e.g., clicking outside the dialog), input data is temporarily cached in the session so it is restored when reopened. This draft data is immediately permanently deleted if the browser tab/page is reloaded.
+    - **System Generation & Epic 2 Link**: **Upon final form submission (Save/Submit)**, the backend system auto-generates a standard **Work Email** (matching the predictive Entra standard from Epic 2) and assigns a unique, incrementing **Employee ID** from the primary `Employee` table sequence. **These fields are strictly handled by the backend and are not displayed or previewed during the creation process.** This establishes a "New Onboard" shell record in Epic 2 immediately. **Crucially, once this Employee ID is assigned upon submission, it is strictly immutable and cannot be removed or changed under any circumstances.**
+    - **Data Capture**: Captures First Name, Last Name, Date of Joining, Phone Number, Type of Joining, Personal Email Address, Hiring Manager, Address, Location, Requisition Record, and the option to upload a file. Includes Emergency Contact details (Emergency Contact Name, Emergency Phone Number, Emergency Contact Relationship).
+    - **Template Assignment Section**: Embedded within the modal is a dedicated "Template Configuration" section. Here, users manually attach a pre-built Onboarding Template (6.4) from a dropdown list to the candidate. Saving the candidate record triggers the template's Starting Node, automatically creating the task snapshot for this journey.
+    - **Progress Initiation**: Calculates the initial progress based on the selected template's total tasks and immediately adds the candidate to the Main Directory (6.1).
+- **Task Dependency Gating**:
+    - **Hard Gating**: Tasks marked as "Dependent" are greyed out and unclickable until all parent tasks are marked as **Completed**.
+    - **Visual Feedback**: The system displays a "Waiting for [Task Name]" badge on blocked items.
+    - **Automatic Triggering**: Completing a parent task instantly notifies the owner of the child task and moves it to "Active" status.
+- **Employee Profile Persistence (Feature 6.3)**:
+    - **Finalization Trigger**: When 100% of tasks are complete, the Admin triggers the "Finalize" action.
+    - **Hard Gating**: The system strictly prevents (disables) the "Finalize" button if any task in the sequence remains incomplete.
+    - **Data Migration & State Change**: 
+        1. The shell record linked by the **Employee ID** in Epic 2 shifts from a **New Onboard** status to an **Active** status. No new record is created; the existing row is updated inline.
+    - **Task Notifications**: All notifications related to task generation, updates, or overdue SLA escalations are strictly dictated by the rules defined in the selected **Onboarding Template**. The template configuration explicitly determines which roles receive notifications and via which channels (e.g., Email, in-app).
+- **Template Versioning (Feature 6.5)**:
+    - **Snapshotting**: When a journey is initiated, it creates a snapshot of the template. Subsequent edits to the master template **do not** affect active onboarding journeys.
+    - **Version History**: The Template Management Hub (6.5) shows a Version History row per template. Selecting it expands a list of all previous versions, each viewable in read-only mode for reference and auditing.
 
-The Onboarding Dashboard provides a global view of all active joiners and their setup status.
+### Sub-Module 1: New Candidates (Primary Dashboard)
 
-| Column | Logic / UI Behavior |
+This is the main interaction point for the Onboarding module. It provides visibility into every active joiner's setup and serves as the launchpad for all operational tasks.
+
+| Feature | Logic / UI Behavior |
 |---|---|
-| **Joiner Name** | Employee name from **Epic 2 (2.2/2.4)**. Links to 6.3. |
-| **Role & Dept** | Captured from the associated employee record. |
-| **Join Date** | The target start date (SLA reference). |
-| **Active Team** | The team currently responsible for the "Blocked" task (IT, HR, Admin). |
-| **Progress (%)** | Visual progress bar based on (Completed Tasks / Total Tasks). |
-| **Status** | **Pre-boarding** (Pending Join), **Day 1** (Active Start), **Complete** (Transitions Employee Status to **Active**). |
-| **Actions** | View Profile (6.3), **Export (PDF/CSV)** standalone reports. |
+| **Main Onboarding Directory** | **Primary View**: A high-density table for tracking joiners. <br> **Columns**: Full Name, Location, Personal email address, Date of joining, Hiring Manager, Requisition Records, Status, Actions. <br><br> **Status Column** — Shows one of five fixed states per candidate row: <br> • `Not Started` – Template assigned but onboarding journey has not been initiated. <br> • `In Progress` – Onboarding is actively running. <br> • `Paused` – Journey is temporarily paused; clock stops on SLAs. <br> • `Cancelled` – Onboarding was terminated before completion. <br> • `Completed` – Persistence Sync (6.3) has been successfully finalized. <br><br> **Actions Column** — Context-sensitive based on current Status: <br> • **Always available**: `View`, `Edit` <br> • **Not Started / Paused**: `Start Onboarding` or `Resume Onboarding` replaces the Start action when paused. <br> • **In Progress**: Replaces "Start Onboarding" with `Pause Onboarding` and `Cancel Onboarding`. <br> • **Paused**: `Resume Onboarding` (replaces Pause) and `Cancel Onboarding` remain available. |
+| **Add New Candidate**| **Enrollment Trigger**: A center-screen popup (modal) form. Captures candidate data, assigns a template, and triggers the task generation engine. |
+| **Completion Flow** | The administrative action to close a journey and sync data to the permanent employee record. |
 
 ---
 
-### Feature 6.2 – Workflow Template Hub
+### Sub-Module 2: Visual Templates (Configuration)
 
-A centralized editor for defining the "Blueprints" of onboarding.
+The configuration area where the logic and structure of the onboarding process are defined.
 
-| Logic | UI Behavior |
+The **Visual Templates** sub-module provides the administrative tools to define and manage process blueprints.
+
+| Feature | Logic / UI Behavior |
 |---|---|
-| **Node-Based Editor** | Visual canvas to drag-and-drop tasks and define dependency arrows (6.4). |
-| **Role Linking** | Templates can be assigned to trigger for specific **Job Titles** or **Departments**. |
-| **SLA Rules** | Define hours/days completion targets per task (relative to Join Date). |
-| **Versioning (6.5)** | Iterative saving. "Publish" makes a template the active system default. |
-| **Global Sync** | Updating a template only affects **future** joiners (In-progress records are locked to their initiation version). |
+| **Node-Based Editor** | A literal visual flowchart UI (similar to n8n) providing a drag-and-drop canvas. Admins add "Nodes" to the canvas and physically draw connecting lines between them to establish complex workflows and dependencies. |
+| **SLA & Role Mapping** | Defines completion targets and links task groups to system roles (Epic 3.3). |
+| **Versioning Hub** | Manages "Active" defaults and keeps history of process iterations. |
 
----
+### Canvas UX Specification (Feature 6.6)
 
-### Feature 6.3 – Unified Onboarding Profile (Management Hub)
+- **Auto-Sizing Canvas**: The canvas expands and contracts automatically based on the total number of nodes and connections placed. It always fits the content with comfortable padding; no manual resizing is required.
+- **Bottom Node Toolbar**: A persistent toolbar at the bottom of the canvas editor displays all available node types. Drag any node from the toolbar directly onto the canvas to place it. Nodes can be added **multiple times**.
+    - **Start & End Nodes (Special)**: Start and End nodes are **not** draggable from the toolbar since only one of each is allowed. Instead, clicking them in the toolbar acts as a **"Zoom to" shortcut**, panning the canvas to instantly center the view on the placed Start or End node.
+- **Node Labeling**: After dropping a node onto the canvas, an inline text input appears allowing the Admin to name the node (e.g., "Send IT Hardware Request"). This label is displayed on the canvas directly within the node card.
+- **Snap to Grid**: All nodes snap to an invisible grid when dragged, ensuring clean, aligned layouts.
+- **Zoom & Pan**: Scroll the mouse wheel to zoom in and out of the canvas. Left-click and drag on any empty canvas space (not on a node) to pan around the canvas freely.
+- **Curved Connection Lines**: Connections are made by dragging from an **output handle** on one node to an **input handle** on another. Connection lines render as smooth **bezier curves** (not straight lines) for visual clarity. **Existing connections are re-routable** — the endpoint of any connection line can be grabbed and dragged to a different input or output handle on any other node to redirect the flow.
+- **Save & Discard**: A persistent action bar at the top of the canvas provides **Save** (commits all current changes to the template version) and **Discard Changes** (reverts the canvas to the last saved state) buttons.
 
-The operational workspace for completing a joiner's setup.
+### Visual Template Structure (Node Engine)
 
-| Component | Logic / UI Behavior |
-|---|---|
-| **Task Checklist** | Grouped by **Team Ownership**. Interactive checkboxes for sign-offs. |
-| **Dependency Guard** | Tasks are greyed out and unclickable until their predecessors are completed. |
-| **Communication Log** | Inline comments per task for cross-team coordination (IT to HR). |
-| **Day-1 Ready Badge** | Turns **Green** only when all "Critical Path" tasks (Email, Device, Access) are done. |
-| **Manual Reassignment**| Managers can re-route specific tasks to different team members. |
-| **Persistence Sync** | Upon full sign-off, the checklist and final report are archived in the **Employee's Document Center (2.4)**. |
+Based on the required visual flowchart design, each Template is composed of distinct `Node` types dragged onto the canvas. This functions similarly to n8n or Zapier visual builders:
 
-### Template Structure
+**1. Start/End Nodes:**
+- **Start Node (Required)**: Every template must begin with a single, unremovable Start Node that defines how the sequence is initiated:
+    - **Creation Trigger**: Starts immediately when the template is attached during the *Add New Candidate* flow (Feature 6.2).
+    - **Post-Creation Trigger**: Starts when manually attached to an existing, already-created candidate.
+    - **Time-Based Trigger**: Auto-starts the flow at a specific time (e.g., "X Days Before Join Date").
+- **End Node**: A single node on the canvas acting as a final "Wait For," ensuring the template journey only formally concludes when all connected task and logic paths successfully reach it.
 
-Each onboarding template defines:
+**2. Action Nodes (Tasks):**
+- Defines the actual work item that drops into a user's *My Tasks* feed.
+- **Required Configuration Fields**: When adding any action node, the Admin must define:
+   - **Task Name**: A clear, concise title.
+   - **Description**: Detailed instructions or context for the task owner.
+   - **Assigned Role(s)**: The system Role (Epic 3) or Roles responsible for completing the task.
+   - **SLA (Hours)**: The expected turnaround time in hours for escalation/tracking purposes.
+   - **Department Field**: A required dropdown field specifying the department category (e.g., HR, IT, Facilities, Finance, Vendor). The options for this dropdown are globally managed in the System Settings.
+   - **External Task Toggle (Checkbox)**: Marks the task as requiring action from the candidate or external systems.
+- **1 Task Node Type:**
+   1. **Standard Task**: A manual checklist item or assignment handled by internal staff or external parties based on configuration.
 
-```mermaid
-mindmap
-  root((Onboarding Template))
-    Template Metadata
-      Template name
-      Applicable role/team/location
-      Version
-    Tasks
-      Task name
-      Assigned team or individual
-      Due date rule
-      Dependencies
-    Notifications
-      Who is notified
-      When they are notified
-      Channel - Email or Slack
-    Triggers
-      Auto-start on joining confirmation
-      Manual start option
-```
+**3. Logic Nodes (Dependencies & Routing):**
+- **Wait For (Hard Gate)**: Pauses the branch until upstream conditions are met. **Supports multiple checks** (e.g., waiting for *both* Task A and Task B to complete before proceeding).
+- **If/Else Branches**: Routes the flow based primarily on the candidate's core *Onboarding Info*. 
+    - **Dropdown Integration**: Conditions natively hook into system dropdown lists (e.g., checking if `Location` equals a value from the global Location settings).
+    - **Complex Logic UI**: Users can build complex queries using an intuitive UI. Clicking to add an **AND / OR** statement adds a new condition row directly underneath the previous field, toggled by a clear "AND/OR" button, to streamline searching for multiple operations (e.g., *IF Location = London AND Role = Engineer*).
+
+**4. Notification Nodes:**
+- Triggered instantly when the flow reaches them to alert users or send communications.
+- **Dual-Channel Option**: When configuring the node, Admins can choose to send an **Automated Email**, a system **Role Notification**, or **Both** simultaneously.
+    - **Automated Emails**: Sends an automated email directly to the Candidate or the Hiring Manager. The UI provides a live preview showing exactly what the email looks like before sending/saving the node.
+    - **Role Notifications**: Triggers system notifications/alerts (via the Global Notification Inbox) for specific roles or individuals to keep them informed of the candidate's progress.
 
 ### Roles & Permissions
 
@@ -957,13 +999,14 @@ mindmap
 | Hiring Manager | View onboarding status for their new joiners |
 
 ### Acceptance Criteria
-- **[6.1]** Admins can create and edit onboarding templates with complex rules (tasks, owners, due dates).
-- **[6.2]** System supports template versioning, ensuring ongoing processes are not interrupted by updates.
-- **[6.3]** Tasks are correctly gated by dependencies, only becoming active/notified once prerequisites are met.
-- **[6.4]** Tasks are automatically assigned and distributed to the correct cross-functional teams.
-- **[6.5]** SLA monitoring triggers notifications and visual flags for overdue onboarding items.
-- **[6.6]** Stakeholders can access a real-time dashboard showing the status of all active new joiners.
-- **[6.7]** Full audit logs capture every change in task status and template configuration.
+- **[6.1]** Users can access the **New Candidates** dashboard to track active joiners with real-time status and progress.
+- **[6.2]** Users can easily **Add New Candidates** via a standardized form that initiates the selected onboarding template.
+- **[6.3]** Upon finalization, the system updates the employee record to **Active** (with a hard block preventing finalization if tasks are incomplete).
+- **[6.4]** Users can access a full **Candidate Detail View** to inspect and edit all captured onboarding data and task progress.
+- **[6.5]** Admins can manage **Visual Templates** via a template management hub.
+- **[6.6]** Admins can build templates using a visual node-based editor with complex dependency and role-mapping rules.
+- **[My Tasks]** Pending onboarding tasks are successfully aggregated into the **Global My Tasks Center (Epic 1)** for assigned roles.
+- **[Roles]** Task visibility and self-assignment logic respects the **Employee Role permissions** defined in Epic 3.
 
 ### Success Metrics
 
@@ -976,7 +1019,7 @@ mindmap
 
 ---
 
-## Epic 7 – Project Management
+## Epic 7 – Project Management [Low Priority]
 
 ### Overview
 The Project Management module is the operational engine for defining and tracking projects across ADT Hub. While the Productivity module focuses on financial P&L, this module focuses on the project lifecycle, team assignments, and real-time tagging. It serves as the master source for project labels used in the Employee and Timesheet modules.
@@ -986,7 +1029,7 @@ The Project Management module is the operational engine for defining and trackin
 | ID | Feature | Priority | Data Captured | Data Displayed |
 |---|---|---|---|---|
 | **7.1** | **Project Master Table** | High | Project Name, Client, Category, Status, Description | Searchable list of all projects; Edit/View actions |
-| **7.2** | **Project Creation Popout** | High | Name, Client, Internal Lead, Start Date | Compact form for inline creation (linked to Epic 2) |
+| **7.2** | **Project Creation Modal** | High | Name, Client, Internal Lead, Start Date | Center-screen modal for inline creation (linked to Epic 2) |
 | **7.3** | **Team Assignment View** | Medium | N/A (Linked from Epic 2) | Aggregated list of all employees tagged to a specific project |
 | **7.4** | **Project Status Tracking** | Medium | Status (Pipeline → Active → Completed → Cancelled) | Visual status badges; Timeline of status changes |
 | **7.5** | **Tag Management** | High | Tag color, Category labels | Global project tag library; Usage counts |
@@ -1020,7 +1063,7 @@ sequenceDiagram
 
 ---
 
-## Epic 8 – Audit & Logging
+## Epic 8 – Audit & Logging [Low Priority]
 
 ### Overview
 System-wide tracking of user actions and record changes for compliance.
