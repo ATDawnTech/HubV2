@@ -1,0 +1,4562 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>ADT Hub V2 &ndash; Data Schema</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="adt-hub-v2--data-schema">ADT Hub V2 – Data Schema</h1>
+<p><strong>Version:</strong> 1.0
+<strong>Date:</strong> March 2026
+<strong>Source:</strong> 19 ADTHUB Supabase migrations + Legacy API Map + ADT Hub Spec Plan v1.0</p>
+<hr>
+<h2 id="overview">Overview</h2>
+<p>This document defines the HubV2 data schema. It is derived from the legacy ADTHUB Supabase schema and updated to support the full ADT Hub Spec Plan. Each section identifies:</p>
+<ul>
+<li>The final resolved legacy table state (after all 19 migrations)</li>
+<li>Whether each table is reused as-is, extended, replaced, or retired</li>
+<li>Net new tables required by HubV2 that have no legacy equivalent</li>
+<li>Cross-module foreign key relationships</li>
+</ul>
+<p><strong>Tech note:</strong> HubV2 moves away from Supabase Auth (<code>auth.users</code>) as the identity anchor. The new <code>employees</code> table is the authoritative identity record. All module FKs reference <code>employees.id</code>.</p>
+<hr>
+<h2 id="a-legacy-schema-inventory--reuse-assessment">A. Legacy Schema Inventory &amp; Reuse Assessment</h2>
+<h3 id="legend">Legend</h3>
+<ul>
+<li><strong>Reuse</strong> — table maps cleanly to HubV2 with no changes required</li>
+<li><strong>Extend</strong> — table is reusable but needs new columns</li>
+<li><strong>Replace</strong> — concept exists but table structure needs redesign</li>
+<li><strong>Retire</strong> — legacy-only, not needed in HubV2</li>
+</ul>
+<hr>
+<h3 id="profiles--extend--becomes-employees"><code>profiles</code> → <strong>Extend</strong> → becomes <code>employees</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 1 – Employee Management</p>
+<p>The legacy <code>profiles</code> table is the core employee identity record. In HubV2 it is renamed to <code>employees</code> and extended with fields required by the spec. The <code>auth.users</code> dependency is removed; identity management is handled by HubV2's own auth layer.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+<th>HubV2 Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>UNIQUE (FK → <a href="http://auth.users.id">auth.users.id</a>)</td>
+<td>Replace with internal auth FK</td>
+</tr>
+<tr>
+<td>email</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>UNIQUE</td>
+<td>Keep as <code>work_email</code></td>
+</tr>
+<tr>
+<td>full_name</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+<td>Split into <code>first_name</code>, <code>last_name</code></td>
+</tr>
+<tr>
+<td>role</td>
+<td>user_role ENUM</td>
+<td>YES</td>
+<td>'staff'</td>
+<td>CHECK: admin, staff, hr, finance</td>
+<td>Migrate to roles table (Epic 2.3)</td>
+</tr>
+<tr>
+<td>photo_path</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td>location</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>boolean</td>
+<td>YES</td>
+<td>true</td>
+<td>—</td>
+<td>Replace with <code>status</code> ENUM</td>
+</tr>
+<tr>
+<td>cost_annual</td>
+<td>numeric</td>
+<td>YES</td>
+<td>—</td>
+<td>CHECK &gt;= 0</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td>currency_code</td>
+<td>text</td>
+<td>YES</td>
+<td>'USD'</td>
+<td>CHECK: USD, INR, VND, SGD</td>
+<td>Keep; move to FK → <code>config_dropdowns</code></td>
+</tr>
+<tr>
+<td>margin_pct</td>
+<td>numeric</td>
+<td>YES</td>
+<td>30</td>
+<td>CHECK 0–100</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td>rate_hourly</td>
+<td>numeric</td>
+<td>YES</td>
+<td>GENERATED STORED</td>
+<td>(cost_annual * (1 + margin/100)) / 1920</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td>employee_code</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>UNIQUE</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td>job_title</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td>department</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → config_dropdowns</td>
+<td>Keep; FK-ify</td>
+</tr>
+<tr>
+<td>manager_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+<td>Keep</td>
+</tr>
+<tr>
+<td>joined_on</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+<td>Keep as <code>hire_date</code></td>
+</tr>
+<tr>
+<td>blocked</td>
+<td>boolean</td>
+<td>YES</td>
+<td>false</td>
+<td>—</td>
+<td>Replace with <code>status</code> field</td>
+</tr>
+<tr>
+<td>ats_role</td>
+<td>ats_role ENUM</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+<td>Move to role_assignments table</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+<td>Keep</td>
+</tr>
+</tbody>
+</table>
+<p><strong>New columns to add:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>employee_number</td>
+<td>text</td>
+<td></td>
+</tr>
+<tr>
+<td>first_name</td>
+<td>text</td>
+<td>Split from full_name</td>
+</tr>
+<tr>
+<td>last_name</td>
+<td>text</td>
+<td>Split from full_name</td>
+</tr>
+<tr>
+<td>personal_email</td>
+<td>text</td>
+<td>UNIQUE; required by Epic 1</td>
+</tr>
+<tr>
+<td>phone</td>
+<td>text</td>
+<td>—</td>
+</tr>
+<tr>
+<td>address</td>
+<td>text</td>
+<td>—</td>
+</tr>
+<tr>
+<td>hire_type</td>
+<td>text</td>
+<td>FK → config_dropdowns; Full-time/Part-time/Contractor/Staff Aug</td>
+</tr>
+<tr>
+<td>work_mode</td>
+<td>text</td>
+<td>FK → config_dropdowns; Remote/Hybrid/In-Person</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>ENUM: active, archiving, archived</td>
+</tr>
+<tr>
+<td>archived_at</td>
+<td>timestamptz</td>
+<td>Set when status → archiving</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="skills_catalog--reuse"><code>skills_catalog</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Config (Skill Repository)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>UNIQUE</td>
+</tr>
+<tr>
+<td>category</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> <em>(add in HubV2)</em></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="employee_skills--extend"><code>employee_skills</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 1 – Employee Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>user_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>PK (composite), FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>skill_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>PK (composite), FK → skills_catalog.id</td>
+</tr>
+<tr>
+<td>level</td>
+<td>int</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK 0–9</td>
+</tr>
+<tr>
+<td>years</td>
+<td>numeric</td>
+<td>YES</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="employee_certifications--reuse"><code>employee_certifications</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 1 – Employee Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>authority</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>credential_id</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>issued_on</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>expires_on</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="employee_rates--extend"><code>employee_rates</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 7 – Productivity Management</p>
+<p>Legacy table has a single row per user (PK = user_id). HubV2 requires time-series rate history.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK <em>(change from user_id PK)</em></td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>base_rate_usd</td>
+<td>numeric</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>effective_from</td>
+<td>date</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>effective_to</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>NULL = current rate</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Add:</strong> composite UNIQUE on (user_id, effective_from).</p>
+<hr>
+<h3 id="projects--extend"><code>projects</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 8 – Project Management / Epic 7 – Productivity</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>description</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>YES</td>
+<td>'pipeline'</td>
+<td>CHECK: pipeline, active, completed, cancelled <em>(add)</em></td>
+</tr>
+<tr>
+<td>category</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → config_dropdowns <em>(add)</em></td>
+</tr>
+<tr>
+<td>start_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>end_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>project_manager</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>sales_manager</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>internal_lead</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> <em>(add)</em></td>
+</tr>
+<tr>
+<td>client</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>discount_pct</td>
+<td>numeric</td>
+<td>YES</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>discount_reason</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>tag_color</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>Hex color for UI tag display <em>(add)</em></td>
+</tr>
+<tr>
+<td>created_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="project_members--reuse"><code>project_members</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 7 – Productivity / Epic 8 – Project Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>project_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>PK (composite), FK → <a href="http://projects.id">projects.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>PK (composite), FK → <a href="http://employees.id">employees.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>bill_rate_usd</td>
+<td>numeric</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>role</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>member_discount_pct</td>
+<td>numeric</td>
+<td>YES</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>effective_from</td>
+<td>date</td>
+<td>YES</td>
+<td>CURRENT_DATE</td>
+<td>—</td>
+</tr>
+<tr>
+<td>effective_to</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>YES</td>
+<td>'active'</td>
+<td>CHECK: active, ended</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="timesheets--extend"><code>timesheets</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 6 – Timesheets</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>project_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://projects.id">projects.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>work_date</td>
+<td>date</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>hours</td>
+<td>numeric</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK 0–24</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>NO</td>
+<td>'submitted'</td>
+<td>CHECK: draft, submitted, approved, rejected</td>
+</tr>
+<tr>
+<td>billable</td>
+<td>boolean</td>
+<td>NO</td>
+<td>true</td>
+<td>—</td>
+</tr>
+<tr>
+<td>week_start</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>approved_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>approved_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>rejection_reason</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="fx_rates--reuse"><code>fx_rates</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 7 – Productivity Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>code</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>rate_to_usd</td>
+<td>numeric</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="holidays--reuse"><code>holidays</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 6 – Timesheets</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>region</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>holiday_date</td>
+<td>date</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="leaves--extend"><code>leaves</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 6 – Timesheets</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>start_date</td>
+<td>date</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>end_date</td>
+<td>date</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>type</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → config_dropdowns <em>(FK-ify)</em></td>
+</tr>
+<tr>
+<td>approved</td>
+<td>boolean</td>
+<td>YES</td>
+<td>false</td>
+<td>—</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>YES</td>
+<td>'pending'</td>
+<td>CHECK: pending, approved, rejected <em>(add)</em></td>
+</tr>
+<tr>
+<td>approved_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> <em>(add)</em></td>
+</tr>
+<tr>
+<td>approved_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="config--replace--becomes-config_dropdowns--system_settings"><code>config</code> → <strong>Replace</strong> → becomes <code>config_dropdowns</code> + <code>system_settings</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Configuration</p>
+<p>Legacy <code>config</code> is a per-user key-value store. HubV2 requires system-wide hierarchical configuration. See Net New tables: <code>config_dropdowns</code> and <code>system_settings</code>.</p>
+<hr>
+<h3 id="onboarding_templates--extend"><code>onboarding_templates</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 4 – Onboarding Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>version</td>
+<td>int</td>
+<td>NO</td>
+<td>1</td>
+<td>—</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>boolean</td>
+<td>YES</td>
+<td>true</td>
+<td>—</td>
+</tr>
+<tr>
+<td>settings</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>location</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>applicable_roles</td>
+<td>text[]</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>notification_config</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>Per-template notification channel settings <em>(add)</em></td>
+</tr>
+<tr>
+<td>created_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="onboarding_task_templates--reuse"><code>onboarding_task_templates</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 4 – Onboarding Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>template_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → onboarding_templates.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>block</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: HR, IT, Facilities, Finance, Vendor</td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>description</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>owner_group_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → owner_groups.id</td>
+</tr>
+<tr>
+<td>sla_hours</td>
+<td>int</td>
+<td>YES</td>
+<td>72</td>
+<td>—</td>
+</tr>
+<tr>
+<td>depends_on</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → onboarding_task_templates.id (self-ref)</td>
+</tr>
+<tr>
+<td>dynamic_rules</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>external_completion</td>
+<td>boolean</td>
+<td>YES</td>
+<td>false</td>
+<td>—</td>
+</tr>
+<tr>
+<td>required_attachments</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>order_index</td>
+<td>int</td>
+<td>YES</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="onboarding_task_template_dependencies--reuse"><code>onboarding_task_template_dependencies</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 4 – Onboarding Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>task_template_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → onboarding_task_templates.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>depends_on_task_template_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → onboarding_task_templates.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Unique:</strong> (task_template_id, depends_on_task_template_id)</p>
+<hr>
+<h3 id="onboarding_journeys--extend"><code>onboarding_journeys</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 4 – Onboarding Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>employee_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> <em>(replace candidate_id)</em></td>
+</tr>
+<tr>
+<td>template_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → onboarding_templates.id</td>
+</tr>
+<tr>
+<td>template_version</td>
+<td>int</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>YES</td>
+<td>'in_progress'</td>
+<td>CHECK: draft, in_progress, completed, paused, cancelled</td>
+</tr>
+<tr>
+<td>doj</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>geo</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>location</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>completed_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>paused_reason</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>created_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="onboarding_tasks--extend"><code>onboarding_tasks</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 4 – Onboarding Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>journey_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → onboarding_journeys.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>template_task_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → onboarding_task_templates.id <em>(add for auditability)</em></td>
+</tr>
+<tr>
+<td>block</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: HR, IT, Facilities, Finance, Vendor</td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>description</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>owner_group_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → owner_groups.id</td>
+</tr>
+<tr>
+<td>assignee</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> ON DELETE SET NULL</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>YES</td>
+<td>'pending'</td>
+<td>CHECK: pending, in_progress, waiting_for_dependency, completed, skipped, blocked</td>
+</tr>
+<tr>
+<td>due_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>started_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>completed_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>notification_sent_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>sla_hours</td>
+<td>int</td>
+<td>YES</td>
+<td>72</td>
+<td>—</td>
+</tr>
+<tr>
+<td>depends_on</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → onboarding_tasks.id (self-ref)</td>
+</tr>
+<tr>
+<td>external_completion</td>
+<td>boolean</td>
+<td>YES</td>
+<td>false</td>
+<td>—</td>
+</tr>
+<tr>
+<td>required_attachments</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>meta</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Remove:</strong> <code>candidate_email</code>, <code>official_email</code> (legacy artifacts; replaced by employee FK on journey).</p>
+<hr>
+<h3 id="onboarding_task_dependencies--reuse"><code>onboarding_task_dependencies</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 4 – Onboarding Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>task_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>PK (composite), FK → onboarding_tasks.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>depends_on_task_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>PK (composite), FK → onboarding_tasks.id ON DELETE CASCADE</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="owner_groups--extend"><code>owner_groups</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 4 – Onboarding Management / Epic 2 – System Config</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>UNIQUE</td>
+</tr>
+<tr>
+<td>description</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>department</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>For escalation routing <em>(add)</em></td>
+</tr>
+<tr>
+<td>manager_role_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://roles.id">roles.id</a>; used for notification routing <em>(add)</em></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="group_members--reuse"><code>group_members</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 4 – Onboarding Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>group_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → owner_groups.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>role</td>
+<td>text</td>
+<td>YES</td>
+<td>'member'</td>
+<td>CHECK: member, lead</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Unique:</strong> (group_id, user_id)</p>
+<hr>
+<h3 id="task_sla_events--reuse"><code>task_sla_events</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 4 – Onboarding / Epic 9 – Audit</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>task_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → onboarding_tasks.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>event</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>meta</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="task_attachments--reuse"><code>task_attachments</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 4 – Onboarding Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>task_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → onboarding_tasks.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>file_url</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>file_name</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>kind</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>uploaded_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>uploaded_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="approvals--extend"><code>approvals</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 3 – Intake / Epic 4 – Onboarding / Epic 2 – Admin</p>
+<p>Generalize from onboarding-only to a polymorphic approval pattern supporting both intake and onboarding.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>resource_type</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: onboarding_task, intake_record <em>(add)</em></td>
+</tr>
+<tr>
+<td>resource_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>Polymorphic FK</td>
+</tr>
+<tr>
+<td>task_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → onboarding_tasks.id ON DELETE CASCADE (legacy; keep for compat)</td>
+</tr>
+<tr>
+<td>approver_group_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → owner_groups.id</td>
+</tr>
+<tr>
+<td>approver_user_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>YES</td>
+<td>'requested'</td>
+<td>CHECK: requested, approved, rejected</td>
+</tr>
+<tr>
+<td>comments</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>decided_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="assets--extend"><code>assets</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 5 – Asset Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>asset_tag</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>UNIQUE</td>
+</tr>
+<tr>
+<td>model</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>manufacturer</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → config_dropdowns <em>(add)</em></td>
+</tr>
+<tr>
+<td>category</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → asset_categories.id ON UPDATE CASCADE</td>
+</tr>
+<tr>
+<td>serial_number</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>location</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>assigned_to</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> <em>(formalize FK constraint)</em></td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>YES</td>
+<td>'active'</td>
+<td>CHECK: available, assigned, in_repair, retired, lost</td>
+</tr>
+<tr>
+<td>poor <em>(add)</em></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>procurement_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>warranty_start_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>warranty_end_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>warranty_type</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>CHECK: standard, extended <em>(add)</em></td>
+</tr>
+<tr>
+<td>vendor</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>invoice_verified_status</td>
+<td>text</td>
+<td>YES</td>
+<td>'unverified'</td>
+<td>CHECK: unverified, verified, mismatch <em>(add)</em></td>
+</tr>
+<tr>
+<td>import_source</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>e.g. CSV import filename <em>(add)</em></td>
+</tr>
+<tr>
+<td>import_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>notes</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Remove:</strong> <code>owner text</code> (free-text; replaced by <code>assigned_to</code> FK), <code>attachments json</code> (move to <code>asset_attachments</code> table).</p>
+<hr>
+<h3 id="asset_categories--extend"><code>asset_categories</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Config / Epic 5 – Asset Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>UNIQUE</td>
+</tr>
+<tr>
+<td>description</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>code</td>
+<td>varchar(5)</td>
+<td>YES</td>
+<td>—</td>
+<td>UNIQUE</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>boolean</td>
+<td>YES</td>
+<td>true</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>sort_order</td>
+<td>int</td>
+<td>YES</td>
+<td>0</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="ats_candidates--extend"><code>ats_candidates</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS &amp; Job Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>full_name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>email</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>UNIQUE</td>
+</tr>
+<tr>
+<td>phone</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>location</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>source</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → config_dropdowns <em>(FK-ify)</em></td>
+</tr>
+<tr>
+<td>current_company</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>current_title</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>resume_url</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>linkedin_profile</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>resume_score</td>
+<td>numeric(5,2)</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>resume_analysis</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ai_parsed_skills</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>last_scored_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ai_summary</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ai_summary_generated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>current_step</td>
+<td>text</td>
+<td>YES</td>
+<td>'sourced'</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="requisitions--extend"><code>requisitions</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS &amp; Job Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>intake_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → intake_records.id <em>(add: Epic 3.7 handoff)</em></td>
+</tr>
+<tr>
+<td>title</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>dept</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → config_dropdowns</td>
+</tr>
+<tr>
+<td>location</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>employment_type</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>CHECK: full_time, part_time, contract, internship</td>
+</tr>
+<tr>
+<td>description</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>min_experience</td>
+<td>int</td>
+<td>YES</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>max_experience</td>
+<td>int</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>priority</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>CHECK: low, medium, high, urgent <em>(add)</em></td>
+</tr>
+<tr>
+<td>budget_min</td>
+<td>numeric</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>budget_max</td>
+<td>numeric</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>posting_start_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>posting_end_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td><em>(add)</em></td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>YES</td>
+<td>'draft'</td>
+<td>CHECK: draft, open, on_hold, closed</td>
+</tr>
+<tr>
+<td>hiring_manager_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> ON DELETE SET NULL</td>
+</tr>
+<tr>
+<td>created_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>linkedin_job_id</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>linkedin_posted_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Remove:</strong> <code>skills text[]</code> → replace with <code>requisition_skills</code> join table (see Net New).</p>
+<hr>
+<h3 id="applications--reuse"><code>applications</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS &amp; Job Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>candidate_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → ats_candidates.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>requisition_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://requisitions.id">requisitions.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>stage</td>
+<td>text</td>
+<td>YES</td>
+<td>'sourced'</td>
+<td>CHECK: sourced, screen, manager, panel, offer, hired, rejected</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>YES</td>
+<td>'active'</td>
+<td>CHECK: active, on_hold, rejected, withdrawn, hired</td>
+</tr>
+<tr>
+<td>owner_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Unique:</strong> (candidate_id, requisition_id)</p>
+<hr>
+<h3 id="interviews--ats_interviews--replace--single-interviews-table"><code>interviews</code> + <code>ats_interviews</code> → <strong>Replace</strong> → single <code>interviews</code> table</h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS &amp; Job Management</p>
+<p>Two parallel interview tables in legacy. Consolidated:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>application_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://applications.id">applications.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>requisition_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://requisitions.id">requisitions.id</a></td>
+</tr>
+<tr>
+<td>interviewer_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>candidate_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → ats_candidates.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>type</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>CHECK: screen, technical, behavioral, panel, final</td>
+</tr>
+<tr>
+<td>scheduled_start</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>scheduled_end</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>meeting_link</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>YES</td>
+<td>'scheduled'</td>
+<td>CHECK: scheduled, completed, cancelled, rescheduled</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="interview_assignments--reuse"><code>interview_assignments</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS &amp; Job Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>interview_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://interviews.id">interviews.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>interviewer_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>candidate_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → ats_candidates.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>role</td>
+<td>text</td>
+<td>YES</td>
+<td>'primary'</td>
+<td>CHECK: primary, observer</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Unique:</strong> (interview_id, interviewer_id)</p>
+<hr>
+<h3 id="interview_feedback--reuse"><code>interview_feedback</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS &amp; Job Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>interview_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://interviews.id">interviews.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>interviewer_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>ratings</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>summary</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>recommendation</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>CHECK: strong_yes, yes, leaning_yes, no, strong_no</td>
+</tr>
+<tr>
+<td>is_final</td>
+<td>boolean</td>
+<td>YES</td>
+<td>false</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="feedback--feedback_scores--extend"><code>feedback</code> + <code>feedback_scores</code> → <strong>Extend</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS &amp; Job Management</p>
+<p>Keep both tables; align <code>feedback.candidate_id</code> FK to <code>ats_candidates.id</code> explicitly and link <code>feedback</code> to <code>applications.id</code> for context.</p>
+<hr>
+<h3 id="candidate_activities--reuse"><code>candidate_activities</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS / Epic 9 – Audit</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>candidate_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → ats_candidates.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>actor_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>activity_type</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>activity_description</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>metadata</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>'{}'</td>
+<td>—</td>
+</tr>
+<tr>
+<td>seen_by</td>
+<td>uuid[]</td>
+<td>YES</td>
+<td>'{}'</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="candidate_comments--reuse"><code>candidate_comments</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS</p>
+<hr>
+<h3 id="ats_comments--reuse"><code>ats_comments</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS</p>
+<hr>
+<h3 id="ats_attachments--reuse"><code>ats_attachments</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS</p>
+<hr>
+<h3 id="compensation_private--reuse"><code>compensation_private</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS</p>
+<hr>
+<h3 id="requisition_activities--reuse"><code>requisition_activities</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS / Epic 9 – Audit</p>
+<hr>
+<h3 id="requisition_comments--reuse"><code>requisition_comments</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS</p>
+<hr>
+<h3 id="ats_audit--audit_logs--app_logs--replace--unified-audit_events"><code>ats_audit</code> + <code>audit_logs</code> + <code>app_logs</code> → <strong>Replace</strong> → unified <code>audit_events</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 9 – Audit &amp; Logging</p>
+<p>Three overlapping audit tables in legacy. HubV2 consolidates into a single structured audit table. See Net New: <code>audit_events</code>.</p>
+<hr>
+<h3 id="test_templates-test_assignments-test_sessions-test_responses-test_scores-proctor_events-proctor_images-ai_prompts--reuse"><code>test_templates</code>, <code>test_assignments</code>, <code>test_sessions</code>, <code>test_responses</code>, <code>test_scores</code>, <code>proctor_events</code>, <code>proctor_images</code>, <code>ai_prompts</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS (Technical Assessment)</p>
+<p>Entire assessment + proctoring subsystem is well-built and maps cleanly to Epic 10. Reuse as-is; update employee FKs to point to <code>employees.id</code>.</p>
+<hr>
+<h3 id="notification_queue-notification_preferences-email_templates-notification_logs-dead_letter_queue--reuse"><code>notification_queue</code>, <code>notification_preferences</code>, <code>email_templates</code>, <code>notification_logs</code>, <code>dead_letter_queue</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Config (Notification Module)</p>
+<p>Notification system is fully built and aligns with Epic 2.4. Extend <code>notification_preferences</code> to add <code>all_modules</code> master toggle. Update <code>module_id</code> CHECK to include all 10 HubV2 modules.</p>
+<hr>
+<h3 id="access_grants--reuse"><code>access_grants</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Config</p>
+<hr>
+<h3 id="pending_invites--reuse"><code>pending_invites</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Config / User Management</p>
+<hr>
+<h3 id="candidate_proficiencies--reuse"><code>candidate_proficiencies</code> → <strong>Reuse</strong></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS</p>
+<hr>
+<h3 id="external_completions--retire"><code>external_completions</code> → <strong>Retire</strong></h3>
+<p>Legacy tokenized external completion flow. HubV2 onboarding does not use this pattern — all tasks completed within the system.</p>
+<hr>
+<h3 id="workflow_updates--retire"><code>workflow_updates</code> → <strong>Retire</strong></h3>
+<p>Catch-all status machine log from the old onboarding workflow (29 tracking columns dropped in migration 20260302145304). Replaced by <code>audit_events</code> (Epic 9) and <code>task_sla_events</code> (Epic 4).</p>
+<h3 id="task_dependencies--retire"><code>task_dependencies</code> → <strong>Retire</strong></h3>
+<p>Duplicate of <code>onboarding_task_dependencies</code>. No FK constraints; appears to be an older parallel table. Superseded.</p>
+<h3 id="hiring_surveys--replace--intake_records"><code>hiring_surveys</code> → <strong>Replace</strong> → <code>intake_records</code></h3>
+<p>See Net New section. The flat form structure is replaced by a full lifecycle intake module.</p>
+<h3 id="candidates--replace"><code>candidates</code> → <strong>Replace</strong></h3>
+<p>Legacy new-joiner record conflating ATS candidates with onboarding subjects. In HubV2, <code>employees</code> is the onboarding subject and <code>ats_candidates</code> is the recruitment subject. The <code>candidates</code> table is retired; its data is migrated to the appropriate target.</p>
+<h3 id="docs--retire"><code>docs</code> → <strong>Retire</strong></h3>
+<p>Internal documentation table. Not referenced in any HubV2 spec module.</p>
+<hr>
+<h2 id="b-net-new-tables">B. Net New Tables</h2>
+<p>Tables with no legacy equivalent, required by HubV2 spec.</p>
+<hr>
+<h3 id="employee_emergency_contacts"><code>employee_emergency_contacts</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 1 – Employee Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>employee_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>relationship</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>phone</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="employee_attachments"><code>employee_attachments</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 1 – Employee Management</p>
+<p>Stores employment contracts, IDs, certifications uploaded to employee profiles.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>employee_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>file_url</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>S3/storage path</td>
+</tr>
+<tr>
+<td>file_name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>label</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>Category label (e.g. &quot;Employment Contract&quot;)</td>
+</tr>
+<tr>
+<td>uploaded_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>uploaded_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="employee_project_history"><code>employee_project_history</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 1 – Employee Management</p>
+<p>Editable project history per employee. Active project assignments are stored in <code>project_members</code>; this table tracks historical/concluded assignments and admin-added entries.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>employee_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>project_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://projects.id">projects.id</a> ON DELETE SET NULL</td>
+</tr>
+<tr>
+<td>project_name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>Denormalized for historical integrity</td>
+</tr>
+<tr>
+<td>role</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>start_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>end_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="offboarding_tasks"><code>offboarding_tasks</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 1 – Employee Management (Feature 1.10 – Newly Offboarded)</p>
+<p>Task pool for employee archiving workflow. Distinct from onboarding tasks.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>employee_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>task_type</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: email_decommission, project_migration, asset_retrieval, system_account_removal</td>
+</tr>
+<tr>
+<td>assigned_group</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: IT, HR, Finance, Manager</td>
+</tr>
+<tr>
+<td>assignee_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a>; NULL = pooled</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>NO</td>
+<td>'pending'</td>
+<td>CHECK: pending, in_progress, completed</td>
+</tr>
+<tr>
+<td>due_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>completed_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>completed_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>sign_off_notes</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="roles"><code>roles</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Config (Role &amp; Permission Management)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>UNIQUE</td>
+</tr>
+<tr>
+<td>description</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>is_system</td>
+<td>boolean</td>
+<td>NO</td>
+<td>false</td>
+<td>System roles (Admin, HR, Staff) cannot be deleted</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="permissions"><code>permissions</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Config (Role &amp; Permission Management)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>role_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → <a href="http://roles.id">roles.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>module</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: employees, intake, onboarding, assets, timesheets, productivity, ats, audit, config, projects</td>
+</tr>
+<tr>
+<td>action</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: view, create, edit, delete, admin_mode, export, bulk_import</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Unique:</strong> (role_id, module, action)</p>
+<hr>
+<h3 id="role_assignments"><code>role_assignments</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Config</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>employee_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>PK (composite), FK → <a href="http://employees.id">employees.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>role_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>PK (composite), FK → <a href="http://roles.id">roles.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>assigned_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>assigned_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="config_dropdowns"><code>config_dropdowns</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Config (Feature 2.1)</p>
+<p>Replaces <code>config</code>. System-wide hierarchical dropdown configuration.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>module</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: employees, intake, onboarding, assets, audit</td>
+</tr>
+<tr>
+<td>category</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>e.g. Department, Location, Hire Type</td>
+</tr>
+<tr>
+<td>value</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>Display value</td>
+</tr>
+<tr>
+<td>sort_order</td>
+<td>int</td>
+<td>YES</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>boolean</td>
+<td>NO</td>
+<td>true</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Unique:</strong> (module, category, value)</p>
+<hr>
+<h3 id="system_settings"><code>system_settings</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 2 – System Config</p>
+<p>Global system-level settings (retention rules, security thresholds, etc.).</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>key</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>value</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>description</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="intake_records"><code>intake_records</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 3 – Intake Management</p>
+<p>Replaces <code>hiring_surveys</code>. Full lifecycle intake with approval workflow.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>reference_number</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>UNIQUE; auto-generated (e.g. INT-2026-001)</td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>NO</td>
+<td>'draft'</td>
+<td>CHECK: draft, submitted, under_review, approved, rejected, escalated</td>
+</tr>
+<tr>
+<td>role_title</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>department</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → config_dropdowns</td>
+</tr>
+<tr>
+<td>location</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>work_model</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>CHECK: remote, hybrid, in_person</td>
+</tr>
+<tr>
+<td>hire_type</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: internal, external, staff_aug</td>
+</tr>
+<tr>
+<td>reason_for_hire</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → config_dropdowns</td>
+</tr>
+<tr>
+<td>priority</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>CHECK: low, medium, high, urgent</td>
+</tr>
+<tr>
+<td>number_of_positions</td>
+<td>int</td>
+<td>NO</td>
+<td>1</td>
+<td>—</td>
+</tr>
+<tr>
+<td>experience_range_min</td>
+<td>int</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>experience_range_max</td>
+<td>int</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>salary_range_min</td>
+<td>numeric</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>salary_range_max</td>
+<td>numeric</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>salary_currency</td>
+<td>text</td>
+<td>NO</td>
+<td>'USD'</td>
+<td>CHECK: INR, USD</td>
+</tr>
+<tr>
+<td>budget_approved</td>
+<td>boolean</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>preferred_start_date</td>
+<td>date</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>client_facing</td>
+<td>boolean</td>
+<td>YES</td>
+<td>false</td>
+<td>—</td>
+</tr>
+<tr>
+<td>client_expectations</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>key_perks_benefits</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>comments_notes</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>hiring_manager_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>ai_generated_jd</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>AI-generated job description</td>
+</tr>
+<tr>
+<td>ai_jd_generated_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>submitted_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>submitted_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="intake_skills"><code>intake_skills</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 3 – Intake Management</p>
+<p>Normalized replacement for <code>hiring_surveys.mandatory_skills</code> / <code>nice_to_have_skills</code> free text.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>intake_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → intake_records.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>skill_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → skills_catalog.id</td>
+</tr>
+<tr>
+<td>type</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: mandatory, nice_to_have</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Unique:</strong> (intake_id, skill_id, type)</p>
+<hr>
+<h3 id="intake_approvals"><code>intake_approvals</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 3 – Intake Management</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>intake_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → intake_records.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>approver_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>status</td>
+<td>text</td>
+<td>NO</td>
+<td>'pending'</td>
+<td>CHECK: pending, approved, rejected</td>
+</tr>
+<tr>
+<td>comments</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>decided_at</td>
+<td>timestamptz</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="intake_audit"><code>intake_audit</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 3 – Intake Management / Epic 9 – Audit</p>
+<p>Version history for intake record changes.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>intake_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → intake_records.id ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>actor_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>action</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: created, updated, submitted, approved, rejected, escalated</td>
+</tr>
+<tr>
+<td>snapshot</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>Full record snapshot at time of action</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="requisition_skills"><code>requisition_skills</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 10 – ATS &amp; Job Management</p>
+<p>Replaces <code>requisitions.skills text[]</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>requisition_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>PK (composite), FK → <a href="http://requisitions.id">requisitions.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>skill_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>PK (composite), FK → skills_catalog.id</td>
+</tr>
+<tr>
+<td>type</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: mandatory, nice_to_have</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="asset_attachments"><code>asset_attachments</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 5 – Asset Management</p>
+<p>Replaces <code>assets.attachments json</code> inline blob.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>gen_random_uuid()</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>asset_id</td>
+<td>uuid</td>
+<td>NO</td>
+<td>—</td>
+<td>FK → <a href="http://assets.id">assets.id</a> ON DELETE CASCADE</td>
+</tr>
+<tr>
+<td>file_url</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>file_name</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>label</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>e.g. Invoice, Warranty Certificate</td>
+</tr>
+<tr>
+<td>uploaded_by</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>uploaded_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="audit_events"><code>audit_events</code></h3>
+<p><strong>HubV2 Module:</strong> Epic 9 – Audit &amp; Logging</p>
+<p>Unified audit log replacing <code>ats_audit</code>, <code>audit_logs</code>, and <code>app_logs</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Default</th>
+<th>Constraints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigserial</td>
+<td>NO</td>
+<td>—</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>actor_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>FK → <a href="http://employees.id">employees.id</a></td>
+</tr>
+<tr>
+<td>module</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: employees, intake, onboarding, assets, timesheets, productivity, ats, config, projects</td>
+</tr>
+<tr>
+<td>entity</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>Table/entity name</td>
+</tr>
+<tr>
+<td>entity_id</td>
+<td>uuid</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>action</td>
+<td>text</td>
+<td>NO</td>
+<td>—</td>
+<td>CHECK: create, update, delete, view, export, login, logout</td>
+</tr>
+<tr>
+<td>severity</td>
+<td>text</td>
+<td>YES</td>
+<td>'info'</td>
+<td>CHECK: info, warn, error</td>
+</tr>
+<tr>
+<td>old_value</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>new_value</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>metadata</td>
+<td>jsonb</td>
+<td>YES</td>
+<td>'{}'</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ip_address</td>
+<td>text</td>
+<td>YES</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NO</td>
+<td>now()</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="c-cross-module-foreign-key-map">C. Cross-Module Foreign Key Map</h2>
+<table>
+<thead>
+<tr>
+<th>Source Module</th>
+<th>Source Table</th>
+<th>FK Column</th>
+<th>Target Module</th>
+<th>Target Table</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All modules</td>
+<td>All tables</td>
+<td><code>*employee_id</code>, <code>*user_id</code>, <code>*assignee</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 1</td>
+<td><code>employees</code></td>
+<td><code>manager_id</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code> (self-ref)</td>
+</tr>
+<tr>
+<td>Epic 1</td>
+<td><code>employee_project_history</code></td>
+<td><code>project_id</code></td>
+<td>Epic 8</td>
+<td><code>projects.id</code></td>
+</tr>
+<tr>
+<td>Epic 3</td>
+<td><code>intake_records</code></td>
+<td><code>hiring_manager_id</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 3</td>
+<td><code>intake_skills</code></td>
+<td><code>skill_id</code></td>
+<td>Epic 2</td>
+<td><code>skills_catalog.id</code></td>
+</tr>
+<tr>
+<td>Epic 4</td>
+<td><code>onboarding_journeys</code></td>
+<td><code>employee_id</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 4</td>
+<td><code>onboarding_tasks</code></td>
+<td><code>assignee</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 5</td>
+<td><code>assets</code></td>
+<td><code>assigned_to</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 5</td>
+<td><code>assets</code></td>
+<td><code>category</code></td>
+<td>Epic 5/2</td>
+<td><code>asset_categories.id</code></td>
+</tr>
+<tr>
+<td>Epic 5</td>
+<td><code>asset_assignment_history</code></td>
+<td><code>asset_id</code></td>
+<td>Epic 5</td>
+<td><code>assets.id</code></td>
+</tr>
+<tr>
+<td>Epic 6</td>
+<td><code>timesheets</code></td>
+<td><code>project_id</code></td>
+<td>Epic 8</td>
+<td><code>projects.id</code></td>
+</tr>
+<tr>
+<td>Epic 6</td>
+<td><code>timesheets</code></td>
+<td><code>user_id</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 7</td>
+<td><code>project_members</code></td>
+<td><code>project_id</code></td>
+<td>Epic 8</td>
+<td><code>projects.id</code></td>
+</tr>
+<tr>
+<td>Epic 7</td>
+<td><code>project_members</code></td>
+<td><code>user_id</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 7</td>
+<td><code>employee_rates</code></td>
+<td><code>user_id</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 9</td>
+<td><code>audit_events</code></td>
+<td><code>actor_id</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 10</td>
+<td><code>requisitions</code></td>
+<td><code>intake_id</code></td>
+<td>Epic 3</td>
+<td><code>intake_records.id</code></td>
+</tr>
+<tr>
+<td>Epic 10</td>
+<td><code>requisitions</code></td>
+<td><code>hiring_manager_id</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 10</td>
+<td><code>requisition_skills</code></td>
+<td><code>skill_id</code></td>
+<td>Epic 2</td>
+<td><code>skills_catalog.id</code></td>
+</tr>
+<tr>
+<td>Epic 10</td>
+<td><code>applications</code></td>
+<td><code>candidate_id</code></td>
+<td>Epic 10</td>
+<td><code>ats_candidates.id</code></td>
+</tr>
+<tr>
+<td>Epic 10</td>
+<td><code>applications</code></td>
+<td><code>requisition_id</code></td>
+<td>Epic 10</td>
+<td><code>requisitions.id</code></td>
+</tr>
+<tr>
+<td>Epic 10</td>
+<td><code>interviews</code></td>
+<td><code>application_id</code></td>
+<td>Epic 10</td>
+<td><code>applications.id</code></td>
+</tr>
+<tr>
+<td>Epic 2</td>
+<td><code>permissions</code></td>
+<td><code>role_id</code></td>
+<td>Epic 2</td>
+<td><code>roles.id</code></td>
+</tr>
+<tr>
+<td>Epic 2</td>
+<td><code>role_assignments</code></td>
+<td><code>employee_id</code></td>
+<td>Epic 1</td>
+<td><code>employees.id</code></td>
+</tr>
+<tr>
+<td>Epic 2</td>
+<td><code>config_dropdowns</code></td>
+<td><em>(source of truth)</em></td>
+<td>All</td>
+<td>Departments, Locations, Hire Types, etc.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="d-schema-summary-by-epic">D. Schema Summary by Epic</h2>
+<table>
+<thead>
+<tr>
+<th>Epic</th>
+<th>Module</th>
+<th>Reuse</th>
+<th>Extend</th>
+<th>Replace</th>
+<th>Retire</th>
+<th>Net New</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Employee Management</td>
+<td><code>employee_certifications</code></td>
+<td><code>profiles→employees</code>, <code>employee_skills</code>, <code>leaves</code></td>
+<td><code>candidates</code></td>
+<td>—</td>
+<td><code>employee_emergency_contacts</code>, <code>employee_attachments</code>, <code>employee_project_history</code>, <code>offboarding_tasks</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>System Config</td>
+<td><code>skills_catalog</code>, <code>access_grants</code>, <code>pending_invites</code>, <code>notification_*</code>, <code>email_templates</code></td>
+<td><code>asset_categories</code>, <code>owner_groups</code></td>
+<td><code>config</code></td>
+<td>—</td>
+<td><code>roles</code>, <code>permissions</code>, <code>role_assignments</code>, <code>config_dropdowns</code>, <code>system_settings</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Intake Management</td>
+<td>—</td>
+<td><code>approvals</code></td>
+<td><code>hiring_surveys</code></td>
+<td>—</td>
+<td><code>intake_records</code>, <code>intake_skills</code>, <code>intake_approvals</code>, <code>intake_audit</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Onboarding</td>
+<td><code>onboarding_task_templates</code>, <code>onboarding_task_template_dependencies</code>, <code>onboarding_task_dependencies</code>, <code>group_members</code>, <code>task_sla_events</code>, <code>task_attachments</code></td>
+<td><code>onboarding_templates</code>, <code>onboarding_journeys</code>, <code>onboarding_tasks</code></td>
+<td>—</td>
+<td><code>external_completions</code>, <code>workflow_updates</code>, <code>task_dependencies</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Asset Management</td>
+<td>—</td>
+<td><code>assets</code></td>
+<td>—</td>
+<td>—</td>
+<td><code>asset_attachments</code>, <code>asset_assignment_history</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Timesheets</td>
+<td><code>holidays</code>, <code>fx_rates</code></td>
+<td><code>timesheets</code>, <code>leaves</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Productivity</td>
+<td><code>project_members</code></td>
+<td><code>employee_rates</code>, <code>projects</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Project Management</td>
+<td>—</td>
+<td><code>projects</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Audit &amp; Logging</td>
+<td><code>task_sla_events</code></td>
+<td>—</td>
+<td><code>ats_audit</code> + <code>audit_logs</code> + <code>app_logs</code></td>
+<td><code>workflow_updates</code></td>
+<td><code>audit_events</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td>ATS &amp; Job Management</td>
+<td><code>applications</code>, <code>interview_assignments</code>, <code>interview_feedback</code>, <code>candidate_activities</code>, <code>candidate_comments</code>, <code>ats_comments</code>, <code>ats_attachments</code>, <code>compensation_private</code>, <code>requisition_activities</code>, <code>requisition_comments</code>, <code>candidate_proficiencies</code>, <code>test_*</code>, <code>proctor_*</code>, <code>ai_prompts</code></td>
+<td><code>ats_candidates</code>, <code>requisitions</code>, <code>feedback</code>, <code>feedback_scores</code></td>
+<td><code>interviews</code> + <code>ats_interviews</code></td>
+<td><code>hiring_surveys</code>, <code>docs</code></td>
+<td><code>requisition_skills</code></td>
+</tr>
+</tbody>
+</table>
+
+            
+            
+        </body>
+        </html>
