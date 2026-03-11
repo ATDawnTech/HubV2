@@ -1,0 +1,34 @@
+from datetime import datetime, timezone
+from sqlalchemy import (
+    Column, String, Text, DateTime,
+    ForeignKey, Index
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from ..base import Base
+
+
+class AuditEvent(Base):
+    __tablename__ = "audit_events"
+
+    id = Column(String(255), primary_key=True)
+    actor_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    module = Column(String(100), nullable=False)
+    entity = Column(String(100), nullable=False)
+    entity_id = Column(String(255), nullable=True)
+    action = Column(String(50), nullable=False)
+    severity = Column(String(20), nullable=True, default="info")
+    old_value = Column(JSONB, nullable=True)
+    new_value = Column(JSONB, nullable=True)
+    event_metadata = Column("metadata", JSONB, nullable=True)
+    ip_address = Column(String(50), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    __table_args__ = (
+        Index("idx_audit_events_actor_id", "actor_id"),
+        Index("idx_audit_events_module_entity", "module", "entity"),
+        Index("idx_audit_events_entity_id", "entity_id"),
+    )

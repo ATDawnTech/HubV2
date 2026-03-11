@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Alembic
+# (versions/ is committed; only exclude generated artifacts)
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# mypy
+.mypy_cache/
+*.pyi
+
+# IDE
+.idea/
+.vscode/
+*.swp
