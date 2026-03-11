@@ -1,6 +1,6 @@
 # ADT Hub V2 – Schema Tests
 
-**Version:** 1.0
+**Version:** 1.1
 **Date:** March 2026
 **Reference:** DATA_SCHEMA_MIGRATION.md
 
@@ -23,7 +23,7 @@ Schema tests verify database-level constraints independent of the application la
 |---|---|---|---|
 | D.1.1 | `employees.work_email` UNIQUE | Insert second employee with same work email | DB rejects; unique violation |
 | D.1.2 | `employees.work_email` NOT NULL | Insert employee without work_email | DB rejects; not null violation |
-| D.1.3 | `employees.employee_number` UNIQUE + auto-increment | Create two employees; check employee_numbers | Both unique; no gaps |
+| D.1.3 | `employees.employee_number` UNIQUE + auto-increment | Create two employees; check employee_numbers | Both unique; no gaps | ⚠️ NOT IMPLEMENTED — `employee_number` column exists but has no UNIQUE constraint in migration 0001. Deferred. |
 | D.1.4 | `employees.status` CHECK | Insert employee with status = 'invalid_value' | DB rejects; check constraint violation |
 | D.1.5 | `employees.personal_email` UNIQUE (when set) | Insert two employees with same personal email | DB rejects |
 
@@ -83,11 +83,16 @@ Schema tests verify database-level constraints independent of the application la
 
 ### D.8 Users & Security
 
-| ID | Constraint | Test | Expected Result |
-|---|---|---|---|
-| D.8.1 | `users.email` UNIQUE | Insert two users with same email | DB rejects |
-| D.8.2 | `users.password_hash` format | Read password_hash from DB | Value starts with `$argon2` or `$2b$`; plaintext never stored |
-| D.8.3 | System roles not deletable (FK guard or trigger) | Attempt DELETE on role with name IN ('Admin','HR','Staff') | DB rejects or application-level guard enforced |
+> **OUT OF SCOPE for this schema.** HubV2 authenticates via SAML SSO — there is no local
+> `users` table, no `password_hash` column, and no local credential storage. D.8 tests
+> will not be implemented. Role protection (D.8.3) is enforced at the application layer,
+> not via a DB constraint.
+
+| ID | Constraint | Test | Expected Result | Status |
+|---|---|---|---|---|
+| D.8.1 | `users.email` UNIQUE | Insert two users with same email | DB rejects | ❌ N/A — no `users` table |
+| D.8.2 | `users.password_hash` format | Read password_hash from DB | Value starts with `$argon2` or `$2b$` | ❌ N/A — SAML SSO; no password storage |
+| D.8.3 | System roles not deletable | Attempt DELETE on system role | DB rejects | ❌ N/A — enforced at application layer |
 
 ### D.9 Referential Integrity — Cross-Module
 
@@ -97,4 +102,4 @@ Schema tests verify database-level constraints independent of the application la
 | D.9.2 | `project_members.project_id` FK | Insert member with non-existent project_id | DB rejects |
 | D.9.3 | `project_members.employee_id` FK | Insert member with non-existent employee_id | DB rejects |
 | D.9.4 | `intake_skills.skill_id` FK | Insert intake_skill with non-existent skill_id | DB rejects |
-| D.9.5 | `notification_queue` delivery status CHECK | Insert notification with status = 'invalid' | DB rejects; only valid statuses accepted |
+| D.9.5 | `notification_queue` delivery status CHECK | Insert notification with status = 'invalid' | DB rejects; only valid statuses accepted | ⚠️ NOT IMPLEMENTED — `notification_queue` table not in current schema. Deferred. |
