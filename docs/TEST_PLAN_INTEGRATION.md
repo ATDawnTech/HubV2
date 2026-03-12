@@ -1,8 +1,8 @@
 # ADT Hub V2 – Integration Tests
 
-**Version:** 1.0
+**Version:** 1.1
 **Date:** March 2026
-**Reference:** ADT Hub Spec Plan v1.0, DATA_SCHEMA_MIGRATION.md
+**Reference:** ADT Hub Spec Plan v1.1, DATA_SCHEMA_MIGRATION.md
 
 ---
 
@@ -13,6 +13,26 @@ Integration tests cover API endpoints + database interactions and cross-module d
 **Test runner:** `pytest tests/integration`
 **Prerequisites:** DB running + migrated; API running; test fixtures loaded
 **When:** On every commit (against test environment)
+
+---
+
+## 0. Epic 0 – Hub Dashboard
+
+### 0.1 My Tasks Aggregation
+
+| ID | Test Case | Expected Result |
+|---|---|---|
+| 0.1.1 | `GET /v1/my-tasks` as IT user with assigned onboarding task | 200; task appears with module=Onboarding |
+| 0.1.2 | Complete task in source module | Task no longer in `GET /v1/my-tasks` |
+| 0.1.3 | `GET /v1/my-tasks` as user with no assignments | 200; empty list |
+| 0.1.4 | User with two roles sees union of tasks from both roles | All tasks visible |
+
+### 0.2 Role-Based Dashboard Configuration
+
+| ID | Test Case | Expected Result |
+|---|---|---|
+| 0.2.1 | Role with no module assignments | `GET /v1/dashboard/modules` displays no results |
+| 0.2.2 | Role with Manager Type flag | Supervisor widgets included in dashboard response |
 
 ---
 
@@ -251,6 +271,28 @@ Integration tests cover API endpoints + database interactions and cross-module d
 | 4.5.1 | Task status change | `task_sla_events` event recorded with actor and timestamp |
 | 4.5.2 | Template config change | `audit_events` record with entity=onboarding_templates |
 
+### 4.6 Journey State Transitions
+
+Spec 6.1 defines five journey states: Not Started, In Progress, Paused, Cancelled, Completed.
+
+| ID | Test Case | Expected Result |
+|---|---|---|
+| 4.6.1 | `PATCH /v1/onboarding-journeys/{id}` status=paused | 200; SLA clock stops; tasks remain assigned |
+| 4.6.2 | `PATCH /v1/onboarding-journeys/{id}` status=in_progress from paused | 200; SLA resumes |
+| 4.6.3 | `PATCH /v1/onboarding-journeys/{id}` status=cancelled | 200; open tasks cleared |
+
+### 4.7 Enrollment & Finalization
+
+Spec 6.2: Enrollment creates a shell employee record with status=new_onboard. Spec 6.3: Finalization is hard-gated until all tasks complete; transitions employee to active.
+
+| ID | Test Case | Expected Result |
+|---|---|---|
+| 4.7.1 | `POST /v1/onboarding/candidates` enroll new candidate | 201; shell `employees` record created with status=new_onboard; employee_id and work_email auto-assigned |
+| 4.7.2 | New Onboard candidate visible in onboarding dashboard | `GET /v1/onboarding/candidates` includes the enrolled candidate |
+| 4.7.3 | New Onboard candidate NOT in employee directory | `GET /v1/employees` default view excludes status=new_onboard |
+| 4.7.4 | `POST /v1/onboarding-journeys/{id}/finalize` with incomplete tasks | 422; blocked |
+| 4.7.5 | `POST /v1/onboarding-journeys/{id}/finalize` with all tasks complete | 200; `employees.status` = active; candidate now appears in employee directory |
+
 ---
 
 ## 5. Epic 5 – Asset Management
@@ -471,6 +513,8 @@ Integration tests cover API endpoints + database interactions and cross-module d
 | X.6 | Rename department in System Config → all employees reflect new name | Epic 2 + 1 | Employee directory shows updated department name |
 | X.7 | Create project inline in employee modal → project available in Timesheets | Epic 1 + 8 + 6 | Project selectable in timesheet project dropdown |
 | X.8 | Remove config dropdown value → disappears from all consuming modules | Epic 2 + All | Value absent from all module dropdowns after deletion |
+| X.9 | Enroll candidate in onboarding → shell employee record created with employee_id | Epic 4 + 1 | `employees.status` = new_onboard; employee_id assigned from sequence |
+| X.10 | Finalize onboarding journey → employee becomes active | Epic 4 + 1 | `employees.status` changes from new_onboard → active; no duplicate record; employee visible in directory |
 
 ---
 
