@@ -1,8 +1,8 @@
 # ADT Hub V2 – Unit Tests
 
-**Version:** 1.0
+**Version:** 1.1
 **Date:** March 2026
-**Reference:** ADT Hub Spec Plan v1.0
+**Reference:** ADT Hub Spec Plan v1.1
 
 ---
 
@@ -138,3 +138,42 @@ Formula: `cost_in_usd = local_cost / rate_to_usd` (where `rate_to_usd` = USD per
 | U.6.3 | Leading/trailing whitespace | " user@example.com " vs "user@example.com" | Duplicate detected (trimmed before compare) |
 | U.6.4 | Different emails | "a@example.com" vs "b@example.com" | No duplicate |
 | U.6.5 | Null personal email not flagged | NULL vs "user@example.com" | No duplicate |
+
+---
+
+## U.7 Work Email Generation
+
+Formula (Spec 2.2, 6.2 — Entra Alignment): Trim leading/trailing whitespace → replace internal spaces with `.` → append `@AtDawnTech.com`.
+
+| ID | Test Case | Input | Expected Output |
+|---|---|---|---|
+| U.7.1 | Standard name | "Jane Smith" | `Jane.Smith@AtDawnTech.com` |
+| U.7.2 | Leading/trailing whitespace stripped | " Ryan Tjan " | `Ryan.Tjan@AtDawnTech.com` |
+| U.7.3 | Single name (no space) | "Alice" | `Alice@AtDawnTech.com` |
+| U.7.4 | Multiple internal spaces collapsed | "Mary  Jane  Watson" | `Mary.Jane.Watson@AtDawnTech.com` |
+
+---
+
+## U.8 Budget Min/Max Validation
+
+Intake submission is blocked if `min_budget > max_budget` (Spec 5.2).
+
+| ID | Test Case | Input | Expected Result |
+|---|---|---|---|
+| U.8.1 | Min exceeds Max | min=100000, max=80000 | Validation error |
+| U.8.2 | Min equals Max | min=80000, max=80000 | Passes |
+| U.8.3 | Min below Max | min=60000, max=100000 | Passes |
+| U.8.4 | Both zero (no budget) | min=0, max=0 | Passes |
+
+---
+
+## U.9 Asset ID Generation
+
+Formula (Spec 4.2): `[First 3 chars of Location]-[First 3 chars of Category]-[4-digit sequence]`.
+
+| ID | Test Case | Input | Expected Output |
+|---|---|---|---|
+| U.9.1 | Standard generation | location="India", category="Laptop", seq=1 | `IND-LAP-0001` |
+| U.9.2 | Sequence padding | location="India", category="Monitor", seq=42 | `IND-MON-0042` |
+| U.9.3 | Short location name | location="UK", category="Phone", seq=1 | `UK-PHO-0001` |
+| U.9.4 | Sequence exceeds 4 digits | seq=10000 | `IND-LAP-10000` (no cap) |
