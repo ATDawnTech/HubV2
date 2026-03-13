@@ -6,7 +6,7 @@ name: Deploy to Prod
 # MIGRATION NOTE: Before running this workflow for the first time, confirm that:
 # 1. The Alembic migration from Supabase schema to HubV2 schema has been validated in test
 # 2. Data migration from Supabase has been completed or is not required
-# 3. The DNS cutover plan has been reviewed — adthub.atdawntech.com currently serves
+# 3. SAML IDP has been configured for hub.atdawntech.com in prod
 #    the legacy ADTHUB app. DNS cutover is a separate manual step after this deployment.
 on:
   workflow_dispatch:
@@ -32,9 +32,9 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  S3_BUCKET: adthub-prod-s3-frontend
-  SERVICE_NAME: adthub-prod-api
-  ECR_REGISTRY: ${{ vars.ECR_REGISTRY_URL }}
+  S3_BUCKET: hub-prod-s3-frontend
+  SERVICE_NAME: hub-prod-api
+  ECR_REGISTRY: ${{ vars.ECR_REGISTRY_URL_PROD }}
 
 jobs:
   deploy-frontend-prod:
@@ -56,7 +56,7 @@ jobs:
       - name: Build frontend (Prod)
         run: npm run build -- --mode production
         env:
-          VITE_API_BASE_URL: https://api.adthub.atdawntech.com
+          VITE_API_BASE_URL: https://api.hub.atdawntech.com
           VITE_ENVIRONMENT: production
 
       - name: Configure AWS credentials (Prod OIDC)
@@ -116,15 +116,15 @@ jobs:
       - name: Deploy to ECS Prod
         run: |
           aws ecs update-service \
-            --cluster adthub-prod-ecs-cluster \
-            --service adthub-prod-ecs-api \
+            --cluster hub-prod-ecs-cluster \
+            --service hub-prod-ecs-api \
             --force-new-deployment
 
       - name: Wait for deployment
         run: |
           aws ecs wait services-stable \
-            --cluster adthub-prod-ecs-cluster \
-            --services adthub-prod-ecs-api
+            --cluster hub-prod-ecs-cluster \
+            --services hub-prod-ecs-api
 
   smoke-test-prod:
     name: Smoke Test (Prod)
@@ -142,4 +142,4 @@ jobs:
       - name: Run smoke tests
         run: pytest backend/tests/smoke/test_env.py -v --noconftest
         env:
-          SMOKE_TEST_BASE_URL: https://api.adthub.atdawntech.com
+          SMOKE_TEST_BASE_URL: https://api.hub.atdawntech.com

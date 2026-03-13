@@ -1,6 +1,6 @@
 variable "product" {
   type        = string
-  description = "Product name (adthub)."
+  description = "Product name (hub)."
 }
 
 variable "environment" {
@@ -38,5 +38,5 @@ variable "ecs_task_memory" {
 
 variable "domain_name" {
   type        = string
-  description = "Frontend subdomain for this environment (adthub.atdawntech.com). DNS cutover happens after migration is complete."
+  description = "Frontend subdomain for this environment (e.g. hub.atdawntech.com)."
 }

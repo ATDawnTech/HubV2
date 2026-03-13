@@ -1,4 +1,4 @@
-product     = "adthub"
+product     = "hub"
 environment = "prod"
 aws_region  = "us-east-1"
 
@@ -10,5 +10,5 @@ github_repository   = "HubV2"
 ecs_task_cpu    = 512
 ecs_task_memory = 1024
 
-# DNS — existing subdomain; DNS cutover happens after migration is complete
-domain_name = "adthub.atdawntech.com"
+# DNS
+domain_name = "hub.atdawntech.com"

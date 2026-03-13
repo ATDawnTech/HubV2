@@ -14,7 +14,7 @@ terraform {
 
   backend "s3" {
     bucket         = "shared-prod-s3-terraform-state"
-    key            = "adthub/prod/terraform.tfstate"
+    key            = "hub/prod/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
     dynamodb_table = "shared-prod-dynamodb-terraform-locks"
@@ -35,30 +35,25 @@ provider "aws" {
   }
 }
 
-# MIGRATION NOTE: adthub.atdawntech.com currently serves the legacy ADTHUB application
-# (S3 + CloudFront backed by Supabase). Do NOT point adthub.atdawntech.com to HubV2
-# infrastructure until the migration cutover is approved. During migration, both apps
-# run simultaneously. The DNS cutover is the final step of the migration plan.
-# See docs/INFRASTRUCTURE.md for the migration strategy.
-
-# 1. DNS — ACM certificate for adthub.atdawntech.com and api.adthub.atdawntech.com
+# 1. DNS — ACM certificate for hub.atdawntech.com and api.hub.atdawntech.com
 module "dns" {
   source = "../../modules/dns"
 
   domain_name = var.domain_name
 }
 
-# 2. Networking — read from shared at-dawn-infra VPC via SSM
+# 2. Networking — read from at-dawn-infra VPC via SSM (internal-prod account: 380958218583)
+# Subnets: /internal/prod/vpc/hubv2-private-subnet-ids
 data "aws_ssm_parameter" "vpc_id" {
-  name = "/shared/${var.environment}/vpc/id"
+  name = "/internal/${var.environment}/vpc/id"
 }
 
 data "aws_ssm_parameter" "public_subnet_ids" {
-  name = "/shared/${var.environment}/vpc/public-subnet-ids"
+  name = "/internal/${var.environment}/vpc/public-subnet-ids"
 }
 
 data "aws_ssm_parameter" "private_subnet_ids" {
-  name = "/shared/${var.environment}/vpc/adthub-private-subnet-ids"
+  name = "/internal/${var.environment}/vpc/hubv2-private-subnet-ids"
 }
 
 locals {
@@ -79,7 +74,7 @@ module "api_ecr" {
 # 4. Security Groups
 resource "aws_security_group" "ecs_api" {
   name        = "${var.product}-${var.environment}-ecs-api-sg"
-  description = "Security group for ECS API tasks — allows inbound only from the ALB."
+  description = "Security group for ECS API tasks - allows inbound only from the ALB."
   vpc_id      = local.vpc_id
 
   ingress {
@@ -101,8 +96,9 @@ resource "aws_security_group" "ecs_api" {
   }
 }
 
-# 5. Database — shared RDS managed by at-dawn-shared-db.
-# SSM path: /shared/prod/rds/adthub/database-url
+# 5. Database — shared RDS managed by at-dawn-shared-db (internal-prod account: 380958218583).
+# Prerequisite: at-dawn-shared-db must have created the hubv2 database/user and published:
+#   /internal/prod/rds/hubv2/database-url (SecureString)
 
 # 6. ECS Cluster & Service (with HTTPS ALB)
 module "api_ecs" {
@@ -126,7 +122,7 @@ module "api_ecs" {
   frontend_url        = "https://${var.domain_name}"
   api_url             = "https://api.${var.domain_name}"
 
-  database_url_ssm_path = "/shared/${var.environment}/rds/adthub/database-url"
+  database_url_ssm_path = "/internal/${var.environment}/rds/hubv2/database-url"
 }
 
 # 7. Frontend (S3 + CloudFront)
@@ -149,7 +145,7 @@ module "github_oidc" {
   github_organization = var.github_organization
   github_repository   = var.github_repository
   deployment_branch   = "main"
-  create_provider     = false
+  create_provider     = true # OIDC provider does not yet exist in 380958218583
 }
 
 # 9. SAML SSM parameter placeholders
