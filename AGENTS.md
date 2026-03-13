@@ -89,6 +89,15 @@ Before declaring any task complete or calling `notify_user`, you **MUST** run th
 - Backend port: `3001`
 
 ### AWS accounts
+At Dawn splits products across two account families:
+
+| Family | Dev account | Prod account | Products |
+|---|---|---|---|
+| **Public** (customer-facing) | `662722197745` | `888947293244` | ADTHub, CampusHQ |
+| **Internal** (operational tools) | `548470137722` | `380958218583` | DawnStep, HubV2 |
+
+HubV2 is an internal product. Its AWS profiles:
+
 | Environment | Account ID | AWS profile |
 |---|---|---|
 | dev | `548470137722` | `internal-dev` |
@@ -173,8 +182,8 @@ AWS_PROFILE=internal-prod terraform apply
 ### GitHub OIDC provider status
 | Account | Provider exists |
 |---|---|
-| 548470137722 (dev) | Yes — `create_provider = false` in dev/main.tf |
-| 380958218583 (prod) | Yes (created 2026-03-13) — keep `create_provider = true` in prod/main.tf |
+| 548470137722 (internal-dev) | Yes — `create_provider = false` in dev/main.tf |
+| 380958218583 (internal-prod) | Yes (created 2026-03-13) — keep `create_provider = true` in prod/main.tf |
 
 ### CI pipeline overview (deploy-dev.yml — triggers on push to main)
 1. **Unit & Schema Tests** — pytest with Postgres service container on port 5434 (matches `config.py` defaults: `adthub_admin` / `adthub_test` / `localpassword`)
