@@ -14,7 +14,7 @@ terraform {
 
   backend "s3" {
     bucket         = "shared-prod-s3-terraform-state"
-    key            = "adthub/dev/terraform.tfstate"
+    key            = "hub/dev/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
     dynamodb_table = "shared-prod-dynamodb-terraform-locks"
@@ -35,26 +35,25 @@ provider "aws" {
   }
 }
 
-# 1. DNS — ACM certificate for adthub-dev.atdawntech.com and api.adthub-dev.atdawntech.com
+# 1. DNS — ACM certificate for hub-dev.atdawntech.com and api.hub-dev.atdawntech.com
 module "dns" {
   source = "../../modules/dns"
 
   domain_name = var.domain_name
 }
 
-# 2. Networking — read from shared at-dawn-infra VPC via SSM
-# Prerequisite: at-dawn-infra must have allocated adthub subnets (10.x.40.0/24, 10.x.41.0/24)
-# and published /shared/dev/vpc/adthub-private-subnet-ids.
+# 2. Networking — read from at-dawn-infra VPC via SSM (internal-dev account: 548470137722)
+# Subnets: /internal/dev/vpc/hubv2-private-subnet-ids (10.10.40.0/24, 10.10.41.0/24)
 data "aws_ssm_parameter" "vpc_id" {
-  name = "/shared/${var.environment}/vpc/id"
+  name = "/internal/${var.environment}/vpc/id"
 }
 
 data "aws_ssm_parameter" "public_subnet_ids" {
-  name = "/shared/${var.environment}/vpc/public-subnet-ids"
+  name = "/internal/${var.environment}/vpc/public-subnet-ids"
 }
 
 data "aws_ssm_parameter" "private_subnet_ids" {
-  name = "/shared/${var.environment}/vpc/adthub-private-subnet-ids"
+  name = "/internal/${var.environment}/vpc/hubv2-private-subnet-ids"
 }
 
 locals {
@@ -75,7 +74,7 @@ module "api_ecr" {
 # 4. Security Groups
 resource "aws_security_group" "ecs_api" {
   name        = "${var.product}-${var.environment}-ecs-api-sg"
-  description = "Security group for ECS API tasks — allows inbound only from the ALB."
+  description = "Security group for ECS API tasks - allows inbound only from the ALB."
   vpc_id      = local.vpc_id
 
   ingress {
@@ -97,9 +96,9 @@ resource "aws_security_group" "ecs_api" {
   }
 }
 
-# 5. Database — shared RDS managed by at-dawn-shared-db.
-# Prerequisite: at-dawn-shared-db must have created the adthub database/user and published:
-#   /shared/dev/rds/adthub/database-url (SecureString)
+# 5. Database — shared RDS managed by at-dawn-shared-db (internal-dev account: 548470137722).
+# Prerequisite: at-dawn-shared-db must have created the hubv2 database/user and published:
+#   /internal/dev/rds/hubv2/database-url (SecureString)
 # The ECS task reads this value at startup via SSM secrets injection.
 
 # 6. ECS Cluster & Service (with HTTPS ALB)
@@ -124,7 +123,7 @@ module "api_ecs" {
   frontend_url        = "https://${var.domain_name}"
   api_url             = "https://api.${var.domain_name}"
 
-  database_url_ssm_path = "/shared/${var.environment}/rds/adthub/database-url"
+  database_url_ssm_path = "/internal/${var.environment}/rds/hubv2/database-url"
 }
 
 # 7. Frontend (S3 + CloudFront)
@@ -151,7 +150,7 @@ module "github_oidc" {
 }
 
 # 9. SAML SSM parameter placeholders — fill in via aws ssm put-parameter after
-#    creating the AWS Identity Center SAML app for adthub-dev.
+#    creating the AWS Identity Center SAML app for hub-dev.
 resource "aws_ssm_parameter" "saml_sso_url" {
   name  = "/${var.product}/${var.environment}/api/saml-idp-sso-url"
   type  = "SecureString"

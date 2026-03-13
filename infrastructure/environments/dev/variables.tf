@@ -1,6 +1,6 @@
 variable "product" {
   type        = string
-  description = "Product name (adthub)."
+  description = "Product name (hub)."
 }
 
 variable "environment" {
@@ -38,5 +38,5 @@ variable "ecs_task_memory" {
 
 variable "domain_name" {
   type        = string
-  description = "Frontend subdomain for this environment (e.g. adthub-dev.atdawntech.com)."
+  description = "Frontend subdomain for this environment (e.g. hub-dev.atdawntech.com)."
 }

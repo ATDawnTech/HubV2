@@ -10,9 +10,9 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  S3_BUCKET: adthub-dev-s3-frontend
+  S3_BUCKET: hub-dev-s3-frontend
   CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID_DEV }}
-  SERVICE_NAME: adthub-dev-api
+  SERVICE_NAME: hub-dev-api
   ECR_REGISTRY: ${{ vars.ECR_REGISTRY_URL }}
 
 jobs:
@@ -33,21 +33,14 @@ jobs:
     name: Integration Tests (Isolated)
     runs-on: ubuntu-latest
     needs: unit-and-schema-tests
-    environment: test
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials (Test OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_TEST_DEPLOY_ROLE }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Fetch CI secrets from SSM
-        id: ssm
+      - name: Generate ephemeral CI secrets
+        id: secrets
         run: |
-          CI_DB_PASS=$(aws ssm get-parameter --name "/adthub/test/ci/postgres-password" --with-decryption --query "Parameter.Value" --output text)
-          CI_JWT_SEC=$(aws ssm get-parameter --name "/adthub/test/ci/jwt-secret" --with-decryption --query "Parameter.Value" --output text)
+          CI_DB_PASS=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 32)
+          CI_JWT_SEC=$(openssl rand -base64 48)
           echo "::add-mask::$CI_DB_PASS"
           echo "::add-mask::$CI_JWT_SEC"
           echo "db_pass=$CI_DB_PASS" >> "$GITHUB_OUTPUT"
@@ -56,9 +49,9 @@ jobs:
       - name: Start isolated Postgres
         run: |
           docker run --name postgres \
-            -e POSTGRES_DB=adthub_test \
-            -e POSTGRES_USER=adthub_admin \
-            -e POSTGRES_PASSWORD=${{ steps.ssm.outputs.db_pass }} \
+            -e POSTGRES_DB=hub_test \
+            -e POSTGRES_USER=hub_admin \
+            -e POSTGRES_PASSWORD=${{ steps.secrets.outputs.db_pass }} \
             -p 5432:5432 \
             -d postgres:16
           until docker exec postgres pg_isready; do
@@ -79,8 +72,8 @@ jobs:
           poetry run alembic upgrade head
           poetry run pytest tests/integration -v
         env:
-          DATABASE_URL: postgresql://adthub_admin:${{ steps.ssm.outputs.db_pass }}@localhost:5432/adthub_test
-          JWT_SECRET: ${{ steps.ssm.outputs.jwt_secret }}
+          DATABASE_URL: postgresql://hub_admin:${{ steps.secrets.outputs.db_pass }}@localhost:5432/hub_test
+          JWT_SECRET: ${{ steps.secrets.outputs.jwt_secret }}
 
   deploy-frontend-dev:
     name: Frontend → S3 + CloudFront (Dev)
@@ -101,7 +94,7 @@ jobs:
       - name: Build frontend (Dev)
         run: npm run build -- --mode development
         env:
-          VITE_API_BASE_URL: https://api.adthub-dev.atdawntech.com
+          VITE_API_BASE_URL: https://api.hub-dev.atdawntech.com
           VITE_ENVIRONMENT: development
 
       - name: Configure AWS credentials (Dev OIDC)
@@ -157,15 +150,15 @@ jobs:
       - name: Deploy to ECS Dev
         run: |
           aws ecs update-service \
-            --cluster adthub-dev-ecs-cluster \
-            --service adthub-dev-ecs-api \
+            --cluster hub-dev-ecs-cluster \
+            --service hub-dev-ecs-api \
             --force-new-deployment
 
       - name: Wait for deployment
         run: |
           aws ecs wait services-stable \
-            --cluster adthub-dev-ecs-cluster \
-            --services adthub-dev-ecs-api
+            --cluster hub-dev-ecs-cluster \
+            --services hub-dev-ecs-api
 
   smoke-test-dev:
     name: Smoke Test (Dev)
@@ -182,4 +175,4 @@ jobs:
       - name: Run smoke tests
         run: pytest backend/tests/smoke/test_env.py -v --noconftest
         env:
-          SMOKE_TEST_BASE_URL: https://api.adthub-dev.atdawntech.com
+          SMOKE_TEST_BASE_URL: https://api.hub-dev.atdawntech.com

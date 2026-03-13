@@ -14,12 +14,12 @@ output "ecs_service_name" {
 }
 
 output "alb_dns_name" {
-  description = "ALB DNS name — add an A/CNAME record in Cloudflare for api.adthub-dev.atdawntech.com pointing here."
+  description = "ALB DNS name — add an A/CNAME record in Cloudflare for api.hub-dev.atdawntech.com pointing here."
   value       = module.api_ecs.alb_dns_name
 }
 
 output "cloudfront_domain_name" {
-  description = "CloudFront domain name — add a CNAME in Cloudflare for adthub-dev.atdawntech.com pointing here."
+  description = "CloudFront domain name — add a CNAME in Cloudflare for hub-dev.atdawntech.com pointing here."
   value       = module.frontend.cloudfront_domain_name
 }
 
