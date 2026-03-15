@@ -15,7 +15,7 @@ class EmployeeFactory(factory.Factory):
     last_name = factory.Faker("last_name")
     work_email = factory.LazyAttributeSequence(lambda o, n: f"employee{n}@example.com")
     personal_email = factory.LazyAttributeSequence(lambda o, n: f"personal{n}@example.com")
-    employee_code = factory.Sequence(lambda n: f"EMP{n:04d}")
+    employee_code = factory.Sequence(lambda n: f"ATD-{n:04d}")
     status = "active"
     currency_code = "USD"
     created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))

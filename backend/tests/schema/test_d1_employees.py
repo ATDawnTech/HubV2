@@ -27,6 +27,19 @@ def test_d1_2_work_email_not_null_violation(db_session) -> None:
 
 
 @pytest.mark.schema
+def test_d1_3_employee_number_unique_violation(db_session) -> None:
+    """D.1.3: employees.employee_number UNIQUE — duplicate employee_number is rejected."""
+    emp1 = EmployeeFactory(employee_number="EMP-0001")
+    emp2 = EmployeeFactory(employee_number="EMP-0001")
+    db_session.add(emp1)
+    db_session.flush()
+
+    db_session.add(emp2)
+    with pytest.raises(sqlalchemy.exc.IntegrityError):
+        db_session.flush()
+
+
+@pytest.mark.schema
 def test_d1_4_status_check_violation(db_session) -> None:
     """D.1.4: employees.status CHECK — invalid status value is rejected.
 

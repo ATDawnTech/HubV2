@@ -1,0 +1,11 @@
+{
+    "folders": [
+        {
+            "path": ".."
+        }
+    ],
+    "settings": {
+        "claudeCode.preferredLocation": "panel",
+        "claudeCode.allowDangerouslySkipPermissions": true
+    }
+}

@@ -14,6 +14,8 @@ alembic = "^1.13"
 psycopg2-binary = "^2.9"
 pydantic-settings = "^2.0"
 structlog = "^24.0"
+pyjwt = "^2.8"
+slowapi = "^0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
@@ -23,6 +25,11 @@ factory-boy = "^3.3"
 faker = "^24.0"
 ruff = "^0.4"
 mypy = "^1.10"
+bandit = {extras = ["toml"], version = "^1.7"}
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = []
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -31,6 +38,9 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--tb=short",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-fail-under=80",
 ]
 markers = [
     "unit: marks tests as unit tests (no external dependencies)",
@@ -57,5 +67,21 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-line-length = 100
+line-length = 88
 target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

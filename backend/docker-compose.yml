@@ -7,6 +7,10 @@ services:
       - "3001:3001"
     env_file:
       - .env
+    environment:
+      # Override DATABASE_URL so the container connects to the db service,
+      # not localhost (which would be the container itself).
+      DATABASE_URL: "postgresql+psycopg2://adthub_admin:localpassword@db:5432/adthub_local"
     depends_on:
       db:
         condition: service_healthy

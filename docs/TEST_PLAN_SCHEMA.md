@@ -103,3 +103,16 @@ Schema tests verify database-level constraints independent of the application la
 | D.9.3 | `project_members.employee_id` FK | Insert member with non-existent employee_id | DB rejects |
 | D.9.4 | `intake_skills.skill_id` FK | Insert intake_skill with non-existent skill_id | DB rejects |
 | D.9.5 | `notification_queue` delivery status CHECK | Insert notification with status = 'invalid' | DB rejects; only valid statuses accepted | ⚠️ NOT IMPLEMENTED — `notification_queue` table not in current schema. Deferred. |
+
+### D.10 Dashboard Tasks (Epic 1)
+
+| ID | Constraint | Test | Expected Result |
+|---|---|---|---|
+| D.10.1 | `dashboard_tasks.status` CHECK | Insert task with status = `'in_progress'` | DB rejects; only `'open'` or `'completed'` accepted |
+| D.10.2 | `dashboard_tasks.module` CHECK | Insert task with module = `'unknown_module'` | DB rejects; only valid module identifiers accepted |
+| D.10.3 | `dashboard_tasks.module` NOT NULL | Insert task with NULL module | DB rejects |
+| D.10.4 | `dashboard_tasks.title` NOT NULL | Insert task with NULL title | DB rejects |
+| D.10.5 | `dashboard_tasks.source_record_id` NOT NULL | Insert task with NULL source_record_id | DB rejects |
+| D.10.6 | `dashboard_tasks.assigned_to_id` FK to `employees` | Insert task with non-existent employee ID | DB rejects; FK violation |
+| D.10.7 | `dashboard_tasks.assigned_to_id` nullable | Insert task with NULL assigned_to_id | Accepted; tasks start unassigned (pool model) |
+| D.10.8 | `dashboard_tasks.assigned_to_id` FK valid | Insert task with valid employee ID | Accepted |

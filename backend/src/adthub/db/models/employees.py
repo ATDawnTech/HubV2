@@ -17,7 +17,7 @@ class Employee(Base):
     phone = Column(String(50), nullable=True)
     address = Column(Text, nullable=True)
     employee_code = Column(String(100), nullable=True, unique=True)
-    employee_number = Column(String(100), nullable=True)
+    employee_number = Column(String(100), nullable=True, unique=True)
     job_title = Column(String(255), nullable=True)
     department = Column(String(255), nullable=True)
     manager_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
@@ -46,7 +46,7 @@ class Employee(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('active', 'archiving', 'archived')",
+            "status IN ('new_onboard', 'active', 'archiving', 'archived')",
             name="ck_employees_status",
         ),
         Index("idx_employees_manager_id", "manager_id"),

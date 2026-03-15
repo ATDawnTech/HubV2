@@ -1,0 +1,184 @@
+"""Unit tests for EmployeeService (Epic 2).
+
+All tests use a mock repository — no database is touched.
+"""
+
+import pytest
+from unittest.mock import MagicMock
+from src.adthub.services.employee_service import EmployeeService
+from src.adthub.exceptions import ConflictError, ResourceNotFoundError
+from src.adthub.schemas.employees import CreateEmployeeRequest, UpdateEmployeeRequest
+from tests.factories.employee_factory import EmployeeFactory
+
+
+def _make_service(mock_repo: MagicMock) -> EmployeeService:
+    return EmployeeService(repository=mock_repo)
+
+
+# ---------------------------------------------------------------------------
+# list_employees
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_list_employees_returns_employees_and_total() -> None:
+    """EmployeeService.list_employees returns (employees, total) tuple."""
+    employees = [EmployeeFactory(), EmployeeFactory()]
+    mock_repo = MagicMock()
+    mock_repo.find_all.return_value = employees
+    mock_repo.count_all.return_value = 2
+
+    service = _make_service(mock_repo)
+    result, total = service.list_employees(limit=20)
+
+    assert result == employees
+    assert total == 2
+    mock_repo.find_all.assert_called_once_with(limit=20, cursor=None)
+
+
+@pytest.mark.unit
+def test_list_employees_passes_cursor_to_repository() -> None:
+    """EmployeeService.list_employees forwards cursor to repository."""
+    mock_repo = MagicMock()
+    mock_repo.find_all.return_value = []
+    mock_repo.count_all.return_value = 0
+
+    service = _make_service(mock_repo)
+    service.list_employees(limit=10, cursor="emp_abc123")
+
+    mock_repo.find_all.assert_called_once_with(limit=10, cursor="emp_abc123")
+
+
+# ---------------------------------------------------------------------------
+# get_employee
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_get_employee_returns_employee_when_found() -> None:
+    """EmployeeService.get_employee returns the employee from repository."""
+    employee = EmployeeFactory()
+    mock_repo = MagicMock()
+    mock_repo.find_by_id.return_value = employee
+
+    service = _make_service(mock_repo)
+    result = service.get_employee(employee.id)
+
+    assert result == employee
+    mock_repo.find_by_id.assert_called_once_with(employee.id)
+
+
+@pytest.mark.unit
+def test_get_employee_raises_not_found_when_missing() -> None:
+    """EmployeeService.get_employee raises ResourceNotFoundError for missing ID."""
+    mock_repo = MagicMock()
+    mock_repo.find_by_id.return_value = None
+
+    service = _make_service(mock_repo)
+    with pytest.raises(ResourceNotFoundError):
+        service.get_employee("emp_doesnotexist")
+
+
+# ---------------------------------------------------------------------------
+# create_employee
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_create_employee_saves_and_returns_employee() -> None:
+    """EmployeeService.create_employee persists and returns a new Employee."""
+    mock_repo = MagicMock()
+    mock_repo.find_by_email.return_value = None
+
+    saved = EmployeeFactory(first_name="Alice", last_name="Smith", work_email="alice@example.com")
+    mock_repo.save.return_value = saved
+
+    service = _make_service(mock_repo)
+    request = CreateEmployeeRequest(
+        first_name="Alice",
+        last_name="Smith",
+        work_email="alice@example.com",
+    )
+    result = service.create_employee(request)
+
+    mock_repo.find_by_email.assert_called_once_with("alice@example.com")
+    mock_repo.save.assert_called_once()
+    assert result == saved
+
+
+@pytest.mark.unit
+def test_create_employee_raises_conflict_when_email_exists() -> None:
+    """EmployeeService.create_employee raises ConflictError for duplicate work email."""
+    existing = EmployeeFactory(work_email="taken@example.com")
+    mock_repo = MagicMock()
+    mock_repo.find_by_email.return_value = existing
+
+    service = _make_service(mock_repo)
+    request = CreateEmployeeRequest(
+        first_name="Bob",
+        last_name="Jones",
+        work_email="taken@example.com",
+    )
+    with pytest.raises(ConflictError):
+        service.create_employee(request)
+
+    mock_repo.save.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# update_employee
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_update_employee_updates_provided_fields() -> None:
+    """EmployeeService.update_employee sets only provided fields on the employee."""
+    employee = EmployeeFactory(job_title="Developer")
+    mock_repo = MagicMock()
+    mock_repo.find_by_id.return_value = employee
+    mock_repo.save.return_value = employee
+
+    service = _make_service(mock_repo)
+    request = UpdateEmployeeRequest(job_title="Senior Developer")
+    service.update_employee(employee.id, request)
+
+    assert employee.job_title == "Senior Developer"
+    mock_repo.save.assert_called_once_with(employee)
+
+
+@pytest.mark.unit
+def test_update_employee_raises_not_found_when_missing() -> None:
+    """EmployeeService.update_employee raises ResourceNotFoundError for missing ID."""
+    mock_repo = MagicMock()
+    mock_repo.find_by_id.return_value = None
+
+    service = _make_service(mock_repo)
+    with pytest.raises(ResourceNotFoundError):
+        service.update_employee("emp_doesnotexist", UpdateEmployeeRequest())
+
+
+# ---------------------------------------------------------------------------
+# archive_employee
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_archive_employee_calls_soft_delete() -> None:
+    """EmployeeService.archive_employee delegates to repository.soft_delete."""
+    mock_repo = MagicMock()
+
+    service = _make_service(mock_repo)
+    service.archive_employee("emp_abc123")
+
+    mock_repo.soft_delete.assert_called_once_with("emp_abc123")
+
+
+@pytest.mark.unit
+def test_archive_employee_propagates_not_found() -> None:
+    """EmployeeService.archive_employee propagates ResourceNotFoundError from repository."""
+    mock_repo = MagicMock()
+    mock_repo.soft_delete.side_effect = ResourceNotFoundError("not found")
+
+    service = _make_service(mock_repo)
+    with pytest.raises(ResourceNotFoundError):
+        service.archive_employee("emp_doesnotexist")

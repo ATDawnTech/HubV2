@@ -45,6 +45,14 @@ class BaseRepository(Generic[T]):
         self._session.flush()
         return entity
 
+    def count_all(self) -> int:
+        """Count all non-deleted records."""
+        return (
+            self._session.query(self._model)
+            .filter(self._model.deleted_at.is_(None))
+            .count()
+        )
+
     def soft_delete(self, resource_id: str) -> None:
         """Soft delete a record by setting deleted_at."""
         entity = self.find_by_id(resource_id)

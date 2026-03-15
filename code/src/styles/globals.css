@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 16 94% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 16 100% 95%;
+    --secondary-foreground: 16 94% 57%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 16 88% 85%;
+    --accent-foreground: 16 94% 57%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 16 94% 57%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222 18% 13%;
+    --foreground: 210 30% 92%;
+    --card: 222 18% 16%;
+    --card-foreground: 210 30% 92%;
+    --popover: 222 18% 16%;
+    --popover-foreground: 210 30% 92%;
+    --primary: 16 94% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 16 30% 20%;
+    --secondary-foreground: 16 94% 57%;
+    --muted: 222 14% 22%;
+    --muted-foreground: 215 16% 60%;
+    --accent: 16 28% 22%;
+    --accent-foreground: 16 94% 57%;
+    --destructive: 0 55% 36%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 222 14% 26%;
+    --input: 222 14% 26%;
+    --ring: 16 94% 57%;
+    --sidebar-background: 222 18% 11%;
+    --sidebar-foreground: 210 20% 88%;
+    --sidebar-primary: 16 94% 57%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 14% 20%;
+    --sidebar-accent-foreground: 210 20% 88%;
+    --sidebar-border: 222 14% 22%;
+    --sidebar-ring: 16 94% 57%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Table fade-in */
+@keyframes table-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.table-animate {
+  animation: table-fade-in 0.22s ease-out both;
+}
+
+/* React Flow handle: larger grab area via ::after pseudo-element */
+.react-flow__handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+/* React Flow edge updater (reconnect anchor): small dot at handle position */
+.react-flow__edgeupdater {
+  width: 10px;
+  height: 10px;
+  cursor: move;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.react-flow__edge:hover .react-flow__edgeupdater {
+  opacity: 1;
+  fill: hsl(var(--primary));
+  stroke: white;
+  stroke-width: 1.5;
+}

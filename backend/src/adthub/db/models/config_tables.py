@@ -12,6 +12,7 @@ class SkillsCatalog(Base):
     id = Column(String(255), primary_key=True)
     name = Column(String(255), nullable=False, unique=True)
     category = Column(String(255), nullable=True)
+    search_tokens = Column(Text, nullable=False, default="")
     created_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)
@@ -43,6 +44,13 @@ class Role(Base):
     name = Column(String(255), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     is_system = Column(Boolean, nullable=False, default=False)
+    # JSON array of department values from config_dropdowns (auto-assign on dept match)
+    auto_assign_departments = Column(Text, nullable=True)
+    dashboard_config = Column(Text, nullable=True)
+    # JSON array of {module, action} pairs granted additively to manager-level holders
+    manager_permissions = Column(Text, nullable=True)
+    # Hierarchy position: lower = higher authority; system roles are always 0
+    sort_order = Column(Integer, nullable=False, default=9999)
     created_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
@@ -70,6 +78,10 @@ class RoleAssignment(Base):
     role_id = Column(String(255), ForeignKey("roles.id"), nullable=False, primary_key=True)
     assigned_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
     assigned_at = Column(DateTime(timezone=True), nullable=False)
+    # Manager context: set per-assignment rather than per role definition
+    is_manager = Column(Boolean, nullable=False, default=False)
+    # JSON array of extra {module, action} pairs active only when is_manager=True
+    manager_permissions = Column(Text, nullable=True)
 
     __table_args__ = (
         Index("idx_role_assignments_employee_id", "employee_id"),
@@ -129,6 +141,21 @@ class OwnerGroup(Base):
     )
 
 
+class RoleGrantPermission(Base):
+    """Junction table: which roles a granting_role can assign to employees."""
+
+    __tablename__ = "role_grant_permissions"
+
+    granting_role_id = Column(String(255), ForeignKey("roles.id"), primary_key=True)
+    assignable_role_id = Column(String(255), ForeignKey("roles.id"), primary_key=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("idx_role_grant_permissions_granting", "granting_role_id"),
+        Index("idx_role_grant_permissions_assignable", "assignable_role_id"),
+    )
+
+
 class GroupMember(Base):
     __tablename__ = "group_members"
 
@@ -144,4 +171,52 @@ class GroupMember(Base):
         UniqueConstraint("group_id", "employee_id", name="uq_group_members_group_employee"),
         Index("idx_group_members_group_id", "group_id"),
         Index("idx_group_members_employee_id", "employee_id"),
+    )
+
+
+class NotificationSettings(Base):
+    """Singleton row (id = 'default') storing global notification configuration."""
+
+    __tablename__ = "notification_settings"
+
+    id = Column(String(50), primary_key=True, default="default")
+    email_enabled = Column(Boolean, nullable=False, default=True)
+    inapp_enabled = Column(Boolean, nullable=False, default=True)
+    offboarding_deadline_hours = Column(Integer, nullable=False, default=72)
+    escalation_warning_hours = Column(Integer, nullable=False, default=24)
+    warranty_alert_days = Column(Integer, nullable=False, default=60)
+    updated_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("idx_notification_settings_updated_by", "updated_by"),
+    )
+
+
+class RoleAssignmentBlacklist(Base):
+    """Tracks employee+role combos explicitly removed to prevent auto-reassignment."""
+
+    __tablename__ = "role_assignment_blacklist"
+
+    employee_id = Column(String(255), ForeignKey("employees.id"), nullable=False, primary_key=True)
+    role_id = Column(String(255), ForeignKey("roles.id"), nullable=False, primary_key=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("idx_role_blacklist_employee_id", "employee_id"),
+        Index("idx_role_blacklist_role_id", "role_id"),
+    )
+
+
+class NotificationModuleToggle(Base):
+    """Per-module, per-channel email/inapp enable toggle."""
+
+    __tablename__ = "notification_module_toggles"
+
+    module = Column(String(100), nullable=False, primary_key=True)
+    channel = Column(String(20), nullable=False, primary_key=True)
+    enabled = Column(Boolean, nullable=False, default=True)
+
+    __table_args__ = (
+        Index("idx_notification_module_toggles_module", "module"),
     )
