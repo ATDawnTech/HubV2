@@ -12,7 +12,7 @@ class SkillsCatalog(Base):
     id = Column(String(255), primary_key=True)
     name = Column(String(255), nullable=False, unique=True)
     category = Column(String(255), nullable=True)
-    search_tokens = Column(Text, nullable=False, default="")
+    search_tokens = Column(Text, nullable=False)
     created_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)

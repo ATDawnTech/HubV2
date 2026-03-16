@@ -42,6 +42,8 @@ jobs:
         run: pip install poetry && cd backend && poetry install --no-root
       - name: Run unit + schema tests
         run: cd backend && poetry run pytest tests/unit tests/schema -v
+        env:
+          JWT_SECRET: ci-unit-test-placeholder
 
   integration-tests:
     name: Integration Tests (Isolated)

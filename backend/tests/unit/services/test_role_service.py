@@ -302,6 +302,7 @@ def test_sync_assigns_role_to_active_employees_in_departments() -> None:
     emp2 = _make_employee("emp_2", "Finance")
     mock_repo = MagicMock()
     mock_repo.find_assignments_for_role.return_value = []
+    mock_repo.is_blacklisted.return_value = False
     mock_emp_repo = MagicMock()
     mock_emp_repo.find_active_by_departments.return_value = [emp1, emp2]
 
