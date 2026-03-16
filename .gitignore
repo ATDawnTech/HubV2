@@ -3,3 +3,28 @@
 .claude/
 .DS_Store
 **/.DS_Store
+
+# Secrets — never committed
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*_rsa
+*_dsa
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+**/.terraform/
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Build output
+dist/
+
+# Terraform
+*.terraform.lock.hcl
+tfplan

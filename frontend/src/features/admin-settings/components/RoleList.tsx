@@ -112,6 +112,7 @@ export function RoleList(): JSX.Element {
     }
     const next = [...orderedRoles];
     const [moved] = next.splice(dragIndex, 1);
+    if (!moved) return;
     next.splice(insertAt, 0, moved);
     setOrderedRoles(next);
 

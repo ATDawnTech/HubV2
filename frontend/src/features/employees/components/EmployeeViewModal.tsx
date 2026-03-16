@@ -37,7 +37,7 @@ function RoleLabel({ entry }: { entry: EmployeeRoleEntry }) {
 // EmployeeViewModal
 // ---------------------------------------------------------------------------
 
-export function EmployeeViewModal({ employee: emp, onClose, onDismiss, onEdit, canExport = true, canManageRoles = false, staleFields = {} }: Props) {
+export function EmployeeViewModal({ employee: emp, onClose, onDismiss, onEdit, canExport = true, canManageRoles: _canManageRoles = false, staleFields = {} }: Props) {
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const assets: Asset[] = [];

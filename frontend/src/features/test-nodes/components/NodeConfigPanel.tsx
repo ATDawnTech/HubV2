@@ -167,7 +167,7 @@ export function NodeConfigPanel({ node, onUpdate, onDelete, onClose, onTest }: N
                         value={cond.join}
                         onChange={(e) => {
                           const next = [...(data.conditions as Condition[])];
-                          next[i] = { ...next[i], join: e.target.value as "and" | "or" };
+                          next[i] = { ...next[i]!, join: e.target.value as "and" | "or" };
                           update("conditions", next);
                         }}
                       >
@@ -181,7 +181,7 @@ export function NodeConfigPanel({ node, onUpdate, onDelete, onClose, onTest }: N
                       value={cond.field}
                       onChange={(e) => {
                         const next = [...(data.conditions as Condition[])];
-                        next[i] = { ...next[i], field: e.target.value };
+                        next[i] = { ...next[i]!, field: e.target.value };
                         update("conditions", next);
                       }}
                     />
@@ -190,7 +190,7 @@ export function NodeConfigPanel({ node, onUpdate, onDelete, onClose, onTest }: N
                       value={cond.operator}
                       onChange={(e) => {
                         const next = [...(data.conditions as Condition[])];
-                        next[i] = { ...next[i], operator: e.target.value as Condition["operator"] };
+                        next[i] = { ...next[i]!, operator: e.target.value as Condition["operator"] };
                         update("conditions", next);
                       }}
                     >
@@ -205,7 +205,7 @@ export function NodeConfigPanel({ node, onUpdate, onDelete, onClose, onTest }: N
                         value={cond.value}
                         onChange={(e) => {
                           const next = [...(data.conditions as Condition[])];
-                          next[i] = { ...next[i], value: e.target.value };
+                          next[i] = { ...next[i]!, value: e.target.value };
                           update("conditions", next);
                         }}
                       />

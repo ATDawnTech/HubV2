@@ -21,7 +21,8 @@ RUN poetry config virtualenvs.create false \
 COPY src/ ./src/
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
+COPY entrypoint.sh ./
 
 EXPOSE 3001
 
-CMD ["uvicorn", "src.adthub.main:app", "--host", "0.0.0.0", "--port", "3001"]
+ENTRYPOINT ["./entrypoint.sh"]
