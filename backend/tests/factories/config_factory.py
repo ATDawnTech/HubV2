@@ -22,6 +22,7 @@ class SkillsCatalogFactory(factory.Factory):
 
     id = factory.LazyFunction(lambda: f"skl_{uuid.uuid4().hex[:12]}")
     name = factory.Sequence(lambda n: f"Skill {n}")
+    search_tokens = factory.LazyAttribute(lambda o: o.name.lower())
     created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
     updated_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
     deleted_at = None
