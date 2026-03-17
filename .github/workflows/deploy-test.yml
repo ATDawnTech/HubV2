@@ -84,7 +84,7 @@ jobs:
         run: |
           cd backend
           poetry run alembic upgrade head
-          poetry run pytest tests/integration -v
+          poetry run pytest tests/integration -v --no-cov
         env:
           DATABASE_URL: postgresql://adthub_admin:${{ steps.ssm.outputs.db_pass }}@localhost:5432/adthub_test
           JWT_SECRET: ${{ steps.ssm.outputs.jwt_secret }}
