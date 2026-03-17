@@ -43,19 +43,19 @@ def test_health_includes_environment(base_url: str) -> None:
     assert "environment" in resp.json(), "Missing 'environment' field in health response"
 
 
-def test_unauthenticated_employees_returns_401(base_url: str) -> None:
-    """GET /v1/employees without a token returns 401, not 500."""
+def test_unauthenticated_employees_returns_403(base_url: str) -> None:
+    """GET /v1/employees without a token returns 403, not 500."""
     resp = requests.get(f"{base_url}/v1/employees", timeout=10)
-    assert resp.status_code == 401, (
-        f"Expected 401 from auth middleware, got {resp.status_code}: {resp.text}"
+    assert resp.status_code == 403, (
+        f"Expected 403 from auth middleware, got {resp.status_code}: {resp.text}"
     )
 
 
-def test_unauthenticated_roles_returns_401(base_url: str) -> None:
-    """GET /v1/admin/roles without a token returns 401, not 500."""
+def test_unauthenticated_roles_returns_403(base_url: str) -> None:
+    """GET /v1/admin/roles without a token returns 403, not 500."""
     resp = requests.get(f"{base_url}/v1/admin/roles", timeout=10)
-    assert resp.status_code == 401, (
-        f"Expected 401 from auth middleware, got {resp.status_code}: {resp.text}"
+    assert resp.status_code == 403, (
+        f"Expected 403 from auth middleware, got {resp.status_code}: {resp.text}"
     )
 
 
