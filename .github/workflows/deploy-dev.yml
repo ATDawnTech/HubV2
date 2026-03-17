@@ -193,6 +193,6 @@ jobs:
       - name: Install test deps
         run: pip install requests pytest
       - name: Run smoke tests
-        run: pytest backend/tests/smoke/test_env.py -v --noconftest
+        run: pytest backend/tests/smoke/test_env.py -v --noconftest --override-ini="addopts="
         env:
           SMOKE_TEST_BASE_URL: https://api.hub-dev.atdawntech.com
