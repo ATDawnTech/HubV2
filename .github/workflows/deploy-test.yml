@@ -30,6 +30,7 @@ permissions:
   contents: read
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   AWS_REGION: us-east-1
   S3_BUCKET: adthub-test-s3-frontend
   SERVICE_NAME: adthub-test-api
