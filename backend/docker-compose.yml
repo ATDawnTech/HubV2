@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3001:3001"
+    volumes:
+      - ./src:/app/src
     env_file:
       - .env
     environment:
