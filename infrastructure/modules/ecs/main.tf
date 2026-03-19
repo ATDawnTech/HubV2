@@ -109,6 +109,7 @@ resource "aws_ecs_task_definition" "service" {
     essential = true
 
     environment = [
+      { name = "ENVIRONMENT", value = var.environment },
       { name = "ALLOWED_ORIGINS", value = var.allowed_origins },
       { name = "FRONTEND_URL", value = var.frontend_url },
       { name = "AZURE_TENANT_ID", value = var.azure_tenant_id },

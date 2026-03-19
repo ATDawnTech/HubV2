@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     azure_tenant_id: str = ""
     azure_client_secret: str = ""
     # The backend callback URL registered in Entra. Must match exactly.
-    azure_redirect_uri: str = "http://localhost:8000/v1/auth/callback"
+    azure_redirect_uri: str = "http://localhost:3001/v1/auth/callback"
     # The public URL of the frontend — used to build the post-auth redirect.
     frontend_url: str = "http://localhost:5173"
     # Entra group Object IDs — map to app roles on login.

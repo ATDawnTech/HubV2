@@ -55,7 +55,7 @@ def test_list_skills_returns_skills_with_usage_counts() -> None:
 
     service = _make_service(mock_repo)
     skills, meta = service.list_skills(
-        search=None, sort_by="created_at", sort_dir="desc", limit=50, offset=0, category=None
+        search=None, sort_by="created_at", sort_dir="desc", limit=50, cursor=None, category=None
     )
 
     assert len(skills) == 1
@@ -73,7 +73,7 @@ def test_list_skills_clamps_limit_to_500() -> None:
     mock_repo.get_usage_counts_bulk.return_value = {}
 
     service = _make_service(mock_repo)
-    service.list_skills(search=None, sort_by="created_at", sort_dir="desc", limit=9999, offset=0, category=None)
+    service.list_skills(search=None, sort_by="created_at", sort_dir="desc", limit=9999, cursor=None, category=None)
 
     call_args = mock_repo.find_all_paginated.call_args
     assert call_args.kwargs["limit"] == 500
@@ -88,7 +88,7 @@ def test_list_skills_defaults_invalid_sort_to_desc() -> None:
     mock_repo.get_usage_counts_bulk.return_value = {}
 
     service = _make_service(mock_repo)
-    service.list_skills(search=None, sort_by="created_at", sort_dir="random", limit=50, offset=0, category=None)
+    service.list_skills(search=None, sort_by="created_at", sort_dir="random", limit=50, cursor=None, category=None)
 
     call_args = mock_repo.find_all_paginated.call_args
     assert call_args.kwargs["sort_dir"] == "desc"

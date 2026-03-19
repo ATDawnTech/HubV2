@@ -71,7 +71,7 @@ module "api_ecr" {
   service_name = "api"
 }
 
-# 4. Security Groups
+# 4. Security Groups — ECS tasks allow inbound only from the ALB
 resource "aws_security_group" "ecs_api" {
   name        = "${var.product}-${var.environment}-ecs-api-sg"
   description = "Security group for ECS API tasks - allows inbound only from the ALB."
@@ -152,54 +152,25 @@ module "github_oidc" {
   create_provider     = false # Provider already exists in this account
 }
 
-# 9. Entra SSM parameter placeholders — fill in via AWS CLI or Console after
-#    creating the Entra app registration. Terraform creates the params with
-#    PLACEHOLDER values; actual secrets are set out-of-band and ignored on
-#    subsequent applies (lifecycle.ignore_changes).
-#
+# 9. SSM secrets — Entra placeholders + JWT secret
+#    Fill Entra values out-of-band via AWS CLI after apply:
 #    aws ssm put-parameter --name /hub/dev/api/azure-client-secret \
 #      --type SecureString --value "<secret>" --overwrite
-resource "aws_ssm_parameter" "azure_client_secret" {
-  name  = "/${var.product}/${var.environment}/api/azure-client-secret"
-  type  = "SecureString"
-  value = "PLACEHOLDER"
+module "api_secrets" {
+  source = "../../modules/ssm_secrets"
 
-  lifecycle {
-    ignore_changes = [value]
-  }
+  product      = var.product
+  environment  = var.environment
+  service_name = "api"
+
+  parameters = [
+    { name = "azure-client-secret", value = "PLACEHOLDER" },
+    { name = "azure-sysadmin-group-id", value = "PLACEHOLDER" },
+    { name = "azure-developer-group-id", value = "PLACEHOLDER" },
+    { name = "azure-user-group-id", value = "PLACEHOLDER" },
+  ]
 }
 
-resource "aws_ssm_parameter" "azure_sysadmin_group_id" {
-  name  = "/${var.product}/${var.environment}/api/azure-sysadmin-group-id"
-  type  = "SecureString"
-  value = "PLACEHOLDER"
-
-  lifecycle {
-    ignore_changes = [value]
-  }
-}
-
-resource "aws_ssm_parameter" "azure_developer_group_id" {
-  name  = "/${var.product}/${var.environment}/api/azure-developer-group-id"
-  type  = "SecureString"
-  value = "PLACEHOLDER"
-
-  lifecycle {
-    ignore_changes = [value]
-  }
-}
-
-resource "aws_ssm_parameter" "azure_user_group_id" {
-  name  = "/${var.product}/${var.environment}/api/azure-user-group-id"
-  type  = "SecureString"
-  value = "PLACEHOLDER"
-
-  lifecycle {
-    ignore_changes = [value]
-  }
-}
-
-# 10. JWT secret — auto-generated at apply time
 resource "random_password" "api_jwt" {
   length = 64
 }
@@ -208,4 +179,18 @@ resource "aws_ssm_parameter" "api_jwt_secret" {
   name  = "/${var.product}/${var.environment}/api/jwt-secret"
   type  = "SecureString"
   value = random_password.api_jwt.result
+}
+
+# 10. Observability — CloudWatch alarms, SNS topics, dashboard
+module "observability" {
+  source = "../../modules/observability"
+
+  product      = var.product
+  environment  = var.environment
+  service_name = "api"
+
+  ecs_cluster_name        = module.api_ecs.ecs_cluster_name
+  ecs_service_name        = module.api_ecs.ecs_service_name
+  alb_arn_suffix          = module.api_ecs.alb_arn_suffix
+  target_group_arn_suffix = module.api_ecs.target_group_arn_suffix
 }

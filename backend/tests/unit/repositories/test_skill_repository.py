@@ -327,14 +327,13 @@ def test_find_all_paginated_returns_list_from_query(mock_session) -> None:
         mock_session.query.return_value
         .filter.return_value
         .order_by.return_value
-        .offset.return_value
         .limit.return_value
         .all.return_value
     ) = skills
 
     repo = SkillRepository(mock_session)
     result = repo.find_all_paginated(
-        search=None, sort_by="name", sort_dir="asc", limit=10, offset=0, category=None
+        search=None, sort_by="name", sort_dir="asc", limit=10, cursor=None, category=None
     )
 
     assert result == skills
@@ -349,14 +348,13 @@ def test_find_all_paginated_with_search_adds_filter(mock_session) -> None:
         .filter.return_value
         .filter.return_value
         .order_by.return_value
-        .offset.return_value
         .limit.return_value
         .all.return_value
     ) = skills
 
     repo = SkillRepository(mock_session)
     result = repo.find_all_paginated(
-        search="python", sort_by="created_at", sort_dir="desc", limit=50, offset=0, category=None
+        search="python", sort_by="created_at", sort_dir="desc", limit=50, cursor=None, category=None
     )
 
     assert result == skills
@@ -369,14 +367,13 @@ def test_find_all_paginated_returns_empty_list_when_no_rows(mock_session) -> Non
         mock_session.query.return_value
         .filter.return_value
         .order_by.return_value
-        .offset.return_value
         .limit.return_value
         .all.return_value
     ) = []
 
     repo = SkillRepository(mock_session)
     result = repo.find_all_paginated(
-        search=None, sort_by="name", sort_dir="asc", limit=100, offset=0, category=None
+        search=None, sort_by="name", sort_dir="asc", limit=100, cursor=None, category=None
     )
 
     assert result == []
@@ -391,35 +388,29 @@ def test_find_all_paginated_with_category_adds_filter(mock_session) -> None:
         .filter.return_value
         .filter.return_value
         .order_by.return_value
-        .offset.return_value
         .limit.return_value
         .all.return_value
     ) = skills
 
     repo = SkillRepository(mock_session)
     result = repo.find_all_paginated(
-        search=None, sort_by="name", sort_dir="desc", limit=10, offset=0, category="Backend"
+        search=None, sort_by="name", sort_dir="desc", limit=10, cursor=None, category="Backend"
     )
 
     assert result == skills
 
 
 @pytest.mark.unit
-def test_find_all_paginated_with_nonzero_offset(mock_session) -> None:
-    """find_all_paginated passes offset through to the query chain."""
+def test_find_all_paginated_with_cursor_no_error(mock_session) -> None:
+    """find_all_paginated with a cursor value does not raise and returns skills."""
     skills = [SkillsCatalogFactory()]
-    (
-        mock_session.query.return_value
-        .filter.return_value
-        .order_by.return_value
-        .offset.return_value
-        .limit.return_value
-        .all.return_value
-    ) = skills
+    # With a cursor, the implementation applies order_by then an extra .filter() for keyset
+    mock_session.query.return_value.filter.return_value.order_by.return_value.filter.return_value.limit.return_value.all.return_value = skills
 
     repo = SkillRepository(mock_session)
     result = repo.find_all_paginated(
-        search=None, sort_by="created_at", sort_dir="asc", limit=10, offset=100, category=None
+        search=None, sort_by="name", sort_dir="asc", limit=10,
+        cursor="TypeScript|skill_abc123", category=None
     )
 
     assert result == skills

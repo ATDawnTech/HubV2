@@ -42,7 +42,7 @@ class SkillService:
         sort_by: str,
         sort_dir: str,
         limit: int,
-        offset: int,
+        cursor: str | None,
         category: str | None,
     ) -> tuple[list[SkillResponse], PaginationMeta]:
         """Return a paginated, optionally filtered page of skills with usage counts.
@@ -52,7 +52,7 @@ class SkillService:
             sort_by: Column to sort by — "name", "created_at", or "usage_count".
             sort_dir: "asc" or "desc".
             limit: Page size (clamped to 1–500).
-            offset: Row offset for the requested page.
+            cursor: Opaque continuation token from the previous page, or None.
             category: Optional exact category filter.
 
         Returns:
@@ -67,10 +67,13 @@ class SkillService:
             sort_by=effective_sort_by,
             sort_dir=effective_sort_dir,
             limit=effective_limit,
-            offset=max(offset, 0),
+            cursor=cursor,
             category=category or None,
         )
         total = self._repo.count(search=search or None, category=category or None)
+
+        has_next = len(rows) > effective_limit
+        rows = rows[:effective_limit]
 
         skill_ids = [r.id for r in rows]
         usage_map = self._repo.get_usage_counts_bulk(skill_ids)
@@ -86,10 +89,20 @@ class SkillService:
             for row in rows
         ]
 
+        next_cursor: str | None = None
+        if has_next and rows:
+            last = rows[-1]
+            if effective_sort_by == "name":
+                next_cursor = f"{last.name}|{last.id}"
+            else:
+                # created_at sort and usage_count sort both use created_at|id as cursor
+                ts = last.created_at.isoformat() if last.created_at else ""
+                next_cursor = f"{ts}|{last.id}"
+
         meta = PaginationMeta(
             total=total,
             page_size=effective_limit,
-            next_cursor=None,
+            next_cursor=next_cursor,
             prev_cursor=None,
         )
         return skills, meta

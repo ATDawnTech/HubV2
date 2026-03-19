@@ -22,3 +22,13 @@ output "alb_zone_id" {
   description = "Hosted zone ID of the ALB — used to create Route53 ALIAS records."
   value       = aws_lb.main.zone_id
 }
+
+output "alb_arn_suffix" {
+  description = "ARN suffix of the ALB — used for CloudWatch metric dimensions."
+  value       = aws_lb.main.arn_suffix
+}
+
+output "target_group_arn_suffix" {
+  description = "ARN suffix of the target group — used for CloudWatch metric dimensions."
+  value       = aws_lb_target_group.api.arn_suffix
+}

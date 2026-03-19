@@ -58,19 +58,19 @@ def list_skills(
     sort_by: str = Query("created_at", pattern="^(name|created_at|usage_count)$"),
     sort: str = Query("desc", pattern="^(asc|desc)$"),
     limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    cursor: str | None = Query(None, max_length=500, description="Cursor token from previous page"),
     category: str | None = Query(None, description="Exact category filter"),
     _user_id: str = Depends(require_permission("admin", "manage_skills")),
     service: SkillService = Depends(get_skill_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
-    """Return a paginated list of skills with server-side sort, filter, and offset pagination."""
+    """Return a paginated list of skills with server-side sort, filter, and cursor pagination."""
     skills, meta = service.list_skills(
         search=search,
         sort_by=sort_by,
         sort_dir=sort,
         limit=limit,
-        offset=offset,
+        cursor=cursor,
         category=category,
     )
     return JSONResponse(

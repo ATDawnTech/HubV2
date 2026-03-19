@@ -1,6 +1,6 @@
 """Repository for SkillsCatalog — paginated CRUD with fuzzy search and usage counts."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timezone
 
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -111,21 +111,27 @@ class SkillRepository:
         sort_by: str,
         sort_dir: str,
         limit: int,
-        offset: int,
+        cursor: str | None,
         category: str | None,
     ) -> list[SkillsCatalog]:
-        """Return a page of skills using offset-based pagination.
+        """Return a page of skills using cursor-based pagination.
+
+        The cursor encodes the last row seen as ``sort_value|id``. For
+        ``usage_count`` sort, the cursor encodes ``created_at|id`` (the
+        secondary sort key) because usage counts are dynamic and cannot be
+        used reliably for keyset pagination.
 
         Args:
             search: Optional ILIKE filter applied to skill name and search_tokens.
             sort_by: Column to sort by — "name", "created_at", or "usage_count".
             sort_dir: "asc" or "desc".
             limit: Maximum number of rows to return.
-            offset: Number of rows to skip (page * limit).
+            cursor: Opaque continuation token from the previous page, or None.
             category: Optional exact category filter.
 
         Returns:
-            List of matching SkillsCatalog rows for the requested page.
+            Up to ``limit + 1`` matching rows. The caller checks ``len > limit``
+            to determine whether a next page exists.
         """
         q = self._db.query(SkillsCatalog).filter(SkillsCatalog.deleted_at.is_(None))
 
@@ -140,23 +146,84 @@ class SkillRepository:
             q = q.filter(SkillsCatalog.category == category)
 
         if sort_by == "usage_count":
-            order_col = (
+            usage_subq = (
                 self._db.query(func.count(EmployeeSkill.skill_id))
                 .filter(EmployeeSkill.skill_id == SkillsCatalog.id)
                 .correlate(SkillsCatalog)
                 .scalar_subquery()
             )
+            if sort_dir == "asc":
+                q = q.order_by(usage_subq.asc(), SkillsCatalog.created_at.asc(), SkillsCatalog.id.asc())
+            else:
+                q = q.order_by(usage_subq.desc(), SkillsCatalog.created_at.desc(), SkillsCatalog.id.desc())
+
+            # Cursor for usage_count sort is created_at|id (stable secondary key)
+            if cursor:
+                parts = cursor.split("|", 1)
+                if len(parts) == 2:
+                    try:
+                        cursor_dt = datetime.fromisoformat(parts[0]).replace(tzinfo=timezone.utc)
+                        cursor_id = parts[1]
+                        if sort_dir == "asc":
+                            q = q.filter(
+                                (SkillsCatalog.created_at > cursor_dt)
+                                | ((SkillsCatalog.created_at == cursor_dt) & (SkillsCatalog.id > cursor_id))
+                            )
+                        else:
+                            q = q.filter(
+                                (SkillsCatalog.created_at < cursor_dt)
+                                | ((SkillsCatalog.created_at == cursor_dt) & (SkillsCatalog.id < cursor_id))
+                            )
+                    except ValueError:
+                        pass
+
         elif sort_by == "name":
-            order_col = SkillsCatalog.name
-        else:
-            order_col = SkillsCatalog.created_at
+            if sort_dir == "asc":
+                q = q.order_by(SkillsCatalog.name.asc(), SkillsCatalog.id.asc())
+            else:
+                q = q.order_by(SkillsCatalog.name.desc(), SkillsCatalog.id.desc())
 
-        if sort_dir == "asc":
-            q = q.order_by(order_col.asc(), SkillsCatalog.id.asc())
-        else:
-            q = q.order_by(order_col.desc(), SkillsCatalog.id.desc())
+            if cursor:
+                parts = cursor.split("|", 1)
+                if len(parts) == 2:
+                    cursor_name, cursor_id = parts[0], parts[1]
+                    if sort_dir == "asc":
+                        q = q.filter(
+                            (SkillsCatalog.name > cursor_name)
+                            | ((SkillsCatalog.name == cursor_name) & (SkillsCatalog.id > cursor_id))
+                        )
+                    else:
+                        q = q.filter(
+                            (SkillsCatalog.name < cursor_name)
+                            | ((SkillsCatalog.name == cursor_name) & (SkillsCatalog.id < cursor_id))
+                        )
 
-        return q.offset(offset).limit(limit).all()
+        else:  # created_at
+            if sort_dir == "asc":
+                q = q.order_by(SkillsCatalog.created_at.asc(), SkillsCatalog.id.asc())
+            else:
+                q = q.order_by(SkillsCatalog.created_at.desc(), SkillsCatalog.id.desc())
+
+            if cursor:
+                parts = cursor.split("|", 1)
+                if len(parts) == 2:
+                    try:
+                        cursor_dt = datetime.fromisoformat(parts[0]).replace(tzinfo=timezone.utc)
+                        cursor_id = parts[1]
+                        if sort_dir == "asc":
+                            q = q.filter(
+                                (SkillsCatalog.created_at > cursor_dt)
+                                | ((SkillsCatalog.created_at == cursor_dt) & (SkillsCatalog.id > cursor_id))
+                            )
+                        else:
+                            q = q.filter(
+                                (SkillsCatalog.created_at < cursor_dt)
+                                | ((SkillsCatalog.created_at == cursor_dt) & (SkillsCatalog.id < cursor_id))
+                            )
+                    except ValueError:
+                        pass
+
+        return q.limit(limit + 1).all()
 
     def get_usage_count(self, skill_id: str) -> int:
         """Return how many employee_skills rows reference this skill.
