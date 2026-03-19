@@ -8,7 +8,7 @@ packages = [{ include = "adthub", from = "src" }]
 [tool.poetry.dependencies]
 python = "^3.12"
 fastapi = "^0.115"
-uvicorn = {extras = ["standard"], version = "^0.34"}
+uvicorn = {extras = ["standard"], version = "^0.42"}
 sqlalchemy = "^2.0"
 alembic = "^1.13"
 psycopg2-binary = "^2.9"
