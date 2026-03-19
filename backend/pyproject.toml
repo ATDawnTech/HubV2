@@ -25,7 +25,7 @@ pytest-cov = "^4.0"
 pytest-asyncio = "^0.23"
 factory-boy = "^3.3"
 faker = "^24.0"
-ruff = "^0.4"
+ruff = "^0.15"
 mypy = "^1.10"
 bandit = {extras = ["toml"], version = "^1.7"}
 
