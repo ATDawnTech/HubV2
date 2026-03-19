@@ -21,11 +21,14 @@ GET    /v1/admin/roles/default-permissions                    — get default pe
 PUT    /v1/admin/roles/default-permissions                    — set default permissions
 """
 
+import structlog
 from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.responses import JSONResponse, Response
+from pydantic import BaseModel as _BaseModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from ..db.repositories.role_repository import RoleRepository
 from ..exceptions import (
     ConflictError,
     ResourceNotFoundError,
@@ -47,8 +50,15 @@ from ..schemas.roles import (
     UpdateRoleRequest,
 )
 from ..services.role_service import RoleService
-from .dependencies import get_current_user_id, get_request_id, get_role_service
+from .dependencies import (
+    get_current_user_id,
+    get_db,
+    get_request_id,
+    get_role_service,
+    require_permission,
+)
 
+logger = structlog.get_logger()
 router = APIRouter(prefix="/v1/admin/roles", tags=["roles"])
 _limiter = Limiter(key_func=get_remote_address)
 
@@ -112,7 +122,7 @@ def list_roles(
     limit: int = Query(default=20, ge=1, le=100),
     cursor: str | None = Query(default=None, max_length=500),
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "view_module")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     roles, total, next_cursor = service.list_roles(limit=limit, cursor=cursor)
@@ -151,7 +161,7 @@ def get_my_effective_permissions(
 def get_default_permissions(
     request: Request,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     perms = service.get_default_permissions()
@@ -167,7 +177,7 @@ def set_default_permissions(
     request: Request,
     body: SetPermissionsRequest,
     service: RoleService = Depends(get_role_service),
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -197,7 +207,7 @@ def set_sort_orders(
     request: Request,
     body: SetSortOrdersRequest,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     service.set_sort_orders([e.model_dump() for e in body.orders])
@@ -226,7 +236,7 @@ def create_role(
     request: Request,
     body: CreateRoleRequest,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -259,13 +269,104 @@ def create_role(
     )
 
 
+# ---------------------------------------------------------------------------
+# Entra group → role mappings (must be before /{role_id} to avoid conflict)
+# ---------------------------------------------------------------------------
+
+class CreateEntraGroupMappingRequest(_BaseModel):
+    entra_group_id: str
+    entra_group_name: str
+    role_id: str
+
+
+def _to_group_mapping(m) -> dict:
+    return {
+        "id": m.id,
+        "entra_group_id": m.entra_group_id,
+        "entra_group_name": m.entra_group_name,
+        "role_id": m.role_id,
+        "created_at": m.created_at.isoformat() if m.created_at else None,
+    }
+
+
+@router.get("/entra-group-mappings", summary="List Entra group → role mappings")
+@_limiter.limit("30/minute")
+def list_entra_group_mappings(
+    request: Request,
+    db=Depends(get_db),
+    _user_id: str = Depends(require_permission("admin", "manage_entra_sync")),
+    request_id: str = Depends(get_request_id),
+) -> JSONResponse:
+    repo = RoleRepository(db)
+    mappings = repo.find_all_entra_group_mappings()
+    return JSONResponse(
+        content=ApiResponse(data=[_to_group_mapping(m) for m in mappings], meta=None, error=None).model_dump(mode="json"),
+        headers={"X-Request-ID": request_id},
+    )
+
+
+@router.post("/entra-group-mappings", summary="Create an Entra group → role mapping")
+@_limiter.limit("10/minute")
+def create_entra_group_mapping(
+    request: Request,
+    body: CreateEntraGroupMappingRequest,
+    db=Depends(get_db),
+    _user_id: str = Depends(require_permission("admin", "manage_entra_sync")),
+    request_id: str = Depends(get_request_id),
+) -> JSONResponse:
+    repo = RoleRepository(db)
+
+    role = repo.find_role_by_id(body.role_id)
+    if role is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=_error("ROLE_NOT_FOUND", f"Role '{body.role_id}' not found.", request_id),
+            headers={"X-Request-ID": request_id},
+        )
+
+    existing = repo.find_entra_group_mapping_by_group_id(body.entra_group_id)
+    if existing is not None:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content=_error("MAPPING_EXISTS", f"A mapping for group '{body.entra_group_id}' already exists.", request_id),
+            headers={"X-Request-ID": request_id},
+        )
+
+    mapping = repo.create_entra_group_mapping(
+        entra_group_id=body.entra_group_id,
+        entra_group_name=body.entra_group_name,
+        role_id=body.role_id,
+    )
+    logger.info("Entra group mapping created.", mapping_id=mapping.id, entra_group_id=body.entra_group_id, role_id=body.role_id)
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content=ApiResponse(data=_to_group_mapping(mapping), meta=None, error=None).model_dump(mode="json"),
+        headers={"X-Request-ID": request_id},
+    )
+
+
+@router.delete("/entra-group-mappings/{mapping_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an Entra group → role mapping")
+@_limiter.limit("10/minute")
+def delete_entra_group_mapping(
+    request: Request,
+    mapping_id: str,
+    db=Depends(get_db),
+    _user_id: str = Depends(require_permission("admin", "manage_entra_sync")),
+    request_id: str = Depends(get_request_id),
+) -> Response:
+    repo = RoleRepository(db)
+    repo.delete_entra_group_mapping(mapping_id)
+    logger.info("Entra group mapping deleted.", mapping_id=mapping_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get("/{role_id}", summary="Get a role with its current permissions")
 @_limiter.limit("100/minute")
 def get_role(
     request: Request,
     role_id: str,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "view_module")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -294,7 +395,7 @@ def update_role(
     role_id: str,
     body: UpdateRoleRequest,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -343,7 +444,7 @@ def delete_role(
     request: Request,
     role_id: str,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> Response:
     try:
@@ -369,7 +470,7 @@ def get_permissions(
     request: Request,
     role_id: str,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -397,7 +498,7 @@ def set_permissions(
     role_id: str,
     body: SetPermissionsRequest,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -437,7 +538,7 @@ def get_manager_permissions(
     request: Request,
     role_id: str,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -465,7 +566,7 @@ def set_manager_permissions(
     role_id: str,
     body: SetManagerPermissionsRequest,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -505,7 +606,7 @@ def get_grantable_roles(
     request: Request,
     role_id: str,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -529,7 +630,7 @@ def set_grantable_roles(
     role_id: str,
     body: SetGrantableRolesRequest,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -562,7 +663,7 @@ def list_role_assignments(
     request: Request,
     role_id: str,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "assign_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -594,7 +695,7 @@ def assign_role(
     role_id: str,
     body: AssignRoleRequest,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "assign_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -633,7 +734,7 @@ def update_assignment(
     employee_id: str,
     body: UpdateAssignmentRequest,
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "assign_roles")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -671,7 +772,7 @@ def unassign_role(
     employee_id: str,
     blacklist: bool = Query(default=False, description="Add to auto-assign blacklist to prevent re-assignment"),
     service: RoleService = Depends(get_role_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "assign_roles")),
     request_id: str = Depends(get_request_id),
 ) -> Response:
     try:

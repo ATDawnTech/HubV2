@@ -4,7 +4,7 @@ This layer owns all business rules. No SQLAlchemy imports, no HTTP knowledge.
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import structlog
 
@@ -55,7 +55,7 @@ class EmployeeService:
             return
         matching_roles = self._role_repository.find_roles_by_department(department)
         existing = {a.role_id for a in self._role_repository.find_assignments_for_employee(employee_id)}
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for role in matching_roles:
             if role.id in existing:
                 continue
@@ -85,6 +85,7 @@ class EmployeeService:
         job_title: str | None = None,
         hire_date_from: str | None = None,
         hire_date_to: str | None = None,
+        role_ids: list[str] | None = None,
     ) -> tuple[list[Employee], int]:
         """Return a paginated page of live employees and their filtered total count.
 
@@ -104,6 +105,7 @@ class EmployeeService:
             job_title=job_title,
             hire_date_from=hire_date_from,
             hire_date_to=hire_date_to,
+            role_ids=role_ids,
         )
         total = self._repository.count_with_filters(
             q=q,
@@ -115,6 +117,7 @@ class EmployeeService:
             job_title=job_title,
             hire_date_from=hire_date_from,
             hire_date_to=hire_date_to,
+            role_ids=role_ids,
         )
         return employees, total
 
@@ -173,7 +176,7 @@ class EmployeeService:
         total = self._repository.count_all_including_archived()
         employee_code = f"ATD-{total + 1:04d}"
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         employee = Employee(
             id=f"emp_{uuid.uuid4().hex[:12]}",
             employee_code=employee_code,
@@ -211,7 +214,7 @@ class EmployeeService:
         old_department = employee.department
         for field, value in request.model_dump(exclude_none=True).items():
             setattr(employee, field, value)
-        employee.updated_at = datetime.now(timezone.utc)
+        employee.updated_at = datetime.now(UTC)
 
         saved = self._repository.save(employee)
         if saved.department != old_department and self._role_repository:
@@ -243,7 +246,7 @@ class EmployeeService:
         if employee is None:
             raise ResourceNotFoundError(f"Employee '{employee_id}' not found.")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         employee.status = "archiving"
         employee.archived_at = now
         employee.updated_at = now
@@ -286,7 +289,7 @@ class EmployeeService:
             raise ResourceNotFoundError(f"Offboarding task '{task_id}' not found.")
 
         task.assignee_id = assignee_id
-        task.updated_at = datetime.now(timezone.utc)
+        task.updated_at = datetime.now(UTC)
         self._task_repository.save(task)
         return task
 
@@ -305,7 +308,7 @@ class EmployeeService:
         if task is None:
             raise ResourceNotFoundError(f"Offboarding task '{task_id}' not found.")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         task.status = "completed"
         task.completed_by = completed_by
         task.completed_at = now

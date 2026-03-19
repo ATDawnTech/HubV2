@@ -12,7 +12,9 @@ from ..db.engine import SessionLocal
 from ..db.repositories.config_dropdown_repository import ConfigDropdownRepository
 from ..db.repositories.dashboard_repository import DashboardRepository
 from ..db.repositories.employee_repository import EmployeeRepository
-from ..db.repositories.notification_settings_repository import NotificationSettingsRepository
+from ..db.repositories.notification_settings_repository import (
+    NotificationSettingsRepository,
+)
 from ..db.repositories.offboarding_task_repository import OffboardingTaskRepository
 from ..db.repositories.role_repository import RoleRepository
 from ..db.repositories.skill_repository import SkillRepository
@@ -24,48 +26,6 @@ from ..services.role_service import RoleService
 from ..services.skill_service import SkillService
 
 _bearer_scheme = HTTPBearer()
-
-
-def get_current_user_id(
-    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
-) -> str:
-    """Validate the JWT bearer token and return the authenticated user's employee ID.
-
-    The token must be signed with HS256 using the configured jwt_secret. The 'sub'
-    claim must contain the employee ID (e.g. 'emp_abc123').
-
-    Args:
-        credentials: HTTP bearer credentials extracted by FastAPI.
-
-    Returns:
-        The employee ID string from the token's 'sub' claim.
-
-    Raises:
-        HTTPException 401: If the token is missing, expired, or invalid.
-    """
-    try:
-        payload = jwt.decode(
-            credentials.credentials,
-            settings.jwt_secret,
-            algorithms=["HS256"],
-        )
-        user_id: str | None = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: missing subject claim.",
-            )
-        return user_id
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired.",
-        )
-    except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token.",
-        )
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -83,6 +43,62 @@ def get_db() -> Generator[Session, None, None]:
         raise
     finally:
         session.close()
+
+
+def get_current_user_id(
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
+    session: Session = Depends(get_db),
+) -> str:
+    """Validate the JWT bearer token and return the authenticated user's employee ID.
+
+    Also verifies the employee exists and is still active. Employees with status
+    'archiving' or 'archived' are rejected immediately — no need to wait for the
+    JWT to expire.
+
+    Args:
+        credentials: HTTP bearer credentials extracted by FastAPI.
+        session: Database session for the employee status check.
+
+    Returns:
+        The employee ID string from the token's 'sub' claim.
+
+    Raises:
+        HTTPException 401: If the token is missing, expired, invalid, or the
+            employee has been deactivated.
+    """
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.jwt_secret,
+            algorithms=["HS256"],
+        )
+        user_id: str | None = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: missing subject claim.",
+            )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired.",
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token.",
+        )
+
+    # Reject tokens for employees who are no longer active
+    repo = EmployeeRepository(session)
+    employee = repo.find_by_id(user_id)
+    if employee is None or employee.status in ("archiving", "archived"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account is inactive.",
+        )
+
+    return user_id
 
 
 def get_dashboard_service(session: Session = Depends(get_db)) -> DashboardService:

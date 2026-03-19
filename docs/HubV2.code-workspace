@@ -6,6 +6,7 @@
     ],
     "settings": {
         "claudeCode.preferredLocation": "panel",
-        "claudeCode.allowDangerouslySkipPermissions": true
+        "claudeCode.allowDangerouslySkipPermissions": true,
+        "accessibility.openChatEditedFiles": false
     }
 }

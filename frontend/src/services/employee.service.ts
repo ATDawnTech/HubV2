@@ -33,7 +33,7 @@ export interface OffboardingPage {
 
 export const employeeService = {
   async listEmployees(params: EmployeeListParams = {}): Promise<EmployeesPage> {
-    const { cursor, q, status, department, location, hire_type, work_mode, job_title, hire_date_from, hire_date_to, limit = 20 } = params;
+    const { cursor, q, status, department, location, hire_type, work_mode, job_title, hire_date_from, hire_date_to, role_id, limit = 20 } = params;
     const query: Record<string, string | number | string[]> = { limit };
     if (cursor) query.cursor = cursor;
     if (q) query.q = q;
@@ -45,6 +45,7 @@ export const employeeService = {
     if (job_title) query.job_title = job_title;
     if (hire_date_from) query.hire_date_from = hire_date_from;
     if (hire_date_to) query.hire_date_to = hire_date_to;
+    if (role_id?.length) query.role_id = role_id;
 
     const res = await apiClient.get<ApiResponse<Employee[]>>("/v1/employees", {
       params: query,

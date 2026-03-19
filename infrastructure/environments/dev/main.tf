@@ -124,6 +124,9 @@ module "api_ecs" {
   api_url             = "https://api.${var.domain_name}"
 
   database_url_ssm_path = "/internal/${var.environment}/rds/hubv2/database-url"
+
+  azure_tenant_id = var.azure_tenant_id
+  azure_client_id = var.azure_client_id
 }
 
 # 7. Frontend (S3 + CloudFront)
@@ -149,10 +152,15 @@ module "github_oidc" {
   create_provider     = false # Provider already exists in this account
 }
 
-# 9. SAML SSM parameter placeholders — fill in via aws ssm put-parameter after
-#    creating the AWS Identity Center SAML app for hub-dev.
-resource "aws_ssm_parameter" "saml_sso_url" {
-  name  = "/${var.product}/${var.environment}/api/saml-idp-sso-url"
+# 9. Entra SSM parameter placeholders — fill in via AWS CLI or Console after
+#    creating the Entra app registration. Terraform creates the params with
+#    PLACEHOLDER values; actual secrets are set out-of-band and ignored on
+#    subsequent applies (lifecycle.ignore_changes).
+#
+#    aws ssm put-parameter --name /hub/dev/api/azure-client-secret \
+#      --type SecureString --value "<secret>" --overwrite
+resource "aws_ssm_parameter" "azure_client_secret" {
+  name  = "/${var.product}/${var.environment}/api/azure-client-secret"
   type  = "SecureString"
   value = "PLACEHOLDER"
 
@@ -161,8 +169,28 @@ resource "aws_ssm_parameter" "saml_sso_url" {
   }
 }
 
-resource "aws_ssm_parameter" "saml_cert" {
-  name  = "/${var.product}/${var.environment}/api/saml-idp-cert"
+resource "aws_ssm_parameter" "azure_sysadmin_group_id" {
+  name  = "/${var.product}/${var.environment}/api/azure-sysadmin-group-id"
+  type  = "SecureString"
+  value = "PLACEHOLDER"
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+resource "aws_ssm_parameter" "azure_developer_group_id" {
+  name  = "/${var.product}/${var.environment}/api/azure-developer-group-id"
+  type  = "SecureString"
+  value = "PLACEHOLDER"
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+resource "aws_ssm_parameter" "azure_user_group_id" {
+  name  = "/${var.product}/${var.environment}/api/azure-user-group-id"
   type  = "SecureString"
   value = "PLACEHOLDER"
 

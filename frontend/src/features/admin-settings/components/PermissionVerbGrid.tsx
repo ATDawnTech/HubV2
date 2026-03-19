@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { ACTION_LABELS, MODULE_LABELS } from "../types/role.types";
+import { ACTION_LABELS, MODULE_LABELS, formatPermissionLabel } from "../types/role.types";
 import type { Permission } from "../types/role.types";
 import {
   GROUPED, isSelected, hasOtherPermsInModule,
@@ -177,7 +177,7 @@ export function PermissionVerbGrid({
                     >
                       {(checked || isInherited) && "✓"}
                     </span>
-                    {ACTION_LABELS[action] ?? action}
+                    {ACTION_LABELS[action] ?? formatPermissionLabel(action)}
                   </label>
                 );
               })}

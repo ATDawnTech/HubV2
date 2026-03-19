@@ -175,11 +175,27 @@ def test_delete_skill_calls_soft_delete_on_found_skill() -> None:
     skill = _make_skill()
     mock_repo = MagicMock()
     mock_repo.find_by_id.return_value = skill
+    mock_repo.get_usage_count.return_value = 0
 
     service = _make_service(mock_repo)
     service.delete_skill(skill.id)
 
     mock_repo.soft_delete.assert_called_once_with(skill)
+
+
+@pytest.mark.unit
+def test_delete_skill_raises_conflict_when_skill_is_in_use() -> None:
+    """delete_skill raises ConflictError when the skill is assigned to one or more employees."""
+    skill = _make_skill()
+    mock_repo = MagicMock()
+    mock_repo.find_by_id.return_value = skill
+    mock_repo.get_usage_count.return_value = 3
+
+    service = _make_service(mock_repo)
+    with pytest.raises(ConflictError):
+        service.delete_skill(skill.id)
+
+    mock_repo.soft_delete.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -192,6 +208,7 @@ def test_bulk_delete_skills_reports_skipped_ids_for_missing_skills() -> None:
     found = _make_skill(skill_id="skill_found1")
     mock_repo = MagicMock()
     mock_repo.find_by_ids.return_value = [found]
+    mock_repo.get_usage_counts_bulk.return_value = {"skill_found1": 0}
     mock_repo.bulk_soft_delete.return_value = 1
 
     service = _make_service(mock_repo)
@@ -208,6 +225,7 @@ def test_bulk_delete_skills_all_found_reports_zero_skipped() -> None:
     skills = [_make_skill(skill_id=f"skill_{i}") for i in range(3)]
     mock_repo = MagicMock()
     mock_repo.find_by_ids.return_value = skills
+    mock_repo.get_usage_counts_bulk.return_value = {s.id: 0 for s in skills}
     mock_repo.bulk_soft_delete.return_value = 3
 
     service = _make_service(mock_repo)
@@ -216,3 +234,22 @@ def test_bulk_delete_skills_all_found_reports_zero_skipped() -> None:
     assert result.deleted_count == 3
     assert result.skipped_count == 0
     assert result.skipped_ids == []
+
+
+@pytest.mark.unit
+def test_bulk_delete_skills_skips_in_use_skills() -> None:
+    """bulk_delete_skills skips skills assigned to employees and reports them in skipped_ids."""
+    free = _make_skill(skill_id="skill_free")
+    in_use = _make_skill(skill_id="skill_in_use", name="Python")
+    mock_repo = MagicMock()
+    mock_repo.find_by_ids.return_value = [free, in_use]
+    mock_repo.get_usage_counts_bulk.return_value = {"skill_free": 0, "skill_in_use": 2}
+    mock_repo.bulk_soft_delete.return_value = 1
+
+    service = _make_service(mock_repo)
+    result = service.bulk_delete_skills(["skill_free", "skill_in_use"])
+
+    assert result.deleted_count == 1
+    assert result.skipped_count == 1
+    assert "skill_in_use" in result.skipped_ids
+    mock_repo.bulk_soft_delete.assert_called_once_with([free])

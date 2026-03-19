@@ -32,3 +32,7 @@ class RoleAssignmentError(ValidationError):
 
 class PermissionDeniedError(ADTHubException):
     """Raised when the authenticated user lacks a required permission. Maps to HTTP 403."""
+
+
+class AuthenticationError(ADTHubException):
+    """Raised when an SSO authentication step fails (invalid state, token exchange, expired code)."""

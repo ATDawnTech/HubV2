@@ -65,3 +65,15 @@ def test_unknown_route_returns_404(base_url: str) -> None:
     assert resp.status_code == 404, (
         f"Expected 404 for unknown route, got {resp.status_code}: {resp.text}"
     )
+
+
+def test_login_redirects_to_microsoft(base_url: str) -> None:
+    """GET /v1/auth/login returns 302 with Location pointing to Microsoft login."""
+    resp = requests.get(f"{base_url}/v1/auth/login", timeout=10, allow_redirects=False)
+    assert resp.status_code == 302, (
+        f"Expected 302 from /v1/auth/login, got {resp.status_code}: {resp.text}"
+    )
+    location = resp.headers.get("location", "")
+    assert "login.microsoftonline.com" in location, (
+        f"Expected redirect to Microsoft, got Location: {location}"
+    )

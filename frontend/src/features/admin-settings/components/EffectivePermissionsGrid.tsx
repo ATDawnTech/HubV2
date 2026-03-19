@@ -5,6 +5,7 @@ import {
   NOUN_PERMISSIONS,
   MODULE_LABELS,
   ACTION_LABELS,
+  formatPermissionLabel,
 } from "../types/role.types";
 
 const ALL_PERMISSIONS = [...VERB_PERMISSIONS, ...NOUN_PERMISSIONS];
@@ -81,7 +82,7 @@ export function EffectivePermissionsGrid({ effective, preview, showPreview }: Pr
                     )}>
                       {highlighted ? "✓" : "✕"}
                     </span>
-                    {ACTION_LABELS[p.action] ?? p.action}
+                    {ACTION_LABELS[p.action] ?? formatPermissionLabel(p.action)}
                   </div>
                 );
               })}

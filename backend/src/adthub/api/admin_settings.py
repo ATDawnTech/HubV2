@@ -22,7 +22,12 @@ from ..schemas.admin_settings import (
 )
 from ..schemas.common import ApiError, ApiResponse, PaginationMeta
 from ..services.admin_settings_service import AdminSettingsService
-from .dependencies import get_admin_settings_service, get_current_user_id, get_request_id
+from .dependencies import (
+    get_admin_settings_service,
+    get_current_user_id,
+    get_request_id,
+    require_permission,
+)
 
 router = APIRouter(prefix="/v1/admin", tags=["admin-settings"])
 _limiter = Limiter(key_func=get_remote_address)
@@ -88,7 +93,7 @@ def list_dropdowns(
     cursor: str | None = Query(default=None, max_length=500),
     service: AdminSettingsService = Depends(get_admin_settings_service),
     request_id: str = Depends(get_request_id),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_dropdowns")),
 ) -> JSONResponse:
     entries, total, next_cursor = service.list_dropdowns(
         module=module,
@@ -122,7 +127,7 @@ def create_dropdown(
     request: Request,
     body: CreateDropdownRequest,
     service: AdminSettingsService = Depends(get_admin_settings_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_dropdowns")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -168,7 +173,7 @@ def update_dropdown(
     dropdown_id: str,
     body: UpdateDropdownRequest,
     service: AdminSettingsService = Depends(get_admin_settings_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_dropdowns")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -225,7 +230,7 @@ def reassign_employees(
     request: Request,
     body: ReassignEmployeesRequest,
     service: AdminSettingsService = Depends(get_admin_settings_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_dropdowns")),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     try:
@@ -269,7 +274,7 @@ def delete_dropdown(
     request: Request,
     dropdown_id: str,
     service: AdminSettingsService = Depends(get_admin_settings_service),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_dropdowns")),
     request_id: str = Depends(get_request_id),
 ) -> Response:
     try:

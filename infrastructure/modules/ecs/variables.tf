@@ -92,3 +92,15 @@ variable "database_url_ssm_path" {
   description = "SSM path for the DATABASE_URL secret. Defaults to /<product>/<env>/<service>/database-url."
   default     = ""
 }
+
+variable "azure_tenant_id" {
+  type        = string
+  description = "Microsoft Entra tenant ID."
+  default     = ""
+}
+
+variable "azure_client_id" {
+  type        = string
+  description = "Microsoft Entra app client ID."
+  default     = ""
+}

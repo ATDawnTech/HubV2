@@ -7,13 +7,23 @@ patterns across these tables differ significantly.
 
 import json
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from ..models.config_tables import Permission, Role, RoleAssignment, RoleAssignmentBlacklist, RoleGrantPermission, SystemSetting
-from ..models.employees import Employee  # noqa: F401 — needed for JOIN in get_all_permissions
 from ...exceptions import ResourceNotFoundError
+from ..models.config_tables import (
+    EntraGroupRoleMapping,
+    Permission,
+    Role,
+    RoleAssignment,
+    RoleAssignmentBlacklist,
+    RoleGrantPermission,
+    SystemSetting,
+)
+from ..models.employees import (
+    Employee,  # noqa: F401 — needed for JOIN in get_all_permissions
+)
 
 
 class RoleRepository:
@@ -70,7 +80,7 @@ class RoleRepository:
         role = self.find_role_by_id(role_id)
         if role is None:
             raise ResourceNotFoundError(f"Role '{role_id}' not found.")
-        role.deleted_at = datetime.now(timezone.utc)
+        role.deleted_at = datetime.now(UTC)
         self._session.flush()
 
     # ------------------------------------------------------------------
@@ -90,7 +100,7 @@ class RoleRepository:
     ) -> list[Permission]:
         """Hard-delete all existing permissions for the role, then bulk-insert new set."""
         self._session.query(Permission).filter(Permission.role_id == role_id).delete()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         new_rows = [
             Permission(
                 id=f"perm_{secrets.token_hex(8)}",
@@ -170,7 +180,7 @@ class RoleRepository:
         if role is None:
             raise ResourceNotFoundError(f"Role '{role_id}' not found.")
         role.manager_permissions = json.dumps(pairs) if pairs else None
-        role.updated_at = datetime.now(timezone.utc)
+        role.updated_at = datetime.now(UTC)
         self._session.flush()
         return pairs
 
@@ -193,7 +203,7 @@ class RoleRepository:
         self._session.query(RoleGrantPermission).filter(
             RoleGrantPermission.granting_role_id == granting_role_id
         ).delete()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         new_rows = [
             RoleGrantPermission(
                 granting_role_id=granting_role_id,
@@ -215,6 +225,25 @@ class RoleRepository:
             .filter(RoleAssignment.employee_id == employee_id)
             .all()
         )
+
+    def find_role_names_bulk(self, employee_ids: list[str]) -> dict[str, list[tuple[str, str]]]:
+        """Return {employee_id: [(role_id, role_name)]} for a batch of employees."""
+        if not employee_ids:
+            return {}
+        rows = (
+            self._session.query(RoleAssignment.employee_id, Role.id, Role.name)
+            .join(Role, Role.id == RoleAssignment.role_id)
+            .filter(
+                RoleAssignment.employee_id.in_(employee_ids),
+                Role.deleted_at.is_(None),
+            )
+            .order_by(Role.sort_order.asc(), Role.name.asc())
+            .all()
+        )
+        result: dict[str, list[tuple[str, str]]] = {}
+        for emp_id, role_id, role_name in rows:
+            result.setdefault(emp_id, []).append((role_id, role_name))
+        return result
 
     def find_assignments_for_role(self, role_id: str) -> list[RoleAssignment]:
         return (
@@ -323,7 +352,7 @@ class RoleRepository:
                 RoleAssignmentBlacklist(
                     employee_id=employee_id,
                     role_id=role_id,
-                    created_at=datetime.now(timezone.utc),
+                    created_at=datetime.now(UTC),
                 )
             )
             self._session.flush()
@@ -376,7 +405,7 @@ class RoleRepository:
         Returns:
             The saved permissions list.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         row = self._session.query(SystemSetting).filter_by(key="default_permissions").first()
         value = json.dumps(permissions)
         if row is None:
@@ -393,3 +422,41 @@ class RoleRepository:
             row.updated_by = updated_by
             row.updated_at = now
         return permissions
+
+    # ------------------------------------------------------------------
+    # Entra group → role mappings
+    # ------------------------------------------------------------------
+
+    def find_all_entra_group_mappings(self) -> list[EntraGroupRoleMapping]:
+        return self._session.query(EntraGroupRoleMapping).order_by(EntraGroupRoleMapping.created_at).all()
+
+    def find_entra_group_mapping_by_id(self, mapping_id: str) -> EntraGroupRoleMapping | None:
+        return self._session.query(EntraGroupRoleMapping).filter_by(id=mapping_id).first()
+
+    def find_entra_group_mapping_by_group_id(self, entra_group_id: str) -> EntraGroupRoleMapping | None:
+        return self._session.query(EntraGroupRoleMapping).filter_by(entra_group_id=entra_group_id).first()
+
+    def create_entra_group_mapping(self, entra_group_id: str, entra_group_name: str, role_id: str) -> EntraGroupRoleMapping:
+        mapping = EntraGroupRoleMapping(
+            id=f"egm_{secrets.token_hex(8)}",
+            entra_group_id=entra_group_id,
+            entra_group_name=entra_group_name,
+            role_id=role_id,
+            created_at=datetime.now(UTC),
+        )
+        self._session.add(mapping)
+        self._session.flush()
+        return mapping
+
+    def delete_entra_group_mapping(self, mapping_id: str) -> None:
+        mapping = self.find_entra_group_mapping_by_id(mapping_id)
+        if mapping is None:
+            return
+        # Cascade: remove SSO-sourced (assigned_by=None) assignments for this role
+        # so users don't retain the role after the mapping is removed.
+        self._session.query(RoleAssignment).filter(
+            RoleAssignment.role_id == mapping.role_id,
+            RoleAssignment.assigned_by.is_(None),
+        ).delete()
+        self._session.delete(mapping)
+        self._session.flush()

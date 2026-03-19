@@ -1,9 +1,8 @@
-from datetime import datetime, timezone
-from sqlalchemy import (
-    Column, String, Text, DateTime,
-    ForeignKey, Index
-)
+from datetime import UTC, datetime
+
+from sqlalchemy import Column, DateTime, ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import JSONB
+
 from ..base import Base
 
 
@@ -24,7 +23,7 @@ class AuditEvent(Base):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
     )
 
     __table_args__ = (

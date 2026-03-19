@@ -11,11 +11,9 @@ Logic contracts:
 
 import json
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import structlog
-
-logger = structlog.get_logger()
 
 from ..db.models.config_tables import Permission, Role, RoleAssignment
 from ..db.repositories.employee_repository import EmployeeRepository
@@ -26,6 +24,8 @@ from ..exceptions import (
     SystemRoleDeleteError,
     ValidationError,
 )
+
+logger = structlog.get_logger()
 
 # Allowlist of valid (module, action) permission pairs.
 # Extend this set as new modules are built.
@@ -95,6 +95,7 @@ _VALID_PERMISSIONS: frozenset[tuple[str, str]] = frozenset({
     ("admin", "manage_skills"),
     ("admin", "manage_notifications"),
     ("admin", "assign_roles"),
+    ("admin", "manage_entra_sync"),
     # --- Noun / visibility permissions ---
     ("visibility", "reveal_pii"),
     ("visibility", "reveal_financials"),
@@ -114,6 +115,12 @@ class RoleService:
     # ------------------------------------------------------------------
     # Role CRUD
     # ------------------------------------------------------------------
+
+    def get_roles_for_employees(
+        self, employee_ids: list[str]
+    ) -> dict[str, list[tuple[str, str]]]:
+        """Return {employee_id: [(role_id, role_name)]} for bulk display."""
+        return self._repo.find_role_names_bulk(employee_ids)
 
     def list_roles(
         self, limit: int = 20, cursor: str | None = None
@@ -145,7 +152,7 @@ class RoleService:
             raise ConflictError(f"A role named '{name}' already exists.")
 
         config_str = self._serialize_dashboard_config(dashboard_config)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         role = Role(
             id=f"role_{secrets.token_hex(8)}",
             name=name,
@@ -171,7 +178,7 @@ class RoleService:
         dashboard_config: dict | None = None,
     ) -> Role:
         role = self.get_role(role_id)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if name is not None:
             name = name.strip()
@@ -393,7 +400,7 @@ class RoleService:
             employee_id=employee_id,
             role_id=role_id,
             assigned_by=assigned_by,
-            assigned_at=datetime.now(timezone.utc),
+            assigned_at=datetime.now(UTC),
             is_manager=is_manager,
             manager_permissions=mgr_perms_str,
         )
@@ -454,7 +461,7 @@ class RoleService:
         # Add: assign to employees in the target departments
         if departments:
             employees = self._emp_repo.find_active_by_departments(departments)
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             target_emp_ids = {emp.id for emp in employees}
             for emp in employees:
                 if emp.id in existing_emp_ids:

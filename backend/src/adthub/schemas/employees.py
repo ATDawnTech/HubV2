@@ -1,7 +1,13 @@
 """Pydantic request/response models for the Employee Management API (Epic 2)."""
 
 from datetime import date, datetime
+
 from pydantic import BaseModel
+
+
+class RoleNameEntry(BaseModel):
+    role_id: str
+    role_name: str
 
 
 class EmployeeResponse(BaseModel):
@@ -9,6 +15,7 @@ class EmployeeResponse(BaseModel):
 
     id: str
     employee_code: str | None
+    entra_oid: str | None = None
     first_name: str
     last_name: str
     work_email: str
@@ -23,6 +30,7 @@ class EmployeeResponse(BaseModel):
     archived_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    roles: list[RoleNameEntry] = []
 
 
 class CreateEmployeeRequest(BaseModel):

@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import structlog
 
-from ..db.repositories.skill_repository import SkillRepository
 from ..db.models.config_tables import SkillsCatalog
+from ..db.repositories.skill_repository import SkillRepository
 from ..exceptions import ConflictError, ResourceNotFoundError
 from ..lib.search_tokens import generate_search_tokens
 from ..schemas.common import PaginationMeta
@@ -121,7 +121,7 @@ class SkillService:
         if existing:
             raise ConflictError(f"A skill named '{request.name}' already exists.")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         skill = SkillsCatalog(
             id=f"skill_{secrets.token_hex(8)}",
             name=request.name,
@@ -163,10 +163,16 @@ class SkillService:
 
         Raises:
             ResourceNotFoundError: If the skill does not exist or is already deleted.
+            ConflictError: If the skill is assigned to one or more employees.
         """
         skill = self._repo.find_by_id(skill_id)
         if not skill:
             raise ResourceNotFoundError(f"Skill '{skill_id}' not found.")
+        usage = self._repo.get_usage_count(skill_id)
+        if usage > 0:
+            raise ConflictError(
+                f"Skill '{skill.name}' is assigned to {usage} employee(s) and cannot be deleted."
+            )
         self._repo.soft_delete(skill)
         logger.info("Skill deleted.", skill_id=skill_id)
 
@@ -187,7 +193,12 @@ class SkillService:
         found_ids = {s.id for s in found}
         skipped = [sid for sid in ids if sid not in found_ids]
 
-        deleted_count = self._repo.bulk_soft_delete(found)
+        usage_map = self._repo.get_usage_counts_bulk([s.id for s in found])
+        deletable = [s for s in found if usage_map.get(s.id, 0) == 0]
+        in_use = [s.id for s in found if usage_map.get(s.id, 0) > 0]
+        skipped.extend(in_use)
+
+        deleted_count = self._repo.bulk_soft_delete(deletable)
         logger.info(
             "Bulk skill delete.",
             deleted=deleted_count,

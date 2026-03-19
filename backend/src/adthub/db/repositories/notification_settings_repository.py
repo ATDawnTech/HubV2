@@ -1,6 +1,6 @@
 """Repository for notification settings (Epic 3.4)."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
@@ -26,7 +26,7 @@ class NotificationSettingsRepository:
                 offboarding_deadline_hours=72,
                 escalation_warning_hours=24,
                 warranty_alert_days=60,
-                updated_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(UTC),
             )
             self._db.add(row)
             self._db.flush()

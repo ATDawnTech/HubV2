@@ -40,3 +40,15 @@ variable "domain_name" {
   type        = string
   description = "Frontend subdomain for this environment (e.g. hub-dev.atdawntech.com)."
 }
+
+variable "azure_tenant_id" {
+  type        = string
+  description = "Microsoft Entra tenant ID."
+  default     = ""
+}
+
+variable "azure_client_id" {
+  type        = string
+  description = "Microsoft Entra app client ID for the dev environment."
+  default     = ""
+}

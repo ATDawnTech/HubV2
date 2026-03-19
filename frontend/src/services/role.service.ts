@@ -2,7 +2,9 @@ import { apiClient } from "@/lib/axios";
 import type { ApiResponse, PaginationMeta } from "@/types/api.types";
 import type {
   AssignRoleInput,
+  CreateEntraGroupMappingInput,
   CreateRoleInput,
+  EntraGroupMapping,
   Permission,
   Role,
   RoleAssignment,
@@ -148,5 +150,24 @@ export const roleService = {
 
   async setSortOrders(orders: Array<{ role_id: string; sort_order: number }>): Promise<void> {
     await apiClient.put("/v1/admin/roles/sort-orders", { orders });
+  },
+
+  async listEntraGroupMappings(): Promise<EntraGroupMapping[]> {
+    const res = await apiClient.get<ApiResponse<EntraGroupMapping[]>>(
+      "/v1/admin/roles/entra-group-mappings",
+    );
+    return res.data.data ?? [];
+  },
+
+  async createEntraGroupMapping(input: CreateEntraGroupMappingInput): Promise<EntraGroupMapping> {
+    const res = await apiClient.post<ApiResponse<EntraGroupMapping>>(
+      "/v1/admin/roles/entra-group-mappings",
+      input,
+    );
+    return res.data.data!;
+  },
+
+  async deleteEntraGroupMapping(id: string): Promise<void> {
+    await apiClient.delete(`/v1/admin/roles/entra-group-mappings/${id}`);
   },
 };

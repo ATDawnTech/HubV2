@@ -29,6 +29,7 @@ describe("GROUPED", () => {
     expect(GROUPED["admin"]).toContain("manage_skills");
     expect(GROUPED["admin"]).toContain("manage_notifications");
     expect(GROUPED["admin"]).toContain("assign_roles");
+    expect(GROUPED["admin"]).toContain("manage_entra_sync");
   });
 
   it("does not mix actions across modules", () => {

@@ -111,15 +111,18 @@ resource "aws_ecs_task_definition" "service" {
     environment = [
       { name = "ALLOWED_ORIGINS", value = var.allowed_origins },
       { name = "FRONTEND_URL", value = var.frontend_url },
-      { name = "SAML_SP_ENTITY_ID", value = "${var.product}-${var.environment}" },
-      { name = "SAML_CALLBACK_URL", value = "${var.api_url}/v1/auth/callback" },
+      { name = "AZURE_TENANT_ID", value = var.azure_tenant_id },
+      { name = "AZURE_CLIENT_ID", value = var.azure_client_id },
+      { name = "AZURE_REDIRECT_URI", value = "${var.api_url}/v1/auth/callback" },
     ]
 
     secrets = [
       { name = "DATABASE_URL", valueFrom = local.database_url_ssm_path },
       { name = "JWT_SECRET", valueFrom = "/${var.product}/${var.environment}/${var.service_name}/jwt-secret" },
-      { name = "SAML_IDP_SSO_URL", valueFrom = "/${var.product}/${var.environment}/${var.service_name}/saml-idp-sso-url" },
-      { name = "SAML_IDP_CERT", valueFrom = "/${var.product}/${var.environment}/${var.service_name}/saml-idp-cert" },
+      { name = "AZURE_CLIENT_SECRET", valueFrom = "/${var.product}/${var.environment}/${var.service_name}/azure-client-secret" },
+      { name = "AZURE_SYSADMIN_GROUP_ID", valueFrom = "/${var.product}/${var.environment}/${var.service_name}/azure-sysadmin-group-id" },
+      { name = "AZURE_DEVELOPER_GROUP_ID", valueFrom = "/${var.product}/${var.environment}/${var.service_name}/azure-developer-group-id" },
+      { name = "AZURE_USER_GROUP_ID", valueFrom = "/${var.product}/${var.environment}/${var.service_name}/azure-user-group-id" },
     ]
 
     portMappings = [

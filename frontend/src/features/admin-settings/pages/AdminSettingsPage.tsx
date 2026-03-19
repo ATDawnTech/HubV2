@@ -1,5 +1,7 @@
 import { useParams } from "react-router-dom";
 import { DefaultPermissionsPanel } from "../components/DefaultPermissionsPanel";
+import { EntraGroupMappingPanel } from "../components/EntraGroupMappingPanel";
+import { EntraSyncPanel } from "../components/EntraSyncPanel";
 import { NotificationSettingsPanel } from "../components/NotificationSettingsPanel";
 import { RoleList } from "../components/RoleList";
 import { RoleTester } from "../components/RoleTester";
@@ -42,6 +44,23 @@ export function AdminSettingsPage(): JSX.Element {
           <RoleList />
           <div className="mt-8">
             <RoleTester />
+          </div>
+        </>
+      )}
+
+      {subModule === "entra-sync" && (
+        <>
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-foreground">Entra Sync</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Manage Microsoft Entra integration — map security groups to app roles and sync the employee directory from Entra.
+            </p>
+          </div>
+          <div className="mb-6">
+            <EntraSyncPanel />
+          </div>
+          <div className="mb-6">
+            <EntraGroupMappingPanel />
           </div>
         </>
       )}

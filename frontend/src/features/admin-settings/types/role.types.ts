@@ -2,6 +2,20 @@
 // Core types — mirror backend schemas/roles.py
 // ---------------------------------------------------------------------------
 
+export interface EntraGroupMapping {
+  id: string;
+  entra_group_id: string;
+  entra_group_name: string;
+  role_id: string;
+  created_at: string | null;
+}
+
+export interface CreateEntraGroupMappingInput {
+  entra_group_id: string;
+  entra_group_name: string;
+  role_id: string;
+}
+
 export interface Permission {
   module: string;
   action: string;
@@ -140,6 +154,7 @@ export const VERB_PERMISSIONS: Permission[] = [
   { module: "admin", action: "manage_skills" },
   { module: "admin", action: "manage_notifications" },
   { module: "admin", action: "assign_roles" },
+  { module: "admin", action: "manage_entra_sync" },
 ];
 
 export const NOUN_PERMISSIONS: Permission[] = [
@@ -147,6 +162,11 @@ export const NOUN_PERMISSIONS: Permission[] = [
   { module: "visibility", action: "reveal_financials" },
   { module: "visibility", action: "reveal_audit_trails" },
 ];
+
+/** Formats a raw permission key (snake_case) into Title Case with spaces. */
+export function formatPermissionLabel(key: string): string {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 // Human-readable labels for permission modules
 export const MODULE_LABELS: Record<string, string> = {
@@ -221,6 +241,7 @@ export const ACTION_LABELS: Record<string, string> = {
   manage_skills: "Manage Skills",
   manage_notifications: "Manage Notifications",
   assign_roles: "Assign Roles",
+  manage_entra_sync: "Manage Entra Sync",
   // Visibility
   reveal_pii: "Reveal PII",
   reveal_financials: "Reveal Financials",

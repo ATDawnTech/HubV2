@@ -4,7 +4,6 @@ Handles HTTP concerns only — request validation, rate limiting, response
 serialisation, and exception translation. No business logic lives here.
 """
 
-import secrets
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 from slowapi import Limiter

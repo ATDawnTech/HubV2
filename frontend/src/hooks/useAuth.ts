@@ -50,6 +50,7 @@ export function useAuth() {
     localStorage.removeItem("adthub_employee_id");
     setTokenState(null);
     setEmployeeIdState(null);
+    window.location.href = "/login";
   }, []);
 
   // In local env, fetch a dev token via TanStack Query if none is stored.

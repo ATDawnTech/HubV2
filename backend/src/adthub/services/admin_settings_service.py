@@ -7,7 +7,7 @@ Sub-module 3.1: Dropdown Settings
 """
 
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from ..db.models.config_tables import ConfigDropdown
 from ..db.repositories.config_dropdown_repository import ConfigDropdownRepository
@@ -93,8 +93,8 @@ class AdminSettingsService:
             sort_order=sort_order,
             is_active=True,
             created_by=created_by,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
         return self._repo.save(entry)
 
@@ -118,7 +118,7 @@ class AdminSettingsService:
         if entry is None:
             raise ResourceNotFoundError(f"Dropdown '{dropdown_id}' not found.")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if new_value is not None:
             new_value = new_value.strip()

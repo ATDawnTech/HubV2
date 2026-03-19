@@ -1,6 +1,6 @@
 """Repository for SkillsCatalog — paginated CRUD with fuzzy search and usage counts."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -221,7 +221,7 @@ class SkillRepository:
         Args:
             skill: The ORM instance to soft-delete.
         """
-        skill.deleted_at = datetime.now(timezone.utc)
+        skill.deleted_at = datetime.now(UTC)
         self._db.flush()
 
     def bulk_recategorize(self, from_category: str | None, to_category: str | None) -> int:
@@ -240,7 +240,7 @@ class SkillRepository:
         else:
             q = q.filter(SkillsCatalog.category == from_category)
         rows = q.all()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for row in rows:
             row.category = to_category
             row.updated_at = now
@@ -256,7 +256,7 @@ class SkillRepository:
         Returns:
             The number of skills marked as deleted.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for skill in skills:
             skill.deleted_at = now
         self._db.flush()

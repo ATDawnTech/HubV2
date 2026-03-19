@@ -1,8 +1,18 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from sqlalchemy import (
-    Column, String, Integer, Text, Date, DateTime, Numeric, Boolean,
-    ForeignKey, UniqueConstraint, Index, CheckConstraint
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
 )
+
 from ..base import Base
 
 
@@ -10,6 +20,7 @@ class Employee(Base):
     __tablename__ = "employees"
 
     id = Column(String(255), primary_key=True)
+    entra_oid = Column(String(255), nullable=True, unique=True)
     first_name = Column(String(255), nullable=False)
     last_name = Column(String(255), nullable=False)
     work_email = Column(String(255), nullable=False, unique=True)
@@ -34,13 +45,13 @@ class Employee(Base):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
     )
     updated_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
 
@@ -51,6 +62,7 @@ class Employee(Base):
         ),
         Index("idx_employees_manager_id", "manager_id"),
         Index("idx_employees_status", "status"),
+        Index("idx_employees_entra_oid", "entra_oid"),
     )
 
 

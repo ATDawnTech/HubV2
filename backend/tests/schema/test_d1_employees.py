@@ -64,3 +64,24 @@ def test_d1_5_personal_email_unique_violation(db_session) -> None:
     db_session.add(emp2)
     with pytest.raises(sqlalchemy.exc.IntegrityError):
         db_session.flush()
+
+
+@pytest.mark.schema
+def test_d1_6_entra_oid_unique_violation(db_session) -> None:
+    """D.1.6: employees.entra_oid UNIQUE — duplicate Entra OID is rejected."""
+    emp1 = EmployeeFactory(entra_oid="oid-duplicate-abc123")
+    emp2 = EmployeeFactory(entra_oid="oid-duplicate-abc123")
+    db_session.add(emp1)
+    db_session.flush()
+
+    db_session.add(emp2)
+    with pytest.raises(sqlalchemy.exc.IntegrityError):
+        db_session.flush()
+
+
+@pytest.mark.schema
+def test_d1_7_entra_oid_nullable(db_session) -> None:
+    """D.1.7: employees.entra_oid NULLABLE — employee without SSO login is valid."""
+    emp = EmployeeFactory(entra_oid=None)
+    db_session.add(emp)
+    db_session.flush()  # should not raise

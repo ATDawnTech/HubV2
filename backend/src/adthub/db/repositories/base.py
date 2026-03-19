@@ -1,6 +1,8 @@
-from typing import TypeVar, Generic, Type
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Generic, TypeVar
+
 from sqlalchemy.orm import Session
+
 from ...exceptions import ResourceNotFoundError
 
 T = TypeVar("T")
@@ -13,7 +15,7 @@ class BaseRepository(Generic[T]):
     Subclasses must never issue queries without the deleted_at filter on deletable tables.
     """
 
-    def __init__(self, model: Type[T], session: Session) -> None:
+    def __init__(self, model: type[T], session: Session) -> None:
         self._model = model
         self._session = session
 
@@ -60,5 +62,5 @@ class BaseRepository(Generic[T]):
             raise ResourceNotFoundError(
                 f"{self._model.__name__} '{resource_id}' not found."
             )
-        entity.deleted_at = datetime.now(timezone.utc)
+        entity.deleted_at = datetime.now(UTC)
         self._session.flush()

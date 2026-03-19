@@ -1,8 +1,5 @@
-from datetime import datetime, timezone
-from sqlalchemy import (
-    Column, String, Text, Date, DateTime,
-    ForeignKey, Index
-)
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Index, String, Text
+
 from ..base import Base
 
 

@@ -1,7 +1,9 @@
-from contextlib import contextmanager
 from collections.abc import Generator
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
+
 from ..config import settings
 
 engine = create_engine(

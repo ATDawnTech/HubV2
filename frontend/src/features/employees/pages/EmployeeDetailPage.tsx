@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { usePermissions } from "@/hooks/usePermissions";
 import { EmployeeForm } from "../components/EmployeeForm";
 import { EmployeeDetailSections } from "../components/EmployeeDetailSections";
 import { useArchiveEmployee } from "../hooks/useArchiveEmployee";
@@ -21,6 +22,8 @@ export function EmployeeDetailPage(): JSX.Element {
   const updateEmployee = useUpdateEmployee(id ?? "");
   const archiveEmployee = useArchiveEmployee();
   const { getStaleFields } = useStaleFieldDetector();
+  const { hasPermission } = usePermissions();
+  const canViewInEntra = hasPermission("admin", "manage_entra_sync");
 
   // Clear ?edit=true from URL once edit mode activates
   useEffect(() => {
@@ -78,6 +81,16 @@ export function EmployeeDetailPage(): JSX.Element {
         </div>
 
         <div className="flex items-center gap-2">
+          {canViewInEntra && emp.entra_oid && (
+            <a
+              href={`https://entra.microsoft.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/${emp.entra_oid}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:border-primary hover:text-primary"
+            >
+              View in Entra
+            </a>
+          )}
           <button
             onClick={() => navigate("/employees")}
             className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:border-primary hover:text-primary"

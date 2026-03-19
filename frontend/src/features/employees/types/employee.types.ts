@@ -8,6 +8,7 @@ export interface EmployeeRoleEntry {
 export interface Employee {
   id: string;
   employee_code: string | null;
+  entra_oid: string | null;
   first_name: string;
   last_name: string;
   work_email: string;
@@ -22,6 +23,7 @@ export interface Employee {
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+  roles: { role_id: string; role_name: string }[];
 }
 
 export interface OffboardingTask {
@@ -82,5 +84,6 @@ export interface EmployeeListParams {
   job_title?: string | undefined;
   hire_date_from?: string | undefined;
   hire_date_to?: string | undefined;
+  role_id?: string[] | undefined;
   limit?: number | undefined;
 }

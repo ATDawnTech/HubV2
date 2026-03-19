@@ -13,10 +13,16 @@ import { TemplateListPage, CanvasEditorPage } from "@/features/test-nodes";
 import { AccountSettingsPage } from "@/features/account";
 import { ComingSoonPage } from "@/components/ui/ComingSoonPage";
 import { NotFoundPage } from "@/components/ui/NotFoundPage";
+import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { AuthCallbackPage } from "@/features/auth/pages/AuthCallbackPage";
+import { RequireAuth } from "@/components/guards/RequireAuth";
 
 export const router = createBrowserRouter([
+  // Auth routes — rendered outside Layout (no sidebar/nav)
+  { path: "/login", element: <LoginPage /> },
+  { path: "/auth/callback", element: <AuthCallbackPage /> },
   {
-    element: <Layout />,
+    element: <RequireAuth><Layout /></RequireAuth>,
     children: [
       { path: "/", element: <DashboardPage /> },
       { path: "/dashboard", element: <DashboardPage /> },

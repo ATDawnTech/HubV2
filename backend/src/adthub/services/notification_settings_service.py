@@ -6,10 +6,12 @@ Manages:
   - Timing thresholds (offboarding deadline, escalation warning, warranty alert)
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from ..db.models.config_tables import NotificationModuleToggle, NotificationSettings
-from ..db.repositories.notification_settings_repository import NotificationSettingsRepository
+from ..db.repositories.notification_settings_repository import (
+    NotificationSettingsRepository,
+)
 from ..exceptions import ValidationError
 
 _VALID_CHANNELS = {"email", "inapp"}
@@ -69,7 +71,7 @@ class NotificationSettingsService:
             settings.inapp_enabled = inapp_enabled
 
         settings.updated_by = user_id
-        settings.updated_at = datetime.now(timezone.utc)
+        settings.updated_at = datetime.now(UTC)
 
         return self._repo.save_settings(settings)
 

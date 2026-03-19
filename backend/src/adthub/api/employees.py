@@ -5,7 +5,7 @@ serialisation, and exception translation. No business logic lives here.
 """
 
 from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -17,20 +17,30 @@ from ..schemas.employees import (
     OffboardingEmployeeResponse,
     OffboardingTaskResponse,
     ReassignTaskRequest,
+    RoleNameEntry,
     UpdateEmployeeRequest,
 )
 from ..services.employee_service import EmployeeService
 from ..services.role_service import RoleService
-from .dependencies import get_current_user_id, get_employee_service, get_request_id, get_role_service
+from .dependencies import (
+    get_employee_service,
+    get_request_id,
+    get_role_service,
+    require_permission,
+)
 
 router = APIRouter(prefix="/v1/employees", tags=["employees"])
 _limiter = Limiter(key_func=get_remote_address)
 
 
-def _to_employee_response(employee) -> EmployeeResponse:
+def _to_employee_response(
+    employee,
+    roles: list[tuple[str, str]] | None = None,
+) -> EmployeeResponse:
     return EmployeeResponse(
         id=employee.id,
         employee_code=employee.employee_code,
+        entra_oid=employee.entra_oid,
         first_name=employee.first_name,
         last_name=employee.last_name,
         work_email=employee.work_email,
@@ -45,6 +55,7 @@ def _to_employee_response(employee) -> EmployeeResponse:
         archived_at=employee.archived_at,
         created_at=employee.created_at,
         updated_at=employee.updated_at,
+        roles=[RoleNameEntry(role_id=r[0], role_name=r[1]) for r in (roles or [])],
     )
 
 
@@ -85,8 +96,10 @@ def list_employees(
     job_title: str | None = Query(default=None, max_length=200),
     hire_date_from: str | None = Query(default=None, max_length=10),
     hire_date_to: str | None = Query(default=None, max_length=10),
-    _user_id: str = Depends(get_current_user_id),
+    role_id: list[str] | None = Query(default=None),
+    _user_id: str = Depends(require_permission("employees", "view_module")),
     service: EmployeeService = Depends(get_employee_service),
+    role_service: RoleService = Depends(get_role_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
     """Return a paginated, filterable list of employees."""
@@ -102,6 +115,7 @@ def list_employees(
         job_title=job_title,
         hire_date_from=hire_date_from,
         hire_date_to=hire_date_to,
+        role_ids=role_id,
     )
 
     has_next = len(employees) > limit
@@ -111,9 +125,11 @@ def list_employees(
         if has_next and page else None
     )
 
+    roles_by_emp = role_service.get_roles_for_employees([e.id for e in page])
+
     return JSONResponse(
         content=ApiResponse(
-            data=[_to_employee_response(e).model_dump(mode="json") for e in page],
+            data=[_to_employee_response(e, roles_by_emp.get(e.id)).model_dump(mode="json") for e in page],
             meta=PaginationMeta(
                 total=total,
                 page_size=len(page),
@@ -131,7 +147,7 @@ def list_employees(
 def check_email(
     request: Request,
     email: str = Query(..., max_length=255),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("employees", "view_module")),
     service: EmployeeService = Depends(get_employee_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -152,7 +168,7 @@ def check_email(
 def create_employee(
     body: CreateEmployeeRequest,
     request: Request,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("employees", "create_employee")),
     service: EmployeeService = Depends(get_employee_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -191,7 +207,7 @@ def list_offboarding(
     request: Request,
     limit: int = Query(default=20, ge=1, le=100),
     cursor: str | None = Query(default=None, max_length=500),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("offboarding", "view_module")),
     service: EmployeeService = Depends(get_employee_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -235,7 +251,7 @@ def list_offboarding(
 def get_employee(
     employee_id: str,
     request: Request,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("employees", "view_module")),
     service: EmployeeService = Depends(get_employee_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -273,7 +289,7 @@ def update_employee(
     employee_id: str,
     body: UpdateEmployeeRequest,
     request: Request,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("employees", "edit_employee")),
     service: EmployeeService = Depends(get_employee_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -310,7 +326,7 @@ def update_employee(
 def archive_employee(
     employee_id: str,
     request: Request,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("employees", "archive_employee")),
     service: EmployeeService = Depends(get_employee_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -347,7 +363,7 @@ def archive_employee(
 def get_employee_roles(
     employee_id: str,
     request: Request,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("employees", "view_module")),
     role_service: RoleService = Depends(get_role_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -386,7 +402,7 @@ def get_employee_roles(
 def get_offboarding_tasks(
     employee_id: str,
     request: Request,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("offboarding", "view_module")),
     service: EmployeeService = Depends(get_employee_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -427,7 +443,7 @@ def complete_offboarding_task(
     employee_id: str,
     task_id: str,
     request: Request,
-    user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(require_permission("offboarding", "complete_tasks")),
     service: EmployeeService = Depends(get_employee_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -469,7 +485,7 @@ def reassign_offboarding_task(
     task_id: str,
     body: ReassignTaskRequest,
     request: Request,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("offboarding", "reassign_tasks")),
     service: EmployeeService = Depends(get_employee_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:

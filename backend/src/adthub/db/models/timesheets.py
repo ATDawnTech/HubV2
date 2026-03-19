@@ -1,8 +1,16 @@
-from datetime import datetime, timezone
 from sqlalchemy import (
-    Column, String, Text, Date, DateTime, Numeric, Boolean,
-    ForeignKey, Index, CheckConstraint
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Numeric,
+    String,
+    Text,
 )
+
 from ..base import Base
 
 

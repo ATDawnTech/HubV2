@@ -3,6 +3,7 @@ import { z } from "zod";
 export const employeeSchema = z.object({
   id: z.string(),
   employee_code: z.string().nullable(),
+  entra_oid: z.string().nullable().default(null),
   first_name: z.string(),
   last_name: z.string(),
   work_email: z.string(),
@@ -17,6 +18,7 @@ export const employeeSchema = z.object({
   archived_at: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
+  roles: z.array(z.object({ role_id: z.string(), role_name: z.string() })).default([]),
 });
 
 export const offboardingTaskSchema = z.object({
