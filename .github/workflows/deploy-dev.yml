@@ -45,6 +45,7 @@ jobs:
         run: cd backend && poetry run pytest tests/unit tests/schema -v
         env:
           JWT_SECRET: ci-unit-test-placeholder
+          DATABASE_URL: postgresql+psycopg2://adthub_admin:localpassword@localhost:5434/adthub_test
 
   integration-tests:
     name: Integration Tests (Isolated)
