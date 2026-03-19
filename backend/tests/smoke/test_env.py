@@ -70,6 +70,8 @@ def test_unknown_route_returns_404(base_url: str) -> None:
 def test_login_redirects_to_microsoft(base_url: str) -> None:
     """GET /v1/auth/login returns 302 with Location pointing to Microsoft login."""
     resp = requests.get(f"{base_url}/v1/auth/login", timeout=10, allow_redirects=False)
+    if resp.status_code == 503:
+        pytest.skip("SSO is not configured in this environment — skipping redirect check")
     assert resp.status_code == 302, (
         f"Expected 302 from /v1/auth/login, got {resp.status_code}: {resp.text}"
     )
