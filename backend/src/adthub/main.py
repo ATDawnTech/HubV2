@@ -98,6 +98,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.get_allowed_origins(),
+    allow_origin_regex=r"http://localhost:\d+" if settings.environment == "local" else None,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
