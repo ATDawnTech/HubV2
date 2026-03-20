@@ -99,7 +99,7 @@ def test_find_all_paginated_returns_active_skills(db_session) -> None:
 
     repo = SkillRepository(db_session)
     rows = repo.find_all_paginated(
-        search=None, sort_by="name", sort_dir="asc", limit=50, offset=0, category=None
+        search=None, sort_by="name", sort_dir="asc", limit=50, cursor=None, category=None
     )
 
     ids = [r.id for r in rows]
@@ -117,7 +117,7 @@ def test_find_all_paginated_filters_by_search(db_session) -> None:
 
     repo = SkillRepository(db_session)
     rows = repo.find_all_paginated(
-        search="python", sort_by="name", sort_dir="asc", limit=50, offset=0, category=None
+        search="python", sort_by="name", sort_dir="asc", limit=50, cursor=None, category=None
     )
 
     ids = [r.id for r in rows]
@@ -135,7 +135,7 @@ def test_find_all_paginated_filters_by_category(db_session) -> None:
 
     repo = SkillRepository(db_session)
     rows = repo.find_all_paginated(
-        search=None, sort_by="name", sort_dir="asc", limit=50, offset=0, category="Backend"
+        search=None, sort_by="name", sort_dir="asc", limit=50, cursor=None, category="Backend"
     )
 
     ids = [r.id for r in rows]
@@ -145,17 +145,19 @@ def test_find_all_paginated_filters_by_category(db_session) -> None:
 
 @pytest.mark.integration
 def test_find_all_paginated_respects_limit_and_offset(db_session) -> None:
-    """find_all_paginated returns the correct page slice."""
+    """find_all_paginated returns the correct page slice using cursor pagination."""
     skills = [SkillsCatalogFactory(name=f"Skill_{i:03}") for i in range(5)]
     db_session.add_all(skills)
     db_session.flush()
 
     repo = SkillRepository(db_session)
     page1 = repo.find_all_paginated(
-        search=None, sort_by="name", sort_dir="asc", limit=3, offset=0, category=None
+        search=None, sort_by="name", sort_dir="asc", limit=3, cursor=None, category=None
     )
+    last = page1[-1]
+    cursor = f"{last.name}|{last.id}"
     page2 = repo.find_all_paginated(
-        search=None, sort_by="name", sort_dir="asc", limit=3, offset=3, category=None
+        search=None, sort_by="name", sort_dir="asc", limit=3, cursor=cursor, category=None
     )
 
     assert len(page1) == 3
@@ -175,7 +177,7 @@ def test_find_all_paginated_sort_by_name_ascending(db_session) -> None:
 
     repo = SkillRepository(db_session)
     rows = repo.find_all_paginated(
-        search=None, sort_by="name", sort_dir="asc", limit=50, offset=0, category="SortTest"
+        search=None, sort_by="name", sort_dir="asc", limit=50, cursor=None, category="SortTest"
     )
 
     names = [r.name for r in rows]
