@@ -151,9 +151,10 @@ def test_find_all_paginated_respects_limit_and_offset(db_session) -> None:
     db_session.flush()
 
     repo = SkillRepository(db_session)
+    # Repository returns limit+1 rows for next-page detection; slice like the service does.
     page1 = repo.find_all_paginated(
         search=None, sort_by="name", sort_dir="asc", limit=3, cursor=None, category=None
-    )
+    )[:3]
     last = page1[-1]
     cursor = f"{last.name}|{last.id}"
     page2 = repo.find_all_paginated(
