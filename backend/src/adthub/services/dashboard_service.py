@@ -2,12 +2,11 @@
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from ..db.models.tasks import DashboardTask
 from ..db.repositories.dashboard_repository import DashboardRepository
 from ..exceptions import TaskAlreadyCompletedError, TaskNotFoundError
-
 
 # Canonical ordered list of modules shown on the Hub Dashboard (Feature 1.1).
 # The id values correspond to the module column in dashboard_tasks.
@@ -103,7 +102,7 @@ class DashboardService:
         Returns:
             The newly created DashboardTask.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         task_id = f"test_{uuid.uuid4().hex[:12]}"
         task = DashboardTask(
             id=task_id,

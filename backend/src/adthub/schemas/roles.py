@@ -5,7 +5,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-
 # ---------------------------------------------------------------------------
 # Permission — read / write (shared shape)
 # ---------------------------------------------------------------------------

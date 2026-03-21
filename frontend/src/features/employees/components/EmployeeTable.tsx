@@ -45,7 +45,7 @@ interface EmployeeTableProps {
   isSelectingAll?: boolean;
 }
 
-type SortField = "employee_code" | "name" | "email" | "job_title" | "department" | "location" | "status";
+type SortField = "employee_code" | "name" | "email" | "job_title" | "department" | "location" | "status" | "role";
 type SortDir = "asc" | "desc";
 
 function sortEmployees(rows: Employee[], field: SortField, dir: SortDir): Employee[] {
@@ -58,6 +58,7 @@ function sortEmployees(rows: Employee[], field: SortField, dir: SortDir): Employ
     else if (field === "department") { av = a.department ?? ""; bv = b.department ?? ""; }
     else if (field === "location") { av = a.location ?? ""; bv = b.location ?? ""; }
     else if (field === "status") { av = a.status; bv = b.status; }
+    else if (field === "role") { av = a.roles.map((r) => r.role_name).join(", "); bv = b.roles.map((r) => r.role_name).join(", "); }
     const cmp = av.localeCompare(bv, undefined, { sensitivity: "base", numeric: true });
     return dir === "asc" ? cmp : -cmp;
   });
@@ -103,8 +104,8 @@ export function EmployeeTable({
     return <div className="rounded-lg border border-dashed border-border py-12 text-center"><p className="text-sm text-muted-foreground">No employees found.</p></div>;
   }
 
-  const HEADER_COLS = ["name", "email", "job_title", "department", "location", "status"] as const;
-  const HEADER_LABELS = ["Name", "Email", "Title", "Department", "Location", "Status"];
+  const HEADER_COLS = ["name", "email", "job_title", "department", "location", "status", "role"] as const;
+  const HEADER_LABELS = ["Name", "Email", "Title", "Department", "Location", "Status", "Role"];
 
   return (
     <div className="space-y-2">
@@ -145,6 +146,7 @@ export function EmployeeTable({
                   <td className="truncate px-4 py-3 text-sm text-muted-foreground">{emp.department ? formatLabel(emp.department) : "—"}</td>
                   <td className="truncate px-4 py-3 text-sm text-muted-foreground">{emp.location ? formatLabel(emp.location) : "—"}</td>
                   <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[emp.status] ?? "bg-muted text-muted-foreground"}`}>{STATUS_LABELS[emp.status] ?? emp.status}</span></td>
+                  <td className="truncate px-4 py-3 text-sm text-muted-foreground">{emp.roles.length > 0 ? emp.roles.map((r) => r.role_name).join(", ") : "—"}</td>
                   <td className="overflow-hidden px-4 py-3">
                     <EmployeeActionMenu employee={emp} adminMode={adminMode} canEdit={canEdit} canExport={canExport} canManageRoles={canManageRoles} isArchiving={isArchiving} onArchive={onArchive} staleFields={staleFields} />
                   </td>

@@ -101,6 +101,7 @@ export function EmployeeViewModal({ employee: emp, onClose, onDismiss, onEdit, c
               )}
             </SectionHeading>
             <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4">
+              <InfoRow label="Work Email" value={emp.work_email} />
               <InfoRow label="Job Title" value={emp.job_title} />
               <InfoRow label="Department" value={emp.department} staleReason={staleFields["department"]} />
               <InfoRow label="Location" value={emp.location} staleReason={staleFields["location"]} />

@@ -2,7 +2,15 @@
 
 from datetime import date, datetime
 from uuid import UUID
+
 from pydantic import BaseModel
+
+
+
+class RoleNameEntry(BaseModel):
+    role_id: UUID
+    role_name: str
+
 
 
 class EmployeeResponse(BaseModel):
@@ -10,6 +18,7 @@ class EmployeeResponse(BaseModel):
 
     id: UUID
     employee_code: str | None
+    entra_oid: str | None = None
     first_name: str
     last_name: str
     work_email: str
@@ -24,6 +33,7 @@ class EmployeeResponse(BaseModel):
     archived_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    roles: list[RoleNameEntry] = []
 
 
 class CreateEmployeeRequest(BaseModel):

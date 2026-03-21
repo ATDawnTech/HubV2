@@ -1,10 +1,11 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import and_, func, or_, text
 from sqlalchemy.orm import Session
 
-from .base import BaseRepository
+from ..models.config_tables import RoleAssignment
 from ..models.employees import Employee
+from .base import BaseRepository
 
 
 def _token_filter(column, value: str):
@@ -18,6 +19,17 @@ class EmployeeRepository(BaseRepository[Employee]):
 
     def __init__(self, session: Session) -> None:
         super().__init__(Employee, session)
+
+    def find_by_entra_oid(self, entra_oid: str) -> Employee | None:
+        """Find an employee by their Microsoft Entra Object ID."""
+        return (
+            self._session.query(Employee)
+            .filter(
+                Employee.entra_oid == entra_oid,
+                Employee.deleted_at.is_(None),
+            )
+            .first()
+        )
 
     def find_by_email(self, email: str) -> Employee | None:
         """Find an active employee by work email (case-insensitive)."""
@@ -43,6 +55,7 @@ class EmployeeRepository(BaseRepository[Employee]):
         job_title: str | None = None,
         hire_date_from: str | None = None,
         hire_date_to: str | None = None,
+        role_ids: list[str] | None = None,
     ) -> list[Employee]:
         """Return employees matching filters with cursor-based pagination."""
         if statuses is None:
@@ -60,7 +73,7 @@ class EmployeeRepository(BaseRepository[Employee]):
         if cursor:
             try:
                 cursor_ts_str, cursor_id = cursor.split("|", 1)
-                cursor_ts = datetime.fromisoformat(cursor_ts_str).replace(tzinfo=timezone.utc)
+                cursor_ts = datetime.fromisoformat(cursor_ts_str).replace(tzinfo=UTC)
                 query = query.filter(
                     or_(
                         Employee.created_at > cursor_ts,
@@ -110,6 +123,14 @@ class EmployeeRepository(BaseRepository[Employee]):
         if hire_date_to:
             query = query.filter(Employee.hire_date <= hire_date_to)
 
+        if role_ids:
+            role_subq = (
+                self._session.query(RoleAssignment.employee_id)
+                .filter(RoleAssignment.role_id.in_(role_ids))
+                .subquery()
+            )
+            query = query.filter(Employee.id.in_(role_subq))
+
         return query.limit(limit + 1).all()
 
     def count_with_filters(
@@ -123,6 +144,7 @@ class EmployeeRepository(BaseRepository[Employee]):
         job_title: str | None = None,
         hire_date_from: str | None = None,
         hire_date_to: str | None = None,
+        role_ids: list[str] | None = None,
     ) -> int:
         """Count employees matching filters (no pagination)."""
         if statuses is None:
@@ -172,6 +194,14 @@ class EmployeeRepository(BaseRepository[Employee]):
 
         if hire_date_to:
             query = query.filter(Employee.hire_date <= hire_date_to)
+
+        if role_ids:
+            role_subq = (
+                self._session.query(RoleAssignment.employee_id)
+                .filter(RoleAssignment.role_id.in_(role_ids))
+                .subquery()
+            )
+            query = query.filter(Employee.id.in_(role_subq))
 
         return query.scalar() or 0
 

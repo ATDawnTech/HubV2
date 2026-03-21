@@ -20,7 +20,11 @@ from ..schemas.notification_settings import (
     UpdateNotificationSettingsRequest,
 )
 from ..services.notification_settings_service import NotificationSettingsService
-from .dependencies import get_current_user_id, get_notification_settings_service, get_request_id
+from .dependencies import (
+    get_current_user_id,
+    get_notification_settings_service,
+    get_request_id,
+)
 
 router = APIRouter(prefix="/v1/admin/notifications", tags=["notifications"])
 _limiter = Limiter(key_func=get_remote_address)

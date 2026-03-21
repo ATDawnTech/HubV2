@@ -1,8 +1,11 @@
 """Dashboard task model — cross-module task registry for the Hub Dashboard."""
 
-from datetime import datetime, timezone
-from sqlalchemy import Column, String, DateTime, ForeignKey, Index, CheckConstraint, text
+from datetime import UTC, datetime
+
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Index, String, text
 from sqlalchemy.dialects.postgresql import UUID
+
+
 from ..base import Base
 
 
@@ -28,13 +31,13 @@ class DashboardTask(Base):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
     )
     updated_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
 

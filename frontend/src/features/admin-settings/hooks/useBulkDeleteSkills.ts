@@ -10,7 +10,14 @@ export function useBulkDeleteSkills() {
     mutationFn: (ids: string[]) => skillManagementService.bulkDeleteSkills({ ids }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: skillKeys.all });
-      toast.success(`${result.deleted_count} skill${result.deleted_count === 1 ? "" : "s"} removed.`);
+      if (result.skipped_count > 0) {
+        toast.success(
+          `${result.deleted_count} skill${result.deleted_count === 1 ? "" : "s"} removed. ` +
+          `${result.skipped_count} skipped (in use by employees).`,
+        );
+      } else {
+        toast.success(`${result.deleted_count} skill${result.deleted_count === 1 ? "" : "s"} removed.`);
+      }
     },
     onError: () => {
       toast.error("Failed to remove skills.");

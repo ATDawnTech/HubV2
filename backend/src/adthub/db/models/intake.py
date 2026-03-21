@@ -1,9 +1,20 @@
-from datetime import datetime, timezone
 from sqlalchemy import (
-    Column, String, Integer, Text, Date, DateTime, Numeric, Boolean,
-    ForeignKey, UniqueConstraint, Index, text
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+
+
 from ..base import Base
 
 

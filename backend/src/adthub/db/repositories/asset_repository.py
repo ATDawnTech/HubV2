@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
-from .base import BaseRepository
+
 from ..models.assets import Asset
+from .base import BaseRepository
 
 
 class AssetRepository(BaseRepository[Asset]):

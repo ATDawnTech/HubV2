@@ -4,8 +4,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application configuration loaded from environment variables."""
 
-    database_url: str = "postgresql+psycopg2://adthub_admin:localpassword@localhost:5434/adthub_local"
-    test_database_url: str = "postgresql+psycopg2://adthub_admin:localpassword@localhost:5434/adthub_test"
+    database_url: str = ""
+    test_database_url: str = ""
     debug: bool = False
     environment: str = "dev"
     jwt_secret: str  # Required — no default. Set via environment variable or .env file.
@@ -16,6 +16,21 @@ class Settings(BaseSettings):
     # Example: "http://localhost:5173,https://adthub.atdawntech.com"
     allowed_origins: str = "http://localhost:5173"
     log_level: str = "INFO"
+
+    # Microsoft Entra SSO — required in all deployed environments.
+    # Set via SSM-injected environment variables. For local dev, set in .env.
+    azure_client_id: str = ""
+    azure_tenant_id: str = ""
+    azure_client_secret: str = ""
+    # The backend callback URL registered in Entra. Must match exactly.
+    azure_redirect_uri: str = "http://localhost:3001/v1/auth/callback"
+    # The public URL of the frontend — used to build the post-auth redirect.
+    frontend_url: str = "http://localhost:5173"
+    # Entra group Object IDs — map to app roles on login.
+    azure_sysadmin_group_id: str = ""
+    azure_developer_group_id: str = ""
+    azure_user_group_id: str = ""
+    entra_sync_interval_hours: int = 4
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
-from .base import BaseRepository
+
 from ..models.projects import Project
+from .base import BaseRepository
 
 
 class ProjectRepository(BaseRepository[Project]):

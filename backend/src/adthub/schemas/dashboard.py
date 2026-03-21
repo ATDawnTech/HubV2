@@ -1,6 +1,7 @@
 """Pydantic request/response models for the Hub Dashboard API (Epic 1)."""
 
 from datetime import datetime
+
 from pydantic import BaseModel
 
 

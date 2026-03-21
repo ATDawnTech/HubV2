@@ -51,7 +51,7 @@ def test_list_employees_returns_employees_and_total() -> None:
     mock_repo.find_with_filters.assert_called_once_with(
         limit=20, cursor=None, q=None, statuses=_LIVE_STATUSES,
         departments=None, locations=None, hire_types=None, work_modes=None,
-        job_title=None, hire_date_from=None, hire_date_to=None,
+        job_title=None, hire_date_from=None, hire_date_to=None, role_ids=None,
     )
 
 
@@ -68,7 +68,7 @@ def test_list_employees_passes_cursor_to_repository() -> None:
     mock_repo.find_with_filters.assert_called_once_with(
         limit=10, cursor="emp_abc123", q=None, statuses=_LIVE_STATUSES,
         departments=None, locations=None, hire_types=None, work_modes=None,
-        job_title=None, hire_date_from=None, hire_date_to=None,
+        job_title=None, hire_date_from=None, hire_date_to=None, role_ids=None,
     )
 
 
@@ -85,7 +85,7 @@ def test_list_employees_forwards_search_and_filter_params() -> None:
     mock_repo.find_with_filters.assert_called_once_with(
         limit=20, cursor=None, q="Alice", statuses=["active"],
         departments=["Engineering"], locations=["NYC"], hire_types=None, work_modes=None,
-        job_title=None, hire_date_from=None, hire_date_to=None,
+        job_title=None, hire_date_from=None, hire_date_to=None, role_ids=None,
     )
 
 
@@ -303,7 +303,7 @@ def test_list_offboarding_returns_archiving_employees() -> None:
     mock_repo.find_with_filters.assert_called_once_with(
         limit=20, cursor=None, q=None, statuses=["archiving"],
         departments=None, locations=None, hire_types=None, work_modes=None,
-        job_title=None, hire_date_from=None, hire_date_to=None,
+        job_title=None, hire_date_from=None, hire_date_to=None, role_ids=None,
     )
 
 

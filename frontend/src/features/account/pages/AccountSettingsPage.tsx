@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { employeeService } from "@/services/employee.service";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import type { EmployeeRoleEntry } from "@/features/employees/types/employee.types";
 
 export function AccountSettingsPage(): JSX.Element {
   const { employeeId } = useAuth();
@@ -12,6 +13,14 @@ export function AccountSettingsPage(): JSX.Element {
     enabled: Boolean(employeeId),
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ["employee", employeeId, "roles"],
+    queryFn: () => employeeService.getEmployeeRoles(employeeId!),
+    enabled: Boolean(employeeId),
+    staleTime: 5 * 60 * 1000,
+  });
+  const assignedRoles = roles.filter((r) => !!r.role_id);
 
   if (isLoading) return <LoadingSpinner message="Loading account..." />;
 
@@ -67,13 +76,39 @@ export function AccountSettingsPage(): JSX.Element {
         </p>
       </section>
 
-      {/* Security placeholder */}
+      {/* Roles */}
+      <section className="mt-4 rounded-lg border border-border bg-card p-6">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Roles
+        </h2>
+        {assignedRoles.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No roles assigned.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {assignedRoles.map((entry: EmployeeRoleEntry) => (
+              <div
+                key={entry.role_id}
+                className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2"
+              >
+                <span className="text-sm font-medium text-card-foreground">{entry.role_name}</span>
+                {entry.is_manager && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-yellow-400/15 border border-yellow-400/30 px-2 py-0.5 text-[11px] font-semibold text-yellow-600 dark:text-yellow-400">
+                    <span>★</span> Manager
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Security */}
       <section className="mt-4 rounded-lg border border-border bg-card p-6">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Security
         </h2>
         <p className="text-sm text-muted-foreground">
-          Password management and SSO configuration will be available when Epic 4 (Auth) is connected.
+          Authentication is managed via Microsoft SSO. Contact your administrator to update access.
         </p>
       </section>
     </main>

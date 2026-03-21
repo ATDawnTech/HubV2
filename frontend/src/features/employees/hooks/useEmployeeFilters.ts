@@ -18,6 +18,7 @@ export function useEmployeeFilters() {
   const debouncedJobTitle = useDebounce(jobTitleInput, 300);
   const [hireDateFrom, setHireDateFrom] = useLocalStorage("emp-filter-date-from", "");
   const [hireDateTo, setHireDateTo] = useLocalStorage("emp-filter-date-to", "");
+  const [selectedRoles, setSelectedRoles] = useLocalStorage<string[]>("emp-filter-roles", []);
 
   const filterCount =
     (activeStatuses.length > 0 ? 1 : 0) +
@@ -27,7 +28,8 @@ export function useEmployeeFilters() {
     selectedWorkModes.length +
     (debouncedJobTitle ? 1 : 0) +
     (hireDateFrom ? 1 : 0) +
-    (hireDateTo ? 1 : 0);
+    (hireDateTo ? 1 : 0) +
+    selectedRoles.length;
 
   /** Build the params object to pass to useEmployees / useAllEmployeeIds. */
   function buildFilterParams(
@@ -43,6 +45,7 @@ export function useEmployeeFilters() {
       ...(debouncedJobTitle ? { job_title: debouncedJobTitle.toLowerCase() } : {}),
       ...(hireDateFrom ? { hire_date_from: hireDateFrom } : {}),
       ...(hireDateTo ? { hire_date_to: hireDateTo } : {}),
+      ...(selectedRoles.length ? { role_id: selectedRoles } : {}),
     };
   }
 
@@ -76,6 +79,12 @@ export function useEmployeeFilters() {
     );
   }
 
+  function toggleRole(v: string): void {
+    setSelectedRoles((prev) =>
+      prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v],
+    );
+  }
+
   function clearAll(): void {
     setActiveStatuses([]);
     setSelectedDepts([]);
@@ -85,6 +94,7 @@ export function useEmployeeFilters() {
     setJobTitleInput("");
     setHireDateFrom("");
     setHireDateTo("");
+    setSelectedRoles([]);
   }
 
   return {
@@ -97,6 +107,7 @@ export function useEmployeeFilters() {
     jobTitleInput,
     hireDateFrom,
     hireDateTo,
+    selectedRoles,
     debouncedJobTitle,
     filterCount,
     // Helpers
@@ -107,6 +118,7 @@ export function useEmployeeFilters() {
     toggleLocation,
     toggleHireType,
     toggleWorkMode,
+    toggleRole,
     setJobTitleInput,
     setHireDateFrom,
     setHireDateTo,

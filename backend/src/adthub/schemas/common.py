@@ -1,6 +1,7 @@
 """Shared Pydantic response envelope types used across all API endpoints."""
 
 from typing import Generic, TypeVar
+
 from pydantic import BaseModel
 
 T = TypeVar("T")

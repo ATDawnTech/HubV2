@@ -1,4 +1,5 @@
 import { useDropdownOptions } from "@/features/admin-settings/hooks/useDropdownOptions";
+import { useRoles } from "@/features/admin-settings/hooks/useRoles";
 import { CheckboxGroup, FilterSection, STATUS_OPTIONS, formatLabel } from "./filterHelpers";
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
   onHireTypeToggle: (v: string) => void;
   selectedWorkModes: string[];
   onWorkModeToggle: (v: string) => void;
+  selectedRoles: string[];
+  onRoleToggle: (v: string) => void;
   jobTitleInput: string;
   onJobTitleChange: (v: string) => void;
   hireDateFrom: string;
@@ -26,6 +29,7 @@ export function EmployeeFilterBody({
   selectedLocations, onLocationToggle,
   selectedHireTypes, onHireTypeToggle,
   selectedWorkModes, onWorkModeToggle,
+  selectedRoles, onRoleToggle,
   jobTitleInput, onJobTitleChange,
   hireDateFrom, onHireDateFromChange,
   hireDateTo, onHireDateToChange,
@@ -39,6 +43,8 @@ export function EmployeeFilterBody({
   const locationOptions = (locationQuery.data ?? []).filter((o) => o.is_active).map((o) => ({ value: o.value, label: formatLabel(o.value) }));
   const hireTypeOptions = (hireTypeQuery.data ?? []).filter((o) => o.is_active).map((o) => ({ value: o.value, label: formatLabel(o.value) }));
   const workModeOptions = (workModeQuery.data ?? []).filter((o) => o.is_active).map((o) => ({ value: o.value, label: formatLabel(o.value) }));
+  const { data: rolesData, isLoading: rolesLoading } = useRoles();
+  const roleOptions = (rolesData?.roles ?? []).map((r) => ({ value: r.id, label: r.name }));
 
   const textInputClass = (active: boolean) =>
     `w-full rounded-md border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 transition-colors ${
@@ -72,6 +78,11 @@ export function EmployeeFilterBody({
       <div className="px-5 py-3">
         <FilterSection label="Work Model" badge={selectedWorkModes.length} defaultOpen={selectedWorkModes.length > 0}>
           <CheckboxGroup options={workModeOptions} selected={selectedWorkModes} onToggle={onWorkModeToggle} loading={workModeQuery.isLoading} />
+        </FilterSection>
+      </div>
+      <div className="px-5 py-3">
+        <FilterSection label="Role" badge={selectedRoles.length} defaultOpen={selectedRoles.length > 0}>
+          <CheckboxGroup options={roleOptions} selected={selectedRoles} onToggle={onRoleToggle} loading={rolesLoading} />
         </FilterSection>
       </div>
       <div className="px-5 py-3">

@@ -10,7 +10,6 @@ def db_engine():
     engine = create_engine(settings.test_database_url)
     Base.metadata.create_all(engine)
     yield engine
-    Base.metadata.drop_all(engine)
 
 
 @pytest.fixture(scope="function")

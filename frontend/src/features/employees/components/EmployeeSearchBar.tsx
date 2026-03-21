@@ -45,6 +45,8 @@ export function EmployeeSearchBar({ filters, filterOpen, setFilterOpen, searchIn
           onHireTypeToggle={(v) => { filters.toggleHireType(v); onResetPage(); }}
           selectedWorkModes={filters.selectedWorkModes}
           onWorkModeToggle={(v) => { filters.toggleWorkMode(v); onResetPage(); }}
+          selectedRoles={filters.selectedRoles}
+          onRoleToggle={(v) => { filters.toggleRole(v); onResetPage(); }}
           jobTitleInput={filters.jobTitleInput}
           onJobTitleChange={(v) => { filters.setJobTitleInput(v); onResetPage(); }}
           hireDateFrom={filters.hireDateFrom}

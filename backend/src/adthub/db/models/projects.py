@@ -1,9 +1,7 @@
-from datetime import datetime, timezone
-from sqlalchemy import (
-    Column, String, Text, Date, DateTime, Numeric,
-    ForeignKey, Index, text
-)
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Index, Numeric, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID
+
+
 from ..base import Base
 
 

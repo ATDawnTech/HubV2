@@ -1,9 +1,18 @@
-from datetime import datetime, timezone
 from sqlalchemy import (
-    Column, String, Integer, Text, DateTime, Boolean,
-    ForeignKey, UniqueConstraint, Index, text
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
+
+
 from ..base import Base
 
 
@@ -192,6 +201,32 @@ class RoleAssignmentBlacklist(Base):
     __table_args__ = (
         Index("idx_role_blacklist_employee_id", "employee_id"),
         Index("idx_role_blacklist_role_id", "role_id"),
+    )
+
+
+class EntraGroupRoleMapping(Base):
+    """Maps a Microsoft Entra security group to an app role.
+
+    On every SSO login the backend reads these mappings and auto-assigns
+    roles whose groups appear in the user's ID token ``groups`` claim.
+    Roles sourced from SSO (assigned_by=None) are also removed when the
+    user is no longer a member of the corresponding group.
+    """
+
+    __tablename__ = "entra_group_role_mappings"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    entra_group_id = Column(String(255), nullable=False, unique=True)
+    entra_group_name = Column(String(255), nullable=False)
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
+
+
+    __table_args__ = (
+        Index("idx_entra_group_mappings_role_id", "role_id"),
+        Index("idx_entra_group_mappings_deleted_at", "deleted_at"),
     )
 
 

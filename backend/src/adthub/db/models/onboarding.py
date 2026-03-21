@@ -1,10 +1,20 @@
-from datetime import datetime, timezone
 from sqlalchemy import (
-    Column, String, Integer, Text, Date, DateTime, Boolean,
-    ForeignKey, UniqueConstraint, Index, text
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy import Text as SAText
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
+
+
 from ..base import Base
 
 

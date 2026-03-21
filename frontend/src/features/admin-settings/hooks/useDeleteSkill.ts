@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/lib/toast";
 import { skillManagementService } from "@/services/skill-management.service";
@@ -12,8 +13,12 @@ export function useDeleteSkill() {
       queryClient.invalidateQueries({ queryKey: skillKeys.all });
       toast.success("Skill removed.");
     },
-    onError: () => {
-      toast.error("Failed to remove skill.");
+    onError: (error: unknown) => {
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        toast.error(error.response.data?.detail ?? "Skill is in use and cannot be deleted.");
+      } else {
+        toast.error("Failed to remove skill.");
+      }
     },
   });
 }

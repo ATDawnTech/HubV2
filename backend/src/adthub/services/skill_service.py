@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import structlog
 
-from ..db.repositories.skill_repository import SkillRepository
 from ..db.models.config_tables import SkillsCatalog
+from ..db.repositories.skill_repository import SkillRepository
 from ..exceptions import ConflictError, ResourceNotFoundError
 from ..lib.search_tokens import generate_search_tokens
 from ..schemas.common import PaginationMeta
@@ -42,7 +42,7 @@ class SkillService:
         sort_by: str,
         sort_dir: str,
         limit: int,
-        offset: int,
+        cursor: str | None,
         category: str | None,
     ) -> tuple[list[SkillResponse], PaginationMeta]:
         """Return a paginated, optionally filtered page of skills with usage counts.
@@ -52,7 +52,7 @@ class SkillService:
             sort_by: Column to sort by — "name", "created_at", or "usage_count".
             sort_dir: "asc" or "desc".
             limit: Page size (clamped to 1–500).
-            offset: Row offset for the requested page.
+            cursor: Opaque continuation token from the previous page, or None.
             category: Optional exact category filter.
 
         Returns:
@@ -67,10 +67,13 @@ class SkillService:
             sort_by=effective_sort_by,
             sort_dir=effective_sort_dir,
             limit=effective_limit,
-            offset=max(offset, 0),
+            cursor=cursor,
             category=category or None,
         )
         total = self._repo.count(search=search or None, category=category or None)
+
+        has_next = len(rows) > effective_limit
+        rows = rows[:effective_limit]
 
         skill_ids = [r.id for r in rows]
         usage_map = self._repo.get_usage_counts_bulk(skill_ids)
@@ -86,10 +89,20 @@ class SkillService:
             for row in rows
         ]
 
+        next_cursor: str | None = None
+        if has_next and rows:
+            last = rows[-1]
+            if effective_sort_by == "name":
+                next_cursor = f"{last.name}|{last.id}"
+            else:
+                # created_at sort and usage_count sort both use created_at|id as cursor
+                ts = last.created_at.isoformat() if last.created_at else ""
+                next_cursor = f"{ts}|{last.id}"
+
         meta = PaginationMeta(
             total=total,
             page_size=effective_limit,
-            next_cursor=None,
+            next_cursor=next_cursor,
             prev_cursor=None,
         )
         return skills, meta
@@ -121,7 +134,7 @@ class SkillService:
         if existing:
             raise ConflictError(f"A skill named '{request.name}' already exists.")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         skill = SkillsCatalog(
             id=f"skill_{secrets.token_hex(8)}",
             name=request.name,
@@ -163,10 +176,16 @@ class SkillService:
 
         Raises:
             ResourceNotFoundError: If the skill does not exist or is already deleted.
+            ConflictError: If the skill is assigned to one or more employees.
         """
         skill = self._repo.find_by_id(skill_id)
         if not skill:
             raise ResourceNotFoundError(f"Skill '{skill_id}' not found.")
+        usage = self._repo.get_usage_count(skill_id)
+        if usage > 0:
+            raise ConflictError(
+                f"Skill '{skill.name}' is assigned to {usage} employee(s) and cannot be deleted."
+            )
         self._repo.soft_delete(skill)
         logger.info("Skill deleted.", skill_id=skill_id)
 
@@ -187,7 +206,12 @@ class SkillService:
         found_ids = {s.id for s in found}
         skipped = [sid for sid in ids if sid not in found_ids]
 
-        deleted_count = self._repo.bulk_soft_delete(found)
+        usage_map = self._repo.get_usage_counts_bulk([s.id for s in found])
+        deletable = [s for s in found if usage_map.get(s.id, 0) == 0]
+        in_use = [s.id for s in found if usage_map.get(s.id, 0) > 0]
+        skipped.extend(in_use)
+
+        deleted_count = self._repo.bulk_soft_delete(deletable)
         logger.info(
             "Bulk skill delete.",
             deleted=deleted_count,

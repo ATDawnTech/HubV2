@@ -5,8 +5,10 @@ No business logic lives here — all route logic is in api/ modules.
 """
 
 import secrets
+from datetime import UTC
 
 import structlog
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -17,18 +19,19 @@ from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .api.admin_settings import router as admin_settings_router
+from .api.auth import router as auth_router
 from .api.dashboard import router as dashboard_router
-from .api.skills import router as skills_router
 from .api.dependencies import get_db
 from .api.dev import router as dev_router
 from .api.employees import router as employees_router
+from .api.entra_sync import router as entra_sync_router
 from .api.notifications import router as notifications_router
 from .api.roles import router as roles_router
+from .api.skills import router as skills_router
 from .api.assets import router as assets_router
 from .api.asset_category import router as asset_category_router
 from .config import settings
 from .lib.logging import configure_logging
-from .schemas.common import ApiError, ApiResponse
 
 # ---------------------------------------------------------------------------
 # Logging — must be configured before any logger is used.
@@ -40,6 +43,7 @@ logger = structlog.get_logger()
 # Rate limiter
 # ---------------------------------------------------------------------------
 limiter = Limiter(key_func=get_remote_address)
+_scheduler = BackgroundScheduler()
 
 
 # ---------------------------------------------------------------------------
@@ -96,6 +100,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.get_allowed_origins(),
+    allow_origin_regex=r"http://localhost:\d+" if settings.environment == "local" else None,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
@@ -106,6 +111,7 @@ app.add_middleware(RequestIDMiddleware)
 # ---------------------------------------------------------------------------
 # Routers
 # ---------------------------------------------------------------------------
+app.include_router(auth_router)
 app.include_router(assets_router)
 app.include_router(asset_category_router)
 app.include_router(dashboard_router)
@@ -114,6 +120,7 @@ app.include_router(employees_router)
 app.include_router(roles_router)
 app.include_router(notifications_router)
 app.include_router(skills_router)
+app.include_router(entra_sync_router)
 if settings.environment == "local":
     app.include_router(dev_router)
 
@@ -170,6 +177,20 @@ def on_startup() -> None:
     if settings.environment == "local":
         _seed_dev_user()
 
+    if settings.azure_client_id and settings.entra_sync_interval_hours > 0:
+        from .services.entra_sync_service import run_scheduled_sync
+        _scheduler.add_job(
+            run_scheduled_sync,
+            "interval",
+            hours=settings.entra_sync_interval_hours,
+            id="entra_sync",
+        )
+        _scheduler.start()
+        logger.info(
+            "Entra sync scheduler started.",
+            interval_hours=settings.entra_sync_interval_hours,
+        )
+
 
 def _seed_dev_user() -> None:
     """Insert dev employees if they don't already exist.
@@ -177,7 +198,7 @@ def _seed_dev_user() -> None:
     Seeds both the default dev identity and the role-tester identity so that
     role assignment FK constraints are satisfied during local development.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from .db.engine import SessionLocal
     from .db.models.employees import Employee
@@ -205,7 +226,7 @@ def _seed_dev_user() -> None:
 
     session = SessionLocal()
     try:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for user in dev_users:
             existing = session.query(Employee).filter_by(id=user["id"]).first()
             if existing is None:
@@ -228,4 +249,6 @@ def _seed_dev_user() -> None:
 
 @app.on_event("shutdown")
 def on_shutdown() -> None:
+    if _scheduler.running:
+        _scheduler.shutdown(wait=False)
     logger.info("Service shutting down.", service="adthub-api")

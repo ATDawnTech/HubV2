@@ -13,6 +13,8 @@ interface Props {
   onHireTypeToggle: (v: string) => void;
   selectedWorkModes: string[];
   onWorkModeToggle: (v: string) => void;
+  selectedRoles: string[];
+  onRoleToggle: (v: string) => void;
   jobTitleInput: string;
   onJobTitleChange: (v: string) => void;
   hireDateFrom: string;
@@ -30,6 +32,7 @@ export function EmployeeFilterModal({
   selectedLocations, onLocationToggle,
   selectedHireTypes, onHireTypeToggle,
   selectedWorkModes, onWorkModeToggle,
+  selectedRoles, onRoleToggle,
   jobTitleInput, onJobTitleChange,
   hireDateFrom, onHireDateFromChange,
   hireDateTo, onHireDateToChange,
@@ -75,6 +78,7 @@ export function EmployeeFilterModal({
         selectedLocations={selectedLocations} onLocationToggle={onLocationToggle}
         selectedHireTypes={selectedHireTypes} onHireTypeToggle={onHireTypeToggle}
         selectedWorkModes={selectedWorkModes} onWorkModeToggle={onWorkModeToggle}
+        selectedRoles={selectedRoles} onRoleToggle={onRoleToggle}
         jobTitleInput={jobTitleInput} onJobTitleChange={onJobTitleChange}
         hireDateFrom={hireDateFrom} onHireDateFromChange={onHireDateFromChange}
         hireDateTo={hireDateTo} onHireDateToChange={onHireDateToChange}

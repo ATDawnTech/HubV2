@@ -2,9 +2,9 @@
 
 import base64
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import func, or_, and_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from ..models.tasks import DashboardTask
@@ -38,7 +38,7 @@ class DashboardRepository:
             .group_by(DashboardTask.module)
             .all()
         )
-        return {module: count for module, count in rows}
+        return dict(rows)
 
     def find_tasks_for_user(
         self,
@@ -151,8 +151,8 @@ class DashboardRepository:
             The mutated task with status='completed' and completed_at set.
         """
         task.status = "completed"
-        task.completed_at = datetime.now(timezone.utc)
-        task.updated_at = datetime.now(timezone.utc)
+        task.completed_at = datetime.now(UTC)
+        task.updated_at = datetime.now(UTC)
         self._session.flush()
         return task
 

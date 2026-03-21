@@ -291,12 +291,15 @@ export function EmployeeEditModal({ employee, onClose, onDismiss }: Props) {
         {/* Header */}
         <div className="flex flex-shrink-0 items-center justify-between rounded-t-xl bg-orange-500 px-6 py-5">
           <div>
-            <h2 id="edit-employee-title" className="text-lg font-semibold text-white">
+            <div className="flex items-center gap-2">
+              {employee.employee_code && (
+                <span className="font-mono text-xs font-semibold text-orange-100">{employee.employee_code}</span>
+              )}
+            </div>
+            <h2 id="edit-employee-title" className="mt-1 text-lg font-semibold text-white">
               {empName}
             </h2>
-            {employee.employee_code && (
-              <p className="font-mono text-xs text-orange-100">{employee.employee_code}</p>
-            )}
+            <p className="text-sm text-orange-100">{employee.work_email}</p>
           </div>
           <button onClick={onClose} aria-label="Close" className="text-orange-200 hover:text-white">✕</button>
         </div>

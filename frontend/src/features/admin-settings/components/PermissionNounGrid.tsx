@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { ACTION_LABELS, NOUN_PERMISSIONS } from "../types/role.types";
+import { ACTION_LABELS, NOUN_PERMISSIONS, formatPermissionLabel } from "../types/role.types";
 import type { Permission } from "../types/role.types";
 
 interface PermissionNounGridProps {
@@ -113,7 +113,7 @@ export function PermissionNounGrid({
               >
                 {(checked || isInherited) && "✓"}
               </span>
-              {ACTION_LABELS[action] ?? action}
+              {ACTION_LABELS[action] ?? formatPermissionLabel(action)}
             </label>
           );
         })}

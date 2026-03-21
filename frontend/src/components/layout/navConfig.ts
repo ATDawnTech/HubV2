@@ -41,6 +41,7 @@ export const NAV_ITEMS: NavItem[] = [
       { label: "Dropdown Settings", path: "/admin-settings/dropdowns" },
       { label: "Skill Management", path: "/admin-settings/skills" },
       { label: "Roles & Permissions", path: "/admin-settings/roles" },
+      { label: "Entra Sync", path: "/admin-settings/entra-sync" },
       { label: "Notifications", path: "/admin-settings/notifications" },
       { label: "Audit Settings", path: "/admin-settings/audit", comingSoon: true },
       { label: "System Security", path: "/admin-settings/security", comingSoon: true },

@@ -12,7 +12,6 @@ from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from .dependencies import get_current_user_id, get_request_id, get_skill_service
 from ..exceptions import ConflictError, ResourceNotFoundError
 from ..schemas.common import ApiResponse
 from ..schemas.skills import (
@@ -24,6 +23,12 @@ from ..schemas.skills import (
     SkillResponse,
 )
 from ..services.skill_service import SkillService
+from .dependencies import (
+    get_current_user_id,
+    get_request_id,
+    get_skill_service,
+    require_permission,
+)
 
 router = APIRouter(prefix="/v1/admin/skills", tags=["skills"])
 _limiter = Limiter(key_func=get_remote_address)
@@ -53,19 +58,19 @@ def list_skills(
     sort_by: str = Query("created_at", pattern="^(name|created_at|usage_count)$"),
     sort: str = Query("desc", pattern="^(asc|desc)$"),
     limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    cursor: str | None = Query(None, max_length=500, description="Cursor token from previous page"),
     category: str | None = Query(None, description="Exact category filter"),
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_skills")),
     service: SkillService = Depends(get_skill_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
-    """Return a paginated list of skills with server-side sort, filter, and offset pagination."""
+    """Return a paginated list of skills with server-side sort, filter, and cursor pagination."""
     skills, meta = service.list_skills(
         search=search,
         sort_by=sort_by,
         sort_dir=sort,
         limit=limit,
-        offset=offset,
+        cursor=cursor,
         category=category,
     )
     return JSONResponse(
@@ -79,7 +84,7 @@ def list_skills(
 def create_skill(
     request: Request,
     body: CreateSkillRequest,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_skills")),
     service: SkillService = Depends(get_skill_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -114,7 +119,7 @@ def create_skill(
 def bulk_recategorize_skills(
     request: Request,
     body: BulkRecategorizeRequest,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_skills")),
     service: SkillService = Depends(get_skill_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -131,7 +136,7 @@ def bulk_recategorize_skills(
 def bulk_delete_skills(
     request: Request,
     body: BulkDeleteSkillsRequest,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_skills")),
     service: SkillService = Depends(get_skill_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -162,7 +167,7 @@ def bulk_delete_skills(
 def delete_skill(
     request: Request,
     skill_id: str,
-    _user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(require_permission("admin", "manage_skills")),
     service: SkillService = Depends(get_skill_service),
     request_id: str = Depends(get_request_id),
 ) -> JSONResponse:
@@ -189,3 +194,5 @@ def delete_skill(
         )
     except ResourceNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc

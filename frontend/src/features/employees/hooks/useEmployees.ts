@@ -15,6 +15,7 @@ interface Options {
   job_title?: string | undefined;
   hire_date_from?: string | undefined;
   hire_date_to?: string | undefined;
+  role_id?: string[] | undefined;
   limit?: number | undefined;
 }
 
@@ -29,11 +30,12 @@ export function useEmployees({
   job_title,
   hire_date_from,
   hire_date_to,
+  role_id,
   limit = 25,
 }: Options = {}) {
   const [cursor, setCursor] = useState<string | undefined>(undefined);
 
-  const params: EmployeeListParams = { cursor, q, status, department, location, hire_type, work_mode, job_title, hire_date_from, hire_date_to, limit };
+  const params: EmployeeListParams = { cursor, q, status, department, location, hire_type, work_mode, job_title, hire_date_from, hire_date_to, role_id, limit };
 
   const query = useQuery({
     queryKey: employeeKeys.list(params),
