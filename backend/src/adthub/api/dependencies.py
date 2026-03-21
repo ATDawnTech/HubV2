@@ -17,6 +17,7 @@ from ..db.repositories.offboarding_task_repository import OffboardingTaskReposit
 from ..db.repositories.role_repository import RoleRepository
 from ..db.repositories.skill_repository import SkillRepository
 from ..services.admin_settings_service import AdminSettingsService
+from ..services.assets import AssetService, AssetCategoryService
 from ..services.dashboard_service import DashboardService
 from ..services.employee_service import EmployeeService
 from ..services.notification_settings_service import NotificationSettingsService
@@ -126,6 +127,18 @@ def get_skill_service(session: Session = Depends(get_db)) -> SkillService:
     """Provide a SkillService backed by a transactional database session."""
     repository = SkillRepository(session)
     return SkillService(repository=repository)
+
+
+def get_asset_service(session: Session = Depends(get_db)) -> AssetService:
+    """Provide an AssetService backed by a transactional database session."""
+    return AssetService(session)
+
+
+def get_asset_category_service(
+    session: Session = Depends(get_db),
+) -> AssetCategoryService:
+    """Provide an AssetCategoryService backed by a transactional database session."""
+    return AssetCategoryService(session)
 
 
 def require_permission(module: str, action: str):

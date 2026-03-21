@@ -1,15 +1,16 @@
 from datetime import datetime, timezone
 from sqlalchemy import (
     Column, String, Integer, Text, Date, DateTime, Numeric, Boolean,
-    ForeignKey, UniqueConstraint, Index, CheckConstraint
+    ForeignKey, UniqueConstraint, Index, CheckConstraint, text
 )
+from sqlalchemy.dialects.postgresql import UUID
 from ..base import Base
 
 
 class Employee(Base):
     __tablename__ = "employees"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     first_name = Column(String(255), nullable=False)
     last_name = Column(String(255), nullable=False)
     work_email = Column(String(255), nullable=False, unique=True)
@@ -20,7 +21,7 @@ class Employee(Base):
     employee_number = Column(String(100), nullable=True, unique=True)
     job_title = Column(String(255), nullable=True)
     department = Column(String(255), nullable=True)
-    manager_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    manager_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     hire_date = Column(Date, nullable=True)
     hire_type = Column(String(50), nullable=True)
     work_mode = Column(String(50), nullable=True)
@@ -57,8 +58,8 @@ class Employee(Base):
 class EmployeeSkill(Base):
     __tablename__ = "employee_skills"
 
-    employee_id = Column(String(255), ForeignKey("employees.id"), nullable=False, primary_key=True)
-    skill_id = Column(String(255), ForeignKey("skills_catalog.id"), nullable=False, primary_key=True)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False, primary_key=True)
+    skill_id = Column(UUID(as_uuid=True), ForeignKey("skills_catalog.id"), nullable=False, primary_key=True)
     level = Column(Integer, nullable=False)
     years = Column(Numeric, nullable=True, default=0)
     created_at = Column(DateTime(timezone=True), nullable=True)
@@ -73,8 +74,8 @@ class EmployeeSkill(Base):
 class EmployeeCertification(Base):
     __tablename__ = "employee_certifications"
 
-    id = Column(String(255), primary_key=True)
-    employee_id = Column(String(255), ForeignKey("employees.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False)
     name = Column(String(255), nullable=False)
     authority = Column(String(255), nullable=True)
     credential_id = Column(String(100), nullable=True)
@@ -92,8 +93,8 @@ class EmployeeCertification(Base):
 class EmployeeRate(Base):
     __tablename__ = "employee_rates"
 
-    id = Column(String(255), primary_key=True)
-    employee_id = Column(String(255), ForeignKey("employees.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False)
     base_rate_usd = Column(Numeric, nullable=False)
     effective_from = Column(Date, nullable=False)
     effective_to = Column(Date, nullable=True)
@@ -108,9 +109,9 @@ class EmployeeRate(Base):
 class EmployeeEmergencyContact(Base):
     __tablename__ = "employee_emergency_contacts"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     employee_id = Column(
-        String(255), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
     )
     name = Column(String(255), nullable=False)
     relationship = Column(String(100), nullable=False)
@@ -127,14 +128,14 @@ class EmployeeEmergencyContact(Base):
 class EmployeeAttachment(Base):
     __tablename__ = "employee_attachments"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     employee_id = Column(
-        String(255), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
     )
     file_url = Column(Text, nullable=False)
     file_name = Column(String(255), nullable=False)
     label = Column(String(255), nullable=True)
-    uploaded_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    uploaded_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     uploaded_at = Column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
@@ -146,19 +147,19 @@ class EmployeeAttachment(Base):
 class EmployeeProjectHistory(Base):
     __tablename__ = "employee_project_history"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     employee_id = Column(
-        String(255), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
     )
     project_id = Column(
-        String(255), ForeignKey("projects.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="SET NULL"), nullable=True
     )
     project_name = Column(String(255), nullable=False)
     role = Column(String(255), nullable=True)
     start_date = Column(Date, nullable=True)
     end_date = Column(Date, nullable=True)
     notes = Column(Text, nullable=True)
-    created_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False)
     updated_at = Column(DateTime(timezone=True), nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
@@ -173,16 +174,16 @@ class EmployeeProjectHistory(Base):
 class OffboardingTask(Base):
     __tablename__ = "offboarding_tasks"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     employee_id = Column(
-        String(255), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
     )
     task_type = Column(String(100), nullable=False)
     assigned_group = Column(String(50), nullable=False)
-    assignee_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    assignee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     status = Column(String(50), nullable=False, default="pending")
     due_at = Column(DateTime(timezone=True), nullable=True)
-    completed_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    completed_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     sign_off_notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False)

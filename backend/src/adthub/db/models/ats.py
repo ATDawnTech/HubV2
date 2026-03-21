@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 from sqlalchemy import (
     Column, String, Integer, Text, Date, DateTime, Numeric, Boolean,
-    ForeignKey, UniqueConstraint, Index
+    ForeignKey, UniqueConstraint, Index, text
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy import Text as SAText
 from ..base import Base
 
@@ -11,7 +11,7 @@ from ..base import Base
 class AtsCandidate(Base):
     __tablename__ = "ats_candidates"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     full_name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False, unique=True)
     phone = Column(String(50), nullable=True)
@@ -37,8 +37,8 @@ class AtsCandidate(Base):
 class Requisition(Base):
     __tablename__ = "requisitions"
 
-    id = Column(String(255), primary_key=True)
-    intake_id = Column(String(255), ForeignKey("intake_records.id"), nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    intake_id = Column(UUID(as_uuid=True), ForeignKey("intake_records.id"), nullable=True)
     title = Column(String(255), nullable=False)
     dept = Column(String(255), nullable=True)
     location = Column(String(255), nullable=True)
@@ -53,9 +53,9 @@ class Requisition(Base):
     posting_end_date = Column(Date, nullable=True)
     status = Column(String(50), nullable=True, default="draft")
     hiring_manager_id = Column(
-        String(255), ForeignKey("employees.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("employees.id", ondelete="SET NULL"), nullable=True
     )
-    created_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     linkedin_job_id = Column(String(255), nullable=True)
     linkedin_posted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=True)
@@ -73,13 +73,13 @@ class RequisitionSkill(Base):
     __tablename__ = "requisition_skills"
 
     requisition_id = Column(
-        String(255),
+        UUID(as_uuid=True),
         ForeignKey("requisitions.id", ondelete="CASCADE"),
         nullable=False,
         primary_key=True,
     )
     skill_id = Column(
-        String(255), ForeignKey("skills_catalog.id"), nullable=False, primary_key=True
+        UUID(as_uuid=True), ForeignKey("skills_catalog.id"), nullable=False, primary_key=True
     )
     type = Column(String(50), nullable=False)
 
@@ -92,16 +92,16 @@ class RequisitionSkill(Base):
 class Application(Base):
     __tablename__ = "applications"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     candidate_id = Column(
-        String(255), ForeignKey("ats_candidates.id", ondelete="CASCADE"), nullable=True
+        UUID(as_uuid=True), ForeignKey("ats_candidates.id", ondelete="CASCADE"), nullable=True
     )
     requisition_id = Column(
-        String(255), ForeignKey("requisitions.id", ondelete="CASCADE"), nullable=True
+        UUID(as_uuid=True), ForeignKey("requisitions.id", ondelete="CASCADE"), nullable=True
     )
     stage = Column(String(50), nullable=True, default="sourced")
     status = Column(String(50), nullable=True, default="active")
-    owner_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
@@ -117,14 +117,14 @@ class Application(Base):
 class Interview(Base):
     __tablename__ = "interviews"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     application_id = Column(
-        String(255), ForeignKey("applications.id", ondelete="CASCADE"), nullable=True
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="CASCADE"), nullable=True
     )
-    requisition_id = Column(String(255), ForeignKey("requisitions.id"), nullable=True)
-    interviewer_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    requisition_id = Column(UUID(as_uuid=True), ForeignKey("requisitions.id"), nullable=True)
+    interviewer_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     candidate_id = Column(
-        String(255), ForeignKey("ats_candidates.id", ondelete="CASCADE"), nullable=True
+        UUID(as_uuid=True), ForeignKey("ats_candidates.id", ondelete="CASCADE"), nullable=True
     )
     type = Column(String(50), nullable=True)
     scheduled_start = Column(DateTime(timezone=True), nullable=True)
@@ -132,7 +132,7 @@ class Interview(Base):
     meeting_link = Column(Text, nullable=True)
     status = Column(String(50), nullable=True, default="scheduled")
     notes = Column(Text, nullable=True)
-    created_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False)
     updated_at = Column(DateTime(timezone=True), nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
@@ -149,13 +149,13 @@ class Interview(Base):
 class InterviewAssignment(Base):
     __tablename__ = "interview_assignments"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     interview_id = Column(
-        String(255), ForeignKey("interviews.id", ondelete="CASCADE"), nullable=True
+        UUID(as_uuid=True), ForeignKey("interviews.id", ondelete="CASCADE"), nullable=True
     )
-    interviewer_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    interviewer_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     candidate_id = Column(
-        String(255), ForeignKey("ats_candidates.id", ondelete="CASCADE"), nullable=True
+        UUID(as_uuid=True), ForeignKey("ats_candidates.id", ondelete="CASCADE"), nullable=True
     )
     role = Column(String(50), nullable=True, default="primary")
     created_at = Column(DateTime(timezone=True), nullable=True)
@@ -173,11 +173,11 @@ class InterviewAssignment(Base):
 class InterviewFeedback(Base):
     __tablename__ = "interview_feedback"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     interview_id = Column(
-        String(255), ForeignKey("interviews.id", ondelete="CASCADE"), nullable=True
+        UUID(as_uuid=True), ForeignKey("interviews.id", ondelete="CASCADE"), nullable=True
     )
-    interviewer_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    interviewer_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     ratings = Column(JSONB, nullable=True)
     summary = Column(Text, nullable=True)
     recommendation = Column(String(50), nullable=True)
@@ -195,11 +195,11 @@ class InterviewFeedback(Base):
 class CandidateActivity(Base):
     __tablename__ = "candidate_activities"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     candidate_id = Column(
-        String(255), ForeignKey("ats_candidates.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("ats_candidates.id", ondelete="CASCADE"), nullable=False
     )
-    actor_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    actor_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     activity_type = Column(String(100), nullable=False)
     activity_description = Column(Text, nullable=False)
     activity_metadata = Column("metadata", JSONB, nullable=True)

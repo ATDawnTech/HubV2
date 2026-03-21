@@ -24,6 +24,8 @@ from .api.dev import router as dev_router
 from .api.employees import router as employees_router
 from .api.notifications import router as notifications_router
 from .api.roles import router as roles_router
+from .api.assets import router as assets_router
+from .api.asset_category import router as asset_category_router
 from .config import settings
 from .lib.logging import configure_logging
 from .schemas.common import ApiError, ApiResponse
@@ -104,6 +106,8 @@ app.add_middleware(RequestIDMiddleware)
 # ---------------------------------------------------------------------------
 # Routers
 # ---------------------------------------------------------------------------
+app.include_router(assets_router)
+app.include_router(asset_category_router)
 app.include_router(dashboard_router)
 app.include_router(admin_settings_router)
 app.include_router(employees_router)

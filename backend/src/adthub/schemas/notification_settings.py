@@ -1,6 +1,7 @@
 """Pydantic schemas for Epic 3.4 – Notification Module."""
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -11,7 +12,7 @@ class NotificationSettingsResponse(BaseModel):
     offboarding_deadline_hours: int
     escalation_warning_hours: int
     warranty_alert_days: int
-    updated_by: str | None
+    updated_by: UUID | None
     updated_at: datetime
 
 

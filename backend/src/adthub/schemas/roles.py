@@ -1,6 +1,7 @@
 """Pydantic schemas for Role & Permission Management API."""
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +20,7 @@ class PermissionEntry(BaseModel):
 # ---------------------------------------------------------------------------
 
 class RoleResponse(BaseModel):
-    id: str
+    id: UUID
     name: str
     description: str | None
     is_system: bool
@@ -74,7 +75,7 @@ class SetManagerPermissionsRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 class SetGrantableRolesRequest(BaseModel):
-    assignable_role_ids: list[str]
+    assignable_role_ids: list[UUID]
 
 
 # ---------------------------------------------------------------------------
@@ -82,16 +83,16 @@ class SetGrantableRolesRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 class RoleAssignmentResponse(BaseModel):
-    employee_id: str
-    role_id: str
-    assigned_by: str | None
+    employee_id: UUID
+    role_id: UUID
+    assigned_by: UUID | None
     assigned_at: datetime
     is_manager: bool
     manager_permissions: list[PermissionEntry]
 
 
 class AssignRoleRequest(BaseModel):
-    employee_id: str = Field(..., min_length=1, max_length=255)
+    employee_id: UUID
     is_manager: bool = Field(default=False)
     manager_permissions: list[PermissionEntry] = Field(default_factory=list)
 
@@ -106,7 +107,7 @@ class UpdateAssignmentRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 class RoleSortOrderEntry(BaseModel):
-    role_id: str = Field(..., min_length=1, max_length=255)
+    role_id: UUID
     sort_order: int = Field(..., ge=0)
 
 
