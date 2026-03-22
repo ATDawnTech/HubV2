@@ -103,7 +103,6 @@ class RoleRepository:
         now = datetime.now(UTC)
         new_rows = [
             Permission(
-                id=f"perm_{secrets.token_hex(8)}",
                 role_id=role_id,
                 module=module,
                 action=action,
@@ -111,6 +110,7 @@ class RoleRepository:
             )
             for module, action in new_pairs
         ]
+
         self._session.bulk_save_objects(new_rows)
         self._session.flush()
         return self.find_permissions_for_role(role_id)
@@ -438,12 +438,12 @@ class RoleRepository:
 
     def create_entra_group_mapping(self, entra_group_id: str, entra_group_name: str, role_id: str) -> EntraGroupRoleMapping:
         mapping = EntraGroupRoleMapping(
-            id=f"egm_{secrets.token_hex(8)}",
             entra_group_id=entra_group_id,
             entra_group_name=entra_group_name,
             role_id=role_id,
             created_at=datetime.now(UTC),
         )
+
         self._session.add(mapping)
         self._session.flush()
         return mapping

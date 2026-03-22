@@ -1,15 +1,8 @@
 from sqlalchemy import (
-    Boolean,
-    CheckConstraint,
-    Column,
-    Date,
-    DateTime,
-    ForeignKey,
-    Index,
-    Numeric,
-    String,
-    Text,
+    Column, String, Text, Date, DateTime, Numeric, Boolean,
+    ForeignKey, Index, CheckConstraint, text
 )
+from sqlalchemy.dialects.postgresql import UUID
 
 from ..base import Base
 
@@ -17,12 +10,12 @@ from ..base import Base
 class Timesheet(Base):
     __tablename__ = "timesheets"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     project_id = Column(
-        String(255), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
     )
     employee_id = Column(
-        String(255), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
     )
     work_date = Column(Date, nullable=False)
     hours = Column(Numeric, nullable=False)
@@ -30,7 +23,7 @@ class Timesheet(Base):
     status = Column(String(50), nullable=False, default="submitted")
     is_billable = Column(Boolean, nullable=False, default=True)
     week_start = Column(Date, nullable=True)
-    approved_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    approved_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     approved_at = Column(DateTime(timezone=True), nullable=True)
     rejection_reason = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=True)
@@ -57,7 +50,7 @@ class FxRate(Base):
 class Holiday(Base):
     __tablename__ = "holidays"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     region = Column(String(100), nullable=False)
     holiday_date = Column(Date, nullable=False)
     name = Column(String(255), nullable=False)
@@ -70,14 +63,14 @@ class Holiday(Base):
 class Leave(Base):
     __tablename__ = "leaves"
 
-    id = Column(String(255), primary_key=True)
-    employee_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     type = Column(String(100), nullable=False)
     is_approved = Column(Boolean, nullable=True, default=False)
     status = Column(String(50), nullable=True, default="pending")
-    approved_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    approved_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     approved_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)

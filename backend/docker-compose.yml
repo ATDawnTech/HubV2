@@ -7,6 +7,8 @@ services:
       - "3001:3001"
     volumes:
       - ./src:/app/src
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
     env_file:
       - .env
     environment:

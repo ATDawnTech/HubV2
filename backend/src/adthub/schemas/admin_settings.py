@@ -1,21 +1,23 @@
 """Pydantic schemas for Epic 3 – Admin System Settings API."""
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, Field
+
 
 # ---------------------------------------------------------------------------
 # Dropdown option — read
 # ---------------------------------------------------------------------------
 
 class DropdownOptionResponse(BaseModel):
-    id: str
+    id: UUID
     module: str
     category: str
     value: str
     sort_order: int
     is_active: bool
-    created_by: str | None
+    created_by: UUID | None
     created_at: datetime | None
     updated_at: datetime | None
 

@@ -21,7 +21,14 @@ export const NAV_ITEMS: NavItem[] = [
       { label: "Offboarding Hub", path: "/employees/offboarding" },
     ],
   },
-  { label: "Assets", path: "/assets", comingSoon: true },
+  {
+    label: "Assets",
+    path: "/assets",
+    children: [
+      { label: "Assets Management", path: "/assets" },
+      { label: "Asset Categories", path: "/asset-categories" },
+    ],
+  },
   { label: "Intake", path: "/intake", comingSoon: true },
   { label: "Onboarding", path: "/onboarding", comingSoon: true },
   { label: "Projects", path: "/projects", comingSoon: true },

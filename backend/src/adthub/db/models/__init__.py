@@ -1,5 +1,4 @@
 from ..base import Base
-from .assets import Asset, AssetAssignmentHistory, AssetAttachment
 from .ats import (
     Application,
     AtsCandidate,
@@ -49,9 +48,11 @@ from .onboarding import (
     TaskAttachment,
     TaskSlaEvent,
 )
+from .assets import Asset, AssetAttachment, AssetAssignmentHistory, AssetCategory
 from .projects import Project, ProjectMember
 from .tasks import DashboardTask
 from .timesheets import FxRate, Holiday, Leave, Timesheet
+
 
 __all__ = [
     "Base",

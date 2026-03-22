@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -10,7 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 class SkillResponse(BaseModel):
     """Read model returned for a single skill in list and create responses."""
 
-    id: str
+    id: UUID
     name: str
     category: str | None
     usage_count: int
@@ -36,7 +37,7 @@ class CreateSkillRequest(BaseModel):
 class BulkDeleteSkillsRequest(BaseModel):
     """Payload for the bulk-delete endpoint — one or more skill IDs."""
 
-    ids: list[str] = Field(..., min_length=1)
+    ids: list[UUID] = Field(..., min_length=1)
 
 
 class BulkDeleteSkillsResponse(BaseModel):
@@ -44,7 +45,7 @@ class BulkDeleteSkillsResponse(BaseModel):
 
     deleted_count: int
     skipped_count: int
-    skipped_ids: list[str]
+    skipped_ids: list[UUID]
 
 
 class BulkRecategorizeRequest(BaseModel):

@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Index, Numeric, String, Text
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Index, Numeric, String, Text, text
+from sqlalchemy.dialects.postgresql import UUID
+
 
 from ..base import Base
 
@@ -6,21 +8,21 @@ from ..base import Base
 class Project(Base):
     __tablename__ = "projects"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(50), nullable=True, default="pipeline")
     category = Column(String(255), nullable=True)
     start_date = Column(Date, nullable=True)
     end_date = Column(Date, nullable=True)
-    project_manager_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
-    sales_manager_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
-    internal_lead_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    project_manager_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
+    sales_manager_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
+    internal_lead_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     client = Column(String(255), nullable=True)
     discount_pct = Column(Numeric, nullable=True, default=0)
     discount_reason = Column(Text, nullable=True)
     tag_color = Column(String(7), nullable=True)
-    created_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
@@ -38,13 +40,13 @@ class ProjectMember(Base):
     __tablename__ = "project_members"
 
     project_id = Column(
-        String(255),
+        UUID(as_uuid=True),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         primary_key=True,
     )
     employee_id = Column(
-        String(255),
+        UUID(as_uuid=True),
         ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False,
         primary_key=True,

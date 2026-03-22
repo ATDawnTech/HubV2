@@ -1,7 +1,8 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Index, String
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, DateTime, ForeignKey, Index, String, text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+
 
 from ..base import Base
 
@@ -9,8 +10,8 @@ from ..base import Base
 class AuditEvent(Base):
     __tablename__ = "audit_events"
 
-    id = Column(String(255), primary_key=True)
-    actor_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    actor_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     module = Column(String(100), nullable=False)
     entity = Column(String(100), nullable=False)
     entity_id = Column(String(255), nullable=True)

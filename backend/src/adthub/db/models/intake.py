@@ -10,8 +10,10 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+
 
 from ..base import Base
 
@@ -19,7 +21,7 @@ from ..base import Base
 class IntakeRecord(Base):
     __tablename__ = "intake_records"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     reference_number = Column(String(50), nullable=False, unique=True)
     status = Column(String(50), nullable=False, default="draft")
     role_title = Column(String(255), nullable=False)
@@ -41,10 +43,10 @@ class IntakeRecord(Base):
     client_expectations = Column(Text, nullable=True)
     key_perks_benefits = Column(Text, nullable=True)
     comments_notes = Column(Text, nullable=True)
-    hiring_manager_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    hiring_manager_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     ai_generated_jd = Column(Text, nullable=True)
     ai_jd_generated_at = Column(DateTime(timezone=True), nullable=True)
-    submitted_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    submitted_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     submitted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False)
     updated_at = Column(DateTime(timezone=True), nullable=False)
@@ -59,11 +61,11 @@ class IntakeRecord(Base):
 class IntakeSkill(Base):
     __tablename__ = "intake_skills"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     intake_id = Column(
-        String(255), ForeignKey("intake_records.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("intake_records.id", ondelete="CASCADE"), nullable=False
     )
-    skill_id = Column(String(255), ForeignKey("skills_catalog.id"), nullable=False)
+    skill_id = Column(UUID(as_uuid=True), ForeignKey("skills_catalog.id"), nullable=False)
     type = Column(String(50), nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False)
 
@@ -77,11 +79,11 @@ class IntakeSkill(Base):
 class IntakeApproval(Base):
     __tablename__ = "intake_approvals"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     intake_id = Column(
-        String(255), ForeignKey("intake_records.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("intake_records.id", ondelete="CASCADE"), nullable=False
     )
-    approver_id = Column(String(255), ForeignKey("employees.id"), nullable=False)
+    approver_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False)
     status = Column(String(50), nullable=False, default="pending")
     comments = Column(Text, nullable=True)
     decided_at = Column(DateTime(timezone=True), nullable=True)
@@ -97,11 +99,11 @@ class IntakeApproval(Base):
 class IntakeAudit(Base):
     __tablename__ = "intake_audit"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     intake_id = Column(
-        String(255), ForeignKey("intake_records.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("intake_records.id", ondelete="CASCADE"), nullable=False
     )
-    actor_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    actor_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     action = Column(String(100), nullable=False)
     snapshot = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False)

@@ -2,7 +2,9 @@
 
 from datetime import UTC, datetime
 
-from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Index, String
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Index, String, text
+from sqlalchemy.dialects.postgresql import UUID
+
 
 from ..base import Base
 
@@ -18,11 +20,11 @@ class DashboardTask(Base):
 
     __tablename__ = "dashboard_tasks"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     module = Column(String(50), nullable=False)
     title = Column(String(255), nullable=False)
-    source_record_id = Column(String(255), nullable=False)
-    assigned_to_id = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    source_record_id = Column(UUID(as_uuid=True), nullable=False)
+    assigned_to_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     deadline = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(20), nullable=False, default="open")
     completed_at = Column(DateTime(timezone=True), nullable=True)

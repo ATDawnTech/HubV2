@@ -8,7 +8,10 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
+from sqlalchemy.dialects.postgresql import UUID
+
 
 from ..base import Base
 
@@ -16,11 +19,11 @@ from ..base import Base
 class SkillsCatalog(Base):
     __tablename__ = "skills_catalog"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     name = Column(String(255), nullable=False, unique=True)
     category = Column(String(255), nullable=True)
     search_tokens = Column(Text, nullable=False)
-    created_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
@@ -30,24 +33,10 @@ class SkillsCatalog(Base):
     )
 
 
-class AssetCategory(Base):
-    __tablename__ = "asset_categories"
-
-    id = Column(String(255), primary_key=True)
-    name = Column(String(255), nullable=False, unique=True)
-    description = Column(Text, nullable=True)
-    code = Column(String(5), nullable=True, unique=True)
-    is_active = Column(Boolean, nullable=False, default=True)
-    sort_order = Column(Integer, nullable=True, default=0)
-    created_at = Column(DateTime(timezone=True), nullable=True)
-    updated_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
-
-
 class Role(Base):
     __tablename__ = "roles"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     name = Column(String(255), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     is_system = Column(Boolean, nullable=False, default=False)
@@ -66,8 +55,8 @@ class Role(Base):
 class Permission(Base):
     __tablename__ = "permissions"
 
-    id = Column(String(255), primary_key=True)
-    role_id = Column(String(255), ForeignKey("roles.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False)
     module = Column(String(100), nullable=False)
     action = Column(String(100), nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=True)
@@ -81,9 +70,9 @@ class Permission(Base):
 class RoleAssignment(Base):
     __tablename__ = "role_assignments"
 
-    employee_id = Column(String(255), ForeignKey("employees.id"), nullable=False, primary_key=True)
-    role_id = Column(String(255), ForeignKey("roles.id"), nullable=False, primary_key=True)
-    assigned_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False, primary_key=True)
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False, primary_key=True)
+    assigned_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     assigned_at = Column(DateTime(timezone=True), nullable=False)
     # Manager context: set per-assignment rather than per role definition
     is_manager = Column(Boolean, nullable=False, default=False)
@@ -100,13 +89,13 @@ class RoleAssignment(Base):
 class ConfigDropdown(Base):
     __tablename__ = "config_dropdowns"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     module = Column(String(100), nullable=False)
     category = Column(String(255), nullable=False)
     value = Column(String(255), nullable=False)
     sort_order = Column(Integer, nullable=True, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
-    created_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
@@ -123,7 +112,7 @@ class SystemSetting(Base):
     key = Column(String(255), primary_key=True)
     value = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
-    updated_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    updated_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
@@ -134,11 +123,11 @@ class SystemSetting(Base):
 class OwnerGroup(Base):
     __tablename__ = "owner_groups"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     name = Column(String(255), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     department = Column(String(255), nullable=True)
-    manager_role_id = Column(String(255), ForeignKey("roles.id"), nullable=True)
+    manager_role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
@@ -153,8 +142,8 @@ class RoleGrantPermission(Base):
 
     __tablename__ = "role_grant_permissions"
 
-    granting_role_id = Column(String(255), ForeignKey("roles.id"), primary_key=True)
-    assignable_role_id = Column(String(255), ForeignKey("roles.id"), primary_key=True)
+    granting_role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), primary_key=True)
+    assignable_role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), primary_key=True)
     created_at = Column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
@@ -166,11 +155,11 @@ class RoleGrantPermission(Base):
 class GroupMember(Base):
     __tablename__ = "group_members"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     group_id = Column(
-        String(255), ForeignKey("owner_groups.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("owner_groups.id", ondelete="CASCADE"), nullable=False
     )
-    employee_id = Column(String(255), ForeignKey("employees.id"), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False)
     role = Column(String(50), nullable=True, default="member")
     created_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -192,7 +181,7 @@ class NotificationSettings(Base):
     offboarding_deadline_hours = Column(Integer, nullable=False, default=72)
     escalation_warning_hours = Column(Integer, nullable=False, default=24)
     warranty_alert_days = Column(Integer, nullable=False, default=60)
-    updated_by = Column(String(255), ForeignKey("employees.id"), nullable=True)
+    updated_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
@@ -205,8 +194,8 @@ class RoleAssignmentBlacklist(Base):
 
     __tablename__ = "role_assignment_blacklist"
 
-    employee_id = Column(String(255), ForeignKey("employees.id"), nullable=False, primary_key=True)
-    role_id = Column(String(255), ForeignKey("roles.id"), nullable=False, primary_key=True)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False, primary_key=True)
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False, primary_key=True)
     created_at = Column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
@@ -226,13 +215,14 @@ class EntraGroupRoleMapping(Base):
 
     __tablename__ = "entra_group_role_mappings"
 
-    id = Column(String(255), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     entra_group_id = Column(String(255), nullable=False, unique=True)
     entra_group_name = Column(String(255), nullable=False)
-    role_id = Column(String(255), ForeignKey("roles.id"), nullable=False)
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False)
     updated_at = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
+
 
     __table_args__ = (
         Index("idx_entra_group_mappings_role_id", "role_id"),
