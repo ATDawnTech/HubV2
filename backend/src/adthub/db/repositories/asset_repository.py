@@ -21,6 +21,14 @@ class AssetRepository(BaseRepository[Asset]):
             .first()
         )
 
+    def count_by_tag_prefix(self, prefix: str) -> int:
+        """Count all assets (including soft-deleted) whose asset_tag starts with prefix."""
+        return (
+            self._session.query(Asset)
+            .filter(Asset.asset_tag.like(f"{prefix}%"))
+            .count()
+        )
+
     def find_assigned_to(self, employee_id: str) -> list[Asset]:
         """Find all assets assigned to an employee."""
         return (
