@@ -61,8 +61,7 @@ def list_dropdown_options(
     module: str = Query(..., min_length=1, max_length=100),
     category: str | None = Query(default=None, max_length=255),
     service: AdminSettingsService = Depends(get_admin_settings_service),
-    request_id: str = Depends(get_request_id),
-    _user_id: str = Depends(get_current_user_id),
+    request_id: str = Depends(get_request_id)
 ) -> JSONResponse:
     options = service.get_options(module, category)
     return JSONResponse(

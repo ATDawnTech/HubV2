@@ -15,13 +15,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse, Response
-from sqlalchemy.orm import Session
 
-from .dependencies import get_db, get_request_id, get_asset_service
+
+from .dependencies import get_db, get_request_id, get_asset_service, get_asset_category_service
 from ..db.models.assets import Asset
 from ..schemas.assets import AssetResponse, CreateAssetRequest, UpdateAssetRequest
 from ..schemas.common import ApiResponse, PaginationMeta
-from ..services.assets import AssetService
+from ..services.assets import AssetService, AssetCategoryService
 
 
 router = APIRouter(prefix="/v1/assets", tags=["Assets"])
@@ -50,55 +50,62 @@ def list_assets(
     return ApiResponse(data=data, meta=meta, error=None)
 
 
+@router.get("/next-tag")
+def get_next_asset_tag(
+    location: str = Query(..., min_length=1),
+    category_id: str = Query(..., min_length=1),
+    service: AssetService = Depends(get_asset_service),
+    category_service: AssetCategoryService = Depends(get_asset_category_service),
+):
+    """Generate the next asset tag for a given location and category."""
+    category = category_service.get_by_id(category_id)
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found"
+        )
+    code = category.code or category.name.upper()
+    next_tag = service.generate_next_tag(location, code)
+    return {"data": {"asset_tag": next_tag}}
+
+
 @router.post("/", response_model=AssetResponse)
 async def create_asset(
     request: CreateAssetRequest,
     service: AssetService = Depends(get_asset_service),
 ):
     """Create a new asset."""
-    return service.create(request.dict())
+    return service.create(request.model_dump())
+
+@router.patch("/{asset_id}", response_model=AssetResponse)
+async def update_asset(
+    asset_id: str,
+    request: UpdateAssetRequest,
+    service: AssetService = Depends(get_asset_service),
+):
+    """Update asset by ID."""
+    asset = service.get_by_id(asset_id)
+    if not asset:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Asset not found"
+        )
+    return service.update(asset, request.model_dump(exclude_unset=True))
+
+@router.delete("/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_asset(
+    asset_id: str,
+    service: AssetService = Depends(get_asset_service),
+):
+    """Delete an asset."""
+    asset = service.get_by_id(asset_id)
+    if not asset:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Asset not found"
+        )
+    
+    service.delete(asset)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-
-# @router.get("/{asset_id}", response_model=AssetResponse)
-# async def get_asset(
-#     asset_id: str,
-#     db: Session = Depends(get_db),
-# ):
-#     """Get an asset by ID."""
-#     service = AssetService(db)
-#     asset = service.get_by_id(asset_id)
-#     if not asset:
-#         raise HTTPException(status_code=404, detail="Asset not found")
-#     return asset
-
-
-# @router.patch("/{asset_id}", response_model=AssetResponse)
-# async def update_asset(
-#     asset_id: str,
-#     request: UpdateAssetRequest,
-#     db: Session = Depends(get_db),
-# ):
-#     """Update an asset by ID."""
-#     service = AssetService(db)
-#     asset = service.get_by_id(asset_id)
-#     if not asset:
-#         raise HTTPException(status_code=404, detail="Asset not found")
-
-#     update_data = request.dict(exclude_unset=True)
-#     return service.update(asset, update_data)
-
-
-# @router.delete("/{asset_id}", status_code=204)
-# async def delete_asset(
-#     asset_id: str,
-#     db: Session = Depends(get_db),
-# ):
-#     """Delete an asset by ID (soft delete)."""
-#     service = AssetService(db)
-#     asset = service.get_by_id(asset_id)
-#     if not asset:
-#         raise HTTPException(status_code=404, detail="Asset not found")
-
-#     service.delete(asset)
-#     return None

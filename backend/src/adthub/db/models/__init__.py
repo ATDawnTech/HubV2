@@ -12,7 +12,6 @@ from .ats import (
 from .audit import AuditEvent
 from .auth import OAuthState, OneTimeCode
 from .config_tables import (
-    AssetCategory,
     ConfigDropdown,
     EntraGroupRoleMapping,
     GroupMember,
@@ -26,6 +25,7 @@ from .config_tables import (
     SkillsCatalog,
     SystemSetting,
 )
+
 from .employees import (
     Employee,
     EmployeeAttachment,
